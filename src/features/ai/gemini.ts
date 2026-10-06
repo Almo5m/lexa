@@ -2,12 +2,19 @@ import { GoogleGenAI } from "@google/genai";
 import type { z } from "zod";
 import { serverEnv } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { isTransientError, runWithFallback } from "./retry";
 
 export type AiFeature = "extract" | "cards" | "tutor";
 
 export class AiLimitError extends Error {
   constructor() {
     super("daily_ai_limit_reached");
+  }
+}
+
+export class AiBusyError extends Error {
+  constructor() {
+    super("ai_busy");
   }
 }
 
@@ -54,6 +61,7 @@ interface CallOptions {
   userId: string;
   feature: AiFeature;
   model: string;
+  fallbackModel?: string;
   system: string;
   prompt: string;
   images?: InlineImage[];
@@ -70,15 +78,20 @@ export async function callGemini(options: CallOptions): Promise<string> {
       })),
       { text: options.prompt },
     ];
-    const response = await getClient().models.generateContent({
-      model: options.model,
-      contents: [{ role: "user", parts }],
-      config: {
-        systemInstruction: options.system,
-        temperature: options.temperature ?? 0.7,
-        ...(options.json ? { responseMimeType: "application/json" } : {}),
-      },
-    });
+    const { value: response } = await runWithFallback(
+      [options.model, options.fallbackModel ?? ""],
+      (model) =>
+        getClient().models.generateContent({
+          model,
+          contents: [{ role: "user", parts }],
+          config: {
+            systemInstruction: options.system,
+            temperature: options.temperature ?? 0.7,
+            ...(options.json ? { responseMimeType: "application/json" } : {}),
+          },
+        }),
+      { retriesPerModel: 2, baseDelayMs: 800 },
+    );
     const text = response.text ?? "";
     if (!text) throw new Error("empty_response");
     await logUsage(options.userId, options.feature, true, startedAt);
@@ -86,7 +99,7 @@ export async function callGemini(options: CallOptions): Promise<string> {
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown_error";
     await logUsage(options.userId, options.feature, false, startedAt, message);
-    throw error;
+    throw isTransientError(error) ? new AiBusyError() : error;
   }
 }
 
@@ -101,6 +114,7 @@ export async function callGeminiJson<T extends z.ZodType>(
       const cleaned = text.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
       return schema.parse(JSON.parse(cleaned));
     } catch (error) {
+      if (error instanceof AiBusyError) throw error;
       lastError = error;
     }
   }

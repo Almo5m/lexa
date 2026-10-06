@@ -44,6 +44,7 @@ export async function POST(request: Request) {
         userId: user.id,
         feature: "extract",
         model: settings.aiModel,
+        fallbackModel: settings.aiFallbackModel,
         system: EXTRACT_SYSTEM,
         prompt: "List the English vocabulary words in these images.",
         images,

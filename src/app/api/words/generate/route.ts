@@ -4,7 +4,7 @@ import { handleApiError } from "@/lib/api";
 import { loadSettings } from "@/lib/settings-server";
 import { cardBatchSchema } from "@/features/ai/schemas";
 import { CARDS_SYSTEM } from "@/features/ai/prompts";
-import { assertWithinDailyLimit, callGeminiJson } from "@/features/ai/gemini";
+import { AiBusyError, assertWithinDailyLimit, callGeminiJson } from "@/features/ai/gemini";
 
 export const maxDuration = 60;
 
@@ -28,12 +28,14 @@ export async function POST() {
 
     let cards: Awaited<ReturnType<typeof requestCards>>;
     try {
-      cards = await requestCards(user.id, settings.aiModel, pending.map((word) => word.term));
+      cards = await requestCards(user.id, settings.aiModel, settings.aiFallbackModel, pending.map((word) => word.term));
     } catch (aiError) {
-      await supabase
-        .from("words")
-        .update({ card_status: "failed" })
-        .in("id", pending.map((word) => word.id));
+      if (!(aiError instanceof AiBusyError)) {
+        await supabase
+          .from("words")
+          .update({ card_status: "failed" })
+          .in("id", pending.map((word) => word.id));
+      }
       throw aiError;
     }
 
@@ -58,12 +60,13 @@ export async function POST() {
   }
 }
 
-function requestCards(userId: string, model: string, terms: string[]) {
+function requestCards(userId: string, model: string, fallbackModel: string, terms: string[]) {
   return callGeminiJson(
     {
       userId,
       feature: "cards",
       model,
+      fallbackModel,
       system: CARDS_SYSTEM,
       prompt: `Write cards for these words: ${JSON.stringify(terms)}`,
       temperature: 0.8,

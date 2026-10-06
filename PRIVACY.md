@@ -6,7 +6,7 @@ Lexa is owned by Moaz (AlMo). All Rights Reserved. See `LICENSE`.
 ## What the app stores
 - Account: email, display name, and the progress numbers (XP, streak).
 - Words each student adds, the study cards for them, and the review history.
-- AI usage records: which feature ran, success or failure, how long it took. No message text is stored here.
+- AI usage records: which feature ran, success or failure, how long it took, and the error text if it failed. No message text is stored here.
 
 ## Photos
 Photos are read in memory to extract the words. They are not saved on the server or in the database.

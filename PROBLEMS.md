@@ -20,3 +20,7 @@ Cards are generated five words at a time. The browser calls the route again unti
 - Streak freeze refills on the first activity of a Saturday. A student who skips Saturdays refills later.
 - The admin dashboard reads usage rows directly. It is fine for hundreds of students. For thousands, move the counting into a database view.
 - The AL-MO signature is text for now. Replace `src/components/almo-signature.tsx` with the logo file when it is ready.
+
+## Gemini returns 503 "high demand" (UNAVAILABLE)
+Seen on the free tier with the main model during busy hours. Fix: each call retries the main model twice with growing waits, then tries a fallback model (set in the dashboard, default `gemini-2.5-flash-lite`). Overload and quota errors (429, 500, 502, 503, 504) count as temporary. Other errors stop at once.
+If everything is busy, the student sees "AI is busy, try again in a minute". Cards stay `pending` instead of `failed`, so they are not lost and can be generated again from the word page.

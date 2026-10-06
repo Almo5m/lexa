@@ -19,6 +19,7 @@ const GROUPS: { title: DictKey; fields: FieldSpec[] }[] = [
     title: "admin.group.ai",
     fields: [
       { key: "aiModel", kind: "text" },
+      { key: "aiFallbackModel", kind: "text" },
       { key: "aiDailyLimitPerStudent", kind: "number" },
       { key: "tutorEnabled", kind: "boolean" },
       { key: "imageExtractionEnabled", kind: "boolean" },

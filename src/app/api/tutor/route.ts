@@ -48,6 +48,7 @@ export async function POST(request: Request) {
       userId: user.id,
       feature: "tutor",
       model: settings.aiModel,
+      fallbackModel: settings.aiFallbackModel,
       system: TUTOR_SYSTEM,
       prompt: `${wordContext}Conversation so far:\n${transcript}\nTutor:`,
       temperature: 0.6,

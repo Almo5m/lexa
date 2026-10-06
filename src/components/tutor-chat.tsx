@@ -38,6 +38,7 @@ export function TutorChat({ wordId }: { wordId?: string }) {
         const known: Record<string, DictKey> = {
           daily_ai_limit_reached: "tutor.limit",
           ai_feature_disabled: "tutor.disabled",
+          ai_busy: "tutor.busy",
         };
         setError(t(known[data.error] ?? "tutor.error"));
         return;

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const settingsSchema = z.object({
   aiModel: z.string().min(1).max(80),
+  aiFallbackModel: z.string().max(80),
   aiDailyLimitPerStudent: z.number().int().min(0).max(500),
   tutorEnabled: z.boolean(),
   imageExtractionEnabled: z.boolean(),
@@ -23,6 +24,7 @@ export type AppSettings = z.infer<typeof settingsSchema>;
 
 export const defaultSettings: AppSettings = {
   aiModel: "gemini-2.5-flash",
+  aiFallbackModel: "gemini-2.5-flash-lite",
   aiDailyLimitPerStudent: 40,
   tutorEnabled: true,
   imageExtractionEnabled: true,

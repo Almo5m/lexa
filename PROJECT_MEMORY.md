@@ -18,3 +18,8 @@ Log of decisions and events, newest at the bottom.
 - Phase 2: placement test and suggested words by level, translation practice (Arabic to English and back), quizzes.
 - Phase 3: games, achievements, statistics page.
 - Later: story feature from the curriculum, pronunciation scoring.
+
+## 2026-10-06 (later)
+- First real run. The dashboard showed 503 UNAVAILABLE from Gemini on cards and tutor.
+- Added retry with backoff, a fallback model setting in the dashboard, a friendly "busy" message, and cards stay pending when the failure is temporary.
+- 49 unit tests pass.

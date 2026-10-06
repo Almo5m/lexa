@@ -35,6 +35,7 @@ export function AddFlow({ maxImages, maxImageMb }: Props) {
     const known = [
       "daily_ai_limit_reached",
       "ai_feature_disabled",
+      "ai_busy",
       "unsupported_image_type",
       "image_too_large",
       "too_many_images",
