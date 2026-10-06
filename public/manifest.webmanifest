@@ -1,0 +1,13 @@
+{
+  "name": "Lexa",
+  "short_name": "Lexa",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f0e2",
+  "theme_color": "#1c2c5b",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
