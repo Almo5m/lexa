@@ -8,11 +8,11 @@ export const metadata: Metadata = {
   title: { default: "Lexa", template: "%s | Lexa" },
   description: "Learn, remember and use English vocabulary.",
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/icons/icon.svg" },
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1c2c5b",
+  themeColor: "#2f2d9f",
   width: "device-width",
   initialScale: 1,
 };

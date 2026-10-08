@@ -6,7 +6,7 @@ Stack: Next.js (App Router), TypeScript, Tailwind CSS, Supabase (auth + database
 
 ## Status
 
-Phase 1 is built. It covers:
+Phases 1 and 2 are built. Phase 1 covers:
 
 - Sign up and login, Arabic and English interface
 - Photo upload, word extraction, cleaning, duplicate detection, manual edit before approval
@@ -17,11 +17,30 @@ Phase 1 is built. It covers:
 - AI tutor per word (Gemini) with a daily limit per student
 - Admin dashboard: AI usage, errors, and every adjustable setting
 
-Not built yet: placement test and suggested words, translation practice, quizzes, games, achievements, statistics page, story feature. See `PROJECT_MEMORY.md` for the plan.
+Phase 2 adds:
+
+- Level test (yes/no test with invented words to catch guessing), level 1 to 5
+- Suggested words for the student's level, picked from a hand-written word bank
+- Quizzes built from the student's own cards: meaning, word, fill the gap, situation, listening
+- Translation practice, Arabic to English and back, corrected by the tutor, with weak words feeding the review
+- A Practice page that groups review, quiz and translation
+
+Not built yet: games, achievements, statistics page, story feature. See `PROJECT_MEMORY.md` for the plan.
+
+## Look and feel
+
+The identity comes from the Lexa logo: indigo, violet, blue and cyan, with amber for XP and streaks. Lexa is the owl and also the name of the AI tutor.
+
+- Loading: `LexaLoader` (owl holding a spinner disc)
+- Moods: `LexaMascot` with `happy`, `neutral` and `sad`, used for feedback, results and empty states
+- Lexa chat opens from the bottom bar on every page
+- The admin dashboard keeps a dark theme with the same colors
+- Brand images live in `public/lexa` and the app icons in `public/icons`
 
 ## Setup
 
 1. Create a Supabase project. Run `supabase/schema.sql` in the SQL editor.
+   If your database already has phase 1, run only `supabase/migrations/002_phase2.sql`.
 2. Copy `.env.example` to `.env.local` and fill in the four values.
 3. Install and run:
 
@@ -49,7 +68,7 @@ npm test           # unit tests
 
 ```
 src/app            pages and API routes
-src/features       srs, gamification, words, ai, admin (logic, no UI)
+src/features       srs, gamification, words, ai, admin, levels, quiz, translate (logic, no UI)
 src/components     shared UI
 src/lib            env, auth, settings, i18n, Supabase clients
 supabase           database schema

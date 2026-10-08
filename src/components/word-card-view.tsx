@@ -86,7 +86,7 @@ export function WordCardView({ card, startRevealed = false, onRevealChange }: Pr
           )}
 
           {card.confusableWith && (
-            <div className="rounded-md border-s-4 border-marker-deep bg-paper-deep/60 p-4">
+            <div className="rounded-md border-s-4 border-violet bg-paper-deep/60 p-4">
               <h3 className="font-semibold">
                 {t("card.confusable")} <span className="ltr-text inline-block">{card.confusableWith.word}</span>
               </h3>

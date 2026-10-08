@@ -15,7 +15,7 @@ describe("summarizeUsage", () => {
       failed: 0,
       successRate: null,
       averageLatencyMs: null,
-      byFeature: { extract: 0, cards: 0, tutor: 0 },
+      byFeature: { extract: 0, cards: 0, tutor: 0, translate: 0 },
     });
   });
   it("counts failures, features and average latency", () => {
@@ -29,7 +29,7 @@ describe("summarizeUsage", () => {
     expect(summary.failed).toBe(1);
     expect(summary.successRate).toBe(0.75);
     expect(summary.averageLatencyMs).toBe(1000);
-    expect(summary.byFeature).toEqual({ extract: 1, cards: 1, tutor: 2 });
+    expect(summary.byFeature).toEqual({ extract: 1, cards: 1, tutor: 2, translate: 0 });
   });
 });
 

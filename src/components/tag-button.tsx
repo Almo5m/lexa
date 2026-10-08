@@ -5,21 +5,17 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 interface TagButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   quiet?: boolean;
+  gradient?: boolean;
   children: ReactNode;
 }
 
-export function ScrambleText({ text }: { text: string }) {
+export function Dots({ label }: { label?: string }) {
   return (
-    <span aria-hidden="true">
-      {[...text].map((char, index) => (
-        <span
-          key={index}
-          className="scramble-letter"
-          style={{ animationDelay: `${(index % 5) * 90}ms` }}
-        >
-          {char === " " ? "\u00A0" : char}
-        </span>
-      ))}
+    <span className="dots" role="status">
+      <span />
+      <span />
+      <span />
+      {label && <span className="sr-only">{label}</span>}
     </span>
   );
 }
@@ -27,6 +23,7 @@ export function ScrambleText({ text }: { text: string }) {
 export function TagButton({
   loading = false,
   quiet = false,
+  gradient = false,
   disabled,
   className = "",
   children,
@@ -38,11 +35,10 @@ export function TagButton({
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      data-loading={loading}
-      className={`tag-btn ${quiet ? "tag-btn-quiet" : ""} ${className}`}
+      className={`tag-btn ${quiet ? "tag-btn-quiet" : ""} ${gradient ? "tag-btn-grad" : ""} ${className}`}
       {...props}
     >
-      <span className="tag-btn-label">{children}</span>
+      {loading ? <Dots /> : children}
     </button>
   );
 }

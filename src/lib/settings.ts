@@ -24,7 +24,7 @@ export type AppSettings = z.infer<typeof settingsSchema>;
 
 export const defaultSettings: AppSettings = {
   aiModel: "gemini-2.5-flash",
-  aiFallbackModel: "gemini-2.5-flash-lite",
+  aiFallbackModel: "gemini-3.5-flash-lite",
   aiDailyLimitPerStudent: 40,
   tutorEnabled: true,
   imageExtractionEnabled: true,

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LexaMascot } from "@/components/lexa-mascot";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
 import { loadSettings } from "@/lib/settings-server";
@@ -116,7 +117,10 @@ export default async function WordsPage({
       )}
 
       {visible.length === 0 ? (
-        <p className="text-ink-soft">{filter === "weak" ? t("words.emptyWeak") : t("words.empty")}</p>
+        <div className="sheet flex flex-col items-center gap-3 p-8 text-center">
+          <LexaMascot mood={filter === "weak" ? "happy" : "neutral"} size={130} />
+          <p className="text-ink-soft">{filter === "weak" ? t("words.emptyWeak") : t("words.empty")}</p>
+        </div>
       ) : (
         <ul className="divide-y divide-line border-y border-line">
           {visible.map(({ row, status }) => (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { ScrambleText, TagButton } from "@/components/tag-button";
+import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
 import type { AppSettings } from "@/lib/settings";
@@ -107,7 +107,7 @@ export function AdminSettingsForm({ initial }: { initial: AppSettings }) {
                       type="checkbox"
                       checked={Boolean(value)}
                       onChange={(event) => update(field.key, event.target.checked as never)}
-                      className="h-6 w-6 accent-[var(--color-marker-deep)]"
+                      className="h-6 w-6 accent-[var(--color-violet)]"
                     />
                     {label}
                   </label>
@@ -141,7 +141,7 @@ export function AdminSettingsForm({ initial }: { initial: AppSettings }) {
 
       <div className="flex items-center gap-4">
         <TagButton type="submit" loading={busy}>
-          {busy ? <ScrambleText text={t("common.loading")} /> : t("admin.save")}
+          {t("admin.save")}
         </TagButton>
         <p aria-live="polite" className={message?.ok ? "marker px-1 text-leaf" : "pen-error text-pen-red"}>
           {message?.text}

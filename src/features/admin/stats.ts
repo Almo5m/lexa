@@ -1,5 +1,5 @@
 export interface UsageRow {
-  feature: "extract" | "cards" | "tutor";
+  feature: "extract" | "cards" | "tutor" | "translate";
   ok: boolean;
   latency_ms: number;
   created_at: string;
@@ -14,7 +14,7 @@ export interface UsageSummary {
 }
 
 export function summarizeUsage(rows: UsageRow[]): UsageSummary {
-  const byFeature = { extract: 0, cards: 0, tutor: 0 };
+  const byFeature = { extract: 0, cards: 0, tutor: 0, translate: 0 };
   let failed = 0;
   let latencySum = 0;
   for (const row of rows) {

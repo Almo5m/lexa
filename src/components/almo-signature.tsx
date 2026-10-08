@@ -12,7 +12,7 @@ export async function AlmoSignature() {
           href={PAGE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-semibold text-ink underline decoration-marker decoration-4 underline-offset-4"
+          className="font-semibold text-ink underline decoration-violet decoration-2 underline-offset-4"
         >
           AL-MO
         </a>

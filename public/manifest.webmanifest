@@ -1,13 +1,15 @@
 {
   "name": "Lexa",
   "short_name": "Lexa",
+  "description": "Don't just learn words. Know them.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f6f0e2",
-  "theme_color": "#1c2c5b",
+  "background_color": "#f5f4ff",
+  "theme_color": "#2f2d9f",
   "lang": "ar",
   "dir": "rtl",
   "icons": [
-    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ]
 }

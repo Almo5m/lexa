@@ -13,6 +13,8 @@ create table public.profiles (
   streak_longest integer not null default 0,
   streak_last_date date,
   streak_freezes integer not null default 1,
+  level_band integer check (level_band between 1 and 5),
+  level_tested_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -67,7 +69,7 @@ create table public.review_logs (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles (id) on delete cascade,
   word_id uuid not null references public.words (id) on delete cascade,
-  mode text not null check (mode in ('recall', 'write', 'listen')),
+  mode text not null check (mode in ('recall', 'write', 'listen', 'quiz', 'translate')),
   grade text not null check (grade in ('again', 'hard', 'good', 'easy')),
   created_at timestamptz not null default now()
 );
@@ -88,7 +90,7 @@ create table public.daily_progress (
 create table public.ai_usage (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references public.profiles (id) on delete set null,
-  feature text not null check (feature in ('extract', 'cards', 'tutor')),
+  feature text not null check (feature in ('extract', 'cards', 'tutor', 'translate')),
   ok boolean not null,
   latency_ms integer not null,
   error text,

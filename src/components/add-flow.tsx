@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { CameraIcon, CloseIcon } from "@/components/icons";
-import { ScrambleText, TagButton } from "@/components/tag-button";
+import { LexaLoader } from "@/components/lexa-loader";
+import { LexaMascot } from "@/components/lexa-mascot";
+import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
 import { normalizeWord, splitManualInput } from "@/features/words/clean";
+import { generatePendingCards } from "@/lib/generate-client";
 
 type Stage = "pick" | "review" | "saving" | "done";
 
@@ -94,16 +97,8 @@ export function AddFlow({ maxImages, maxImageMb }: Props) {
       const saved = await saveResponse.json();
       if (!saveResponse.ok) throw new Error(saved.error);
 
-      setProgress({ done: 0, total: saved.added });
-      let done = 0;
-      for (let guard = 0; guard < 80; guard++) {
-        const response = await fetch("/api/words/generate", { method: "POST" });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
-        done += data.generated;
-        setProgress({ done: Math.min(done, saved.added), total: saved.added });
-        if (data.remaining === 0 || data.generated === 0) break;
-      }
+      const generated = await generatePendingCards(saved.added, (done, total) => setProgress({ done, total }));
+      if (!generated.ok) throw new Error(generated.error);
       setStage("done");
     } catch (caught) {
       setError(safeError(caught instanceof Error ? caught.message : undefined));
@@ -115,23 +110,20 @@ export function AddFlow({ maxImages, maxImageMb }: Props) {
 
   if (stage === "saving") {
     return (
-      <div className="sheet space-y-4 p-6" aria-live="polite">
+      <div className="sheet flex flex-col items-center gap-3 p-8 text-center" aria-live="polite">
+        <LexaLoader size={150} label={t("common.loading")} />
         <p className="text-lg">
-          {progress.total === 0 ? (
-            <ScrambleText text={t("add.saving")} />
-          ) : (
-            <ScrambleText text={t("add.generating", { a: progress.done, b: progress.total })} />
-          )}
+          {progress.total === 0 ? t("add.saving") : t("add.generating", { a: progress.done, b: progress.total })}
         </p>
-        <span className="sr-only">{t("common.loading")}</span>
       </div>
     );
   }
 
   if (stage === "done") {
     return (
-      <div className="sheet space-y-5 p-6">
-        <p className="marker inline px-1 text-xl">{t("add.done", { n: progress.done })}</p>
+      <div className="sheet flex flex-col items-center gap-4 p-8 text-center">
+        <LexaMascot mood="happy" size={150} />
+        <p className="marker px-1 text-xl">{t("add.done", { n: progress.done })}</p>
         <div>
           <Link href="/words" className="tag-btn">
             {t("add.openWords")}
@@ -162,8 +154,14 @@ export function AddFlow({ maxImages, maxImageMb }: Props) {
             <p className="text-sm text-ink-soft">{files.map((file) => file.name).join("، ")}</p>
           )}
           <TagButton onClick={extract} loading={busy} disabled={files.length === 0}>
-            {busy ? <ScrambleText text={t("add.extracting")} /> : t("add.extract")}
+            {t("add.extract")}
           </TagButton>
+          {busy && (
+            <div className="flex flex-col items-center gap-2 pt-4 text-center" aria-live="polite">
+              <LexaLoader size={130} label={t("add.extracting")} />
+              <p className="text-ink-soft">{t("add.extracting")}</p>
+            </div>
+          )}
         </section>
       )}
 

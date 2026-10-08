@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { WordCardView } from "@/components/word-card-view";
 import { SpeakButton, speak } from "@/components/speak-button";
-import { ScrambleText, TagButton } from "@/components/tag-button";
+import { LexaMascot } from "@/components/lexa-mascot";
+import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { WordCard } from "@/features/ai/schemas";
 import type { ReviewMode } from "@/features/srs/session";
@@ -98,9 +99,10 @@ export function ReviewSession({ words }: { words: SessionWord[] }) {
   if (finished) {
     const { xp, correct, answered, levelUp, goal } = totals.current;
     return (
-      <section className="sheet space-y-4 p-6" aria-live="polite">
+      <section className="sheet flex flex-col items-center gap-4 p-8 text-center" aria-live="polite">
+        <LexaMascot mood={answered === 0 || correct >= answered / 2 ? "happy" : "neutral"} size={130} />
         <h2 className="text-2xl font-semibold">{t("review.summaryTitle")}</h2>
-        <p className="marker inline px-1 text-xl">{t("review.summaryXp", { n: xp })}</p>
+        <p className="marker px-1 text-xl">{t("review.summaryXp", { n: xp })}</p>
         <p>{t("review.summaryCorrect", { a: correct, b: answered })}</p>
         {levelUp && <p className="font-semibold text-leaf">{t("review.levelUp")}</p>}
         {goal && <p className="font-semibold text-leaf">{t("review.goalDone")}</p>}
@@ -231,10 +233,11 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
         </p>
       )}
 
-      <div aria-live="polite" className="min-h-8">
+      <div aria-live="polite" className="flex min-h-8 flex-wrap items-center gap-3">
+        {result && <LexaMascot mood={result.correct ? "happy" : "sad"} size={76} />}
         {result &&
           (result.correct ? (
-            <p className="marker inline px-1 font-semibold">{t("review.correct")}</p>
+            <p className="marker px-1 font-semibold">{t("review.correct")}</p>
           ) : (
             <p className="pen-error ltr-text font-semibold text-pen-red">
               {t("review.wrong", { word: result.answer })}
@@ -259,7 +262,7 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
         {!result ? (
           <>
             <TagButton type="submit" loading={busy} disabled={answer.trim().length === 0}>
-              {busy ? <ScrambleText text={t("common.loading")} /> : t("review.check")}
+              {t("review.check")}
             </TagButton>
             {!hint && (
               <TagButton quiet onClick={() => setHint(true)}>

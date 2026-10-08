@@ -9,6 +9,15 @@ export function isTransientError(error: unknown): boolean {
   return TRANSIENT_TEXT.test(text);
 }
 
+const MODEL_UNAVAILABLE_TEXT = /\b404\b|NOT_FOUND|no longer available|is not found|not supported for/i;
+
+export function isModelUnavailableError(error: unknown): boolean {
+  const status = (error as { status?: number } | null)?.status;
+  if (status === 404) return true;
+  const text = error instanceof Error ? error.message : String(error);
+  return MODEL_UNAVAILABLE_TEXT.test(text);
+}
+
 export interface FallbackOptions {
   retriesPerModel: number;
   baseDelayMs: number;
@@ -25,17 +34,20 @@ export async function runWithFallback<T>(
   const sleep = options.sleep ?? defaultSleep;
   const unique = [...new Set(models.filter(Boolean))];
   let lastError: unknown;
+  let transientError: unknown;
 
   for (const model of unique) {
     for (let tries = 0; tries <= options.retriesPerModel; tries++) {
       try {
         return { value: await attempt(model), model };
       } catch (error) {
-        if (!isTransientError(error)) throw error;
         lastError = error;
+        if (isModelUnavailableError(error)) break;
+        if (!isTransientError(error)) throw error;
+        transientError = error;
         if (tries < options.retriesPerModel) await sleep(options.baseDelayMs * 2 ** tries);
       }
     }
   }
-  throw lastError;
+  throw transientError ?? lastError;
 }

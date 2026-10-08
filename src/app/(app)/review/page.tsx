@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LexaMascot } from "@/components/lexa-mascot";
 import { ReviewSession, type SessionWord } from "@/components/review-session";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
@@ -69,7 +70,8 @@ export default async function ReviewPage() {
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-semibold">{t("review.title")}</h1>
       {sessionWords.length === 0 ? (
-        <div className="space-y-3">
+        <div className="sheet flex flex-col items-center gap-3 p-8 text-center">
+          <LexaMascot mood="neutral" size={140} />
           <p className="text-lg">{t("review.nothing")}</p>
           <p className="text-ink-soft">{t("review.nothingHint")}</p>
           <Link href="/add" className="tag-btn">

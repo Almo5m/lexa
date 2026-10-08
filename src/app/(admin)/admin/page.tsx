@@ -77,6 +77,9 @@ export default async function AdminPage() {
               <li>
                 {t("admin.feature.tutor")}: <b className="text-ink">{today.byFeature.tutor}</b>
               </li>
+              <li>
+                {t("admin.feature.translate")}: <b className="text-ink">{today.byFeature.translate}</b>
+              </li>
             </ul>
           </div>
           <p>
@@ -97,7 +100,7 @@ export default async function AdminPage() {
             <li key={item.day} className="flex flex-1 flex-col items-center justify-end gap-1">
               <span className="text-sm">{item.count}</span>
               <span
-                className="w-full rounded-t-sm bg-marker"
+                className="w-full rounded-t-md bg-[image:var(--grad)]"
                 style={{ height: `${Math.max(4, (item.count / peak) * 96)}px` }}
               />
               <span className="ltr-text text-xs text-ink-faint">{item.day.slice(5)}</span>

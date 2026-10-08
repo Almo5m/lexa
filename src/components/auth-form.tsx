@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { TagButton, ScrambleText } from "@/components/tag-button";
+import { TagButton } from "@/components/tag-button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useT } from "@/lib/i18n/provider";
 
@@ -47,7 +47,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="sheet mx-auto mt-10 w-full max-w-sm space-y-6 p-6" noValidate>
+    <form onSubmit={onSubmit} className="sheet-raised mx-auto mt-6 w-full max-w-sm space-y-6 p-6" noValidate>
       <h1 className="text-2xl font-semibold">
         {isSignup ? t("auth.signupTitle") : t("auth.loginTitle")}
       </h1>
@@ -105,13 +105,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       </div>
 
       <TagButton type="submit" loading={loading} className="w-full">
-        {loading ? (
-          <ScrambleText text={t("common.loading")} />
-        ) : isSignup ? (
-          t("auth.signup")
-        ) : (
-          t("auth.login")
-        )}
+        {isSignup ? t("auth.signup") : t("auth.login")}
       </TagButton>
 
       <p className="text-center text-sm">

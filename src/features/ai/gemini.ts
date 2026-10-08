@@ -4,7 +4,7 @@ import { serverEnv } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { isTransientError, runWithFallback } from "./retry";
 
-export type AiFeature = "extract" | "cards" | "tutor";
+export type AiFeature = "extract" | "cards" | "tutor" | "translate";
 
 export class AiLimitError extends Error {
   constructor() {

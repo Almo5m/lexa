@@ -2,7 +2,8 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { ChatIcon } from "@/components/icons";
-import { ScrambleText, TagButton } from "@/components/tag-button";
+import { LexaLoader } from "@/components/lexa-loader";
+import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
 
@@ -81,9 +82,10 @@ export function TutorChat({ wordId }: { wordId?: string }) {
           </p>
         ))}
         {busy && (
-          <p className="text-ink-faint">
-            <ScrambleText text={t("tutor.thinking")} />
-          </p>
+          <div className="flex items-center gap-3 text-ink-faint">
+            <LexaLoader size={56} label={t("tutor.thinking")} />
+            <span aria-hidden="true">{t("tutor.thinking")}</span>
+          </div>
         )}
         {error && (
           <p role="alert" className="pen-error text-pen-red">

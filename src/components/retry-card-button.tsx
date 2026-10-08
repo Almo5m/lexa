@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ScrambleText, TagButton } from "@/components/tag-button";
+import { TagButton } from "@/components/tag-button";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useT } from "@/lib/i18n/provider";
 
@@ -31,7 +31,7 @@ export function RetryCardButton({ wordId }: { wordId: string }) {
   return (
     <div className="space-y-2">
       <TagButton onClick={retry} loading={busy}>
-        {busy ? <ScrambleText text={t("common.loading")} /> : t("card.retry")}
+        {t("card.retry")}
       </TagButton>
       {error && (
         <p role="alert" className="pen-error text-pen-red">
