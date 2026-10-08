@@ -52,3 +52,48 @@ describe("requestsPerDay", () => {
     ]);
   });
 });
+
+import { okAndFailedPerDay, parseStoredError, summarizeByFeature } from "@/features/admin/stats";
+
+describe("summarizeByFeature", () => {
+  it("lists every feature, even ones nobody used", () => {
+    const result = summarizeByFeature([
+      { feature: "tutor", ok: true, latency_ms: 1000, created_at: "2026-10-06T10:00:00Z" },
+      { feature: "tutor", ok: false, latency_ms: 3000, created_at: "2026-10-06T11:00:00Z" },
+    ]);
+    expect(result.map((item) => item.feature)).toEqual(["extract", "cards", "tutor", "translate"]);
+    expect(result[2]).toEqual({ feature: "tutor", total: 2, failed: 1, averageLatencyMs: 2000 });
+    expect(result[0]).toEqual({ feature: "extract", total: 0, failed: 0, averageLatencyMs: null });
+  });
+});
+
+describe("okAndFailedPerDay", () => {
+  it("splits each day into good and failed requests", () => {
+    const result = okAndFailedPerDay(
+      [
+        { feature: "cards", ok: true, latency_ms: 1, created_at: "2026-10-06T01:00:00Z" },
+        { feature: "cards", ok: false, latency_ms: 1, created_at: "2026-10-06T02:00:00Z" },
+        { feature: "cards", ok: false, latency_ms: 1, created_at: "2026-10-05T02:00:00Z" },
+      ],
+      ["2026-10-05", "2026-10-06", "2026-10-07"],
+    );
+    expect(result).toEqual([
+      { day: "2026-10-05", ok: 0, failed: 1 },
+      { day: "2026-10-06", ok: 1, failed: 1 },
+      { day: "2026-10-07", ok: 0, failed: 0 },
+    ]);
+  });
+});
+
+describe("parseStoredError", () => {
+  it("reads the kind prefix written by the AI layer", () => {
+    expect(parseStoredError("[model] This model is no longer available")).toEqual({
+      kind: "model",
+      message: "This model is no longer available",
+    });
+  });
+  it("treats older rows without a prefix as other", () => {
+    expect(parseStoredError("empty_response")).toEqual({ kind: "other", message: "empty_response" });
+    expect(parseStoredError(null)).toEqual({ kind: "other", message: "" });
+  });
+});

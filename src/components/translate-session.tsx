@@ -25,7 +25,7 @@ interface Feedback {
   xpGained: number;
 }
 
-const KNOWN_ERRORS = ["daily_ai_limit_reached", "ai_feature_disabled", "ai_busy", "no_words"];
+const KNOWN_ERRORS = ["daily_ai_limit_reached", "ai_feature_disabled", "ai_busy", "ai_unavailable", "no_words"];
 
 export function TranslateSession() {
   const { t } = useT();

@@ -2,7 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 import type { z } from "zod";
 import { serverEnv } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { isTransientError, runWithFallback } from "./retry";
+import { classifyAiError, readableAiMessage } from "./errors";
+import { runWithFallback } from "./retry";
 
 export type AiFeature = "extract" | "cards" | "tutor" | "translate";
 
@@ -18,6 +19,13 @@ export class AiBusyError extends Error {
   }
 }
 
+/** The model name or the key is wrong, so waiting will not help. The admin must act. */
+export class AiUnavailableError extends Error {
+  constructor() {
+    super("ai_unavailable");
+  }
+}
+
 export class AiDisabledError extends Error {
   constructor() {
     super("ai_feature_disabled");
@@ -26,7 +34,7 @@ export class AiDisabledError extends Error {
 
 let client: GoogleGenAI | null = null;
 
-function getClient(): GoogleGenAI {
+export function getClient(): GoogleGenAI {
   client ??= new GoogleGenAI({ apiKey: serverEnv.geminiApiKey() });
   return client;
 }
@@ -43,13 +51,18 @@ export async function assertWithinDailyLimit(userId: string, limit: number): Pro
 }
 
 async function logUsage(userId: string, feature: AiFeature, ok: boolean, startedAt: number, error?: string) {
-  await createSupabaseAdminClient().from("ai_usage").insert({
-    user_id: userId,
-    feature,
-    ok,
-    latency_ms: Date.now() - startedAt,
-    error: error ? error.slice(0, 300) : null,
-  });
+  try {
+    await createSupabaseAdminClient().from("ai_usage").insert({
+      user_id: userId,
+      feature,
+      ok,
+      latency_ms: Date.now() - startedAt,
+      error: error ? error.slice(0, 300) : null,
+    });
+  } catch (loggingError) {
+    // A failed log line must never turn a good answer into an error.
+    console.error("ai_usage insert failed", loggingError);
+  }
 }
 
 export interface InlineImage {
@@ -97,9 +110,11 @@ export async function callGemini(options: CallOptions): Promise<string> {
     await logUsage(options.userId, options.feature, true, startedAt);
     return text;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "unknown_error";
-    await logUsage(options.userId, options.feature, false, startedAt, message);
-    throw isTransientError(error) ? new AiBusyError() : error;
+    const kind = classifyAiError(error);
+    await logUsage(options.userId, options.feature, false, startedAt, `[${kind}] ${readableAiMessage(error)}`);
+    if (kind === "busy" || kind === "quota") throw new AiBusyError();
+    if (kind === "model" || kind === "auth") throw new AiUnavailableError();
+    throw error;
   }
 }
 
@@ -114,7 +129,7 @@ export async function callGeminiJson<T extends z.ZodType>(
       const cleaned = text.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
       return schema.parse(JSON.parse(cleaned));
     } catch (error) {
-      if (error instanceof AiBusyError) throw error;
+      if (error instanceof AiBusyError || error instanceof AiUnavailableError) throw error;
       lastError = error;
     }
   }

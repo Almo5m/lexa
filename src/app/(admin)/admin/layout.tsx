@@ -8,13 +8,21 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const { t } = await getT();
   return (
     <div data-theme="admin" className="min-h-dvh bg-paper text-ink">
-      <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
-        <p className="text-xl font-semibold">Lexa · {t("admin.title")}</p>
-        <Link href="/" className="min-h-11 content-center text-ink-soft underline underline-offset-4">
-          {t("nav.home")}
-        </Link>
+      <header className="border-b border-line">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <img src="/lexa/owl.webp" alt="" width={44} height={37} />
+            <div className="leading-tight">
+              <p className="text-lg font-bold">Lexa</p>
+              <p className="text-sm text-ink-soft">{t("admin.title")}</p>
+            </div>
+          </div>
+          <Link href="/" className="inline-flex min-h-11 items-center rounded-full px-4 text-ink-soft shadow-[inset_0_0_0_2px_var(--color-line)] hover:bg-paper-deep">
+            {t("nav.home")}
+          </Link>
+        </div>
       </header>
-      <main className="mx-auto max-w-5xl px-5 pb-16">{children}</main>
+      <main className="mx-auto max-w-5xl px-5 py-6">{children}</main>
     </div>
   );
 }

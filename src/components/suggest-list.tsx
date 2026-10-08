@@ -41,7 +41,7 @@ export function SuggestList({ words }: { words: string[] }) {
       setStage("done");
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : "";
-      const known = ["daily_ai_limit_reached", "ai_feature_disabled", "ai_busy"];
+      const known = ["daily_ai_limit_reached", "ai_feature_disabled", "ai_busy", "ai_unavailable"];
       setError(known.includes(code) ? t(`error.${code}` as DictKey) : t("error.generic"));
       setStage("pick");
     }

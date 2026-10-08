@@ -1,21 +1,12 @@
-const TRANSIENT_STATUS = new Set([429, 500, 502, 503, 504]);
-const TRANSIENT_TEXT =
-  /\b(429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand|fetch failed|ECONNRESET|ETIMEDOUT|deadline/i;
+import { classifyAiError } from "./errors";
 
 export function isTransientError(error: unknown): boolean {
-  const status = (error as { status?: number } | null)?.status;
-  if (typeof status === "number" && TRANSIENT_STATUS.has(status)) return true;
-  const text = error instanceof Error ? error.message : String(error);
-  return TRANSIENT_TEXT.test(text);
+  const kind = classifyAiError(error);
+  return kind === "busy" || kind === "quota";
 }
 
-const MODEL_UNAVAILABLE_TEXT = /\b404\b|NOT_FOUND|no longer available|is not found|not supported for/i;
-
 export function isModelUnavailableError(error: unknown): boolean {
-  const status = (error as { status?: number } | null)?.status;
-  if (status === 404) return true;
-  const text = error instanceof Error ? error.message : String(error);
-  return MODEL_UNAVAILABLE_TEXT.test(text);
+  return classifyAiError(error) === "model";
 }
 
 export interface FallbackOptions {
@@ -26,6 +17,14 @@ export interface FallbackOptions {
 
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Tries the models in order.
+ * - busy (503 and friends): wait and retry the same model, then move on.
+ * - quota (429): move on at once, because retrying burns more quota.
+ * - model (404, retired): move on at once.
+ * - auth or anything else: stop, because another model will not help.
+ * When every model failed, the most useful error is thrown: busy and quota first.
+ */
 export async function runWithFallback<T>(
   models: string[],
   attempt: (model: string) => Promise<T>,
@@ -34,7 +33,7 @@ export async function runWithFallback<T>(
   const sleep = options.sleep ?? defaultSleep;
   const unique = [...new Set(models.filter(Boolean))];
   let lastError: unknown;
-  let transientError: unknown;
+  let temporaryError: unknown;
 
   for (const model of unique) {
     for (let tries = 0; tries <= options.retriesPerModel; tries++) {
@@ -42,12 +41,14 @@ export async function runWithFallback<T>(
         return { value: await attempt(model), model };
       } catch (error) {
         lastError = error;
-        if (isModelUnavailableError(error)) break;
-        if (!isTransientError(error)) throw error;
-        transientError = error;
+        const kind = classifyAiError(error);
+        if (kind === "auth" || kind === "other") throw error;
+        if (kind === "model") break;
+        temporaryError = error;
+        if (kind === "quota") break;
         if (tries < options.retriesPerModel) await sleep(options.baseDelayMs * 2 ** tries);
       }
     }
   }
-  throw transientError ?? lastError;
+  throw temporaryError ?? lastError;
 }

@@ -47,3 +47,45 @@ export function lastDays(count: number, now: Date): string[] {
     return date.toISOString().slice(0, 10);
   });
 }
+
+export interface FeatureSummary {
+  feature: UsageRow["feature"];
+  total: number;
+  failed: number;
+  averageLatencyMs: number | null;
+}
+
+export function summarizeByFeature(rows: UsageRow[]): FeatureSummary[] {
+  const features: UsageRow["feature"][] = ["extract", "cards", "tutor", "translate"];
+  return features.map((feature) => {
+    const own = rows.filter((row) => row.feature === feature);
+    const total = own.length;
+    return {
+      feature,
+      total,
+      failed: own.filter((row) => !row.ok).length,
+      averageLatencyMs: total === 0 ? null : Math.round(own.reduce((sum, row) => sum + row.latency_ms, 0) / total),
+    };
+  });
+}
+
+export function okAndFailedPerDay(
+  rows: UsageRow[],
+  dayKeys: string[],
+): { day: string; ok: number; failed: number }[] {
+  const days = new Map(dayKeys.map((key) => [key, { ok: 0, failed: 0 }]));
+  for (const row of rows) {
+    const bucket = days.get(row.created_at.slice(0, 10));
+    if (!bucket) continue;
+    if (row.ok) bucket.ok += 1;
+    else bucket.failed += 1;
+  }
+  return dayKeys.map((day) => ({ day, ...days.get(day)! }));
+}
+
+/** Failed rows store "[kind] message". Split it so the dashboard can color the kind. */
+export function parseStoredError(stored: string | null): { kind: string; message: string } {
+  const match = /^\[(\w+)\]\s*(.*)$/s.exec(stored ?? "");
+  if (match) return { kind: match[1], message: match[2] };
+  return { kind: "other", message: stored ?? "" };
+}

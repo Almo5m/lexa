@@ -50,3 +50,9 @@ Log of decisions and events, newest at the bottom.
 
 ## 2026-10-07 (env fix)
 - Real run failed with "Missing environment variable" in the browser. Moaz fixed `env.ts` by reading each variable by its full name. The fix is right and is now in the project, with a test that blocks computed lookups.
+
+## 2026-10-08 (AI reliability and dashboard)
+- Moaz reported that the AI was not working anywhere and that the dashboard looked basic and disorganized. No error text was given, so the code was reviewed. Found: both models can be retired, quota errors were retried, and log writes could break answers.
+- AI errors are now classified, handled by kind, and stored readably. New student message when the model or key is wrong.
+- Dashboard rebuilt with Overview, AI and Settings tabs. The AI tab runs a live test, a system check, and lists the models the key can use.
+- 98 unit tests pass and the production build passes. Not checked against the real services or in a browser.

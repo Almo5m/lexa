@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { HttpError } from "@/lib/auth";
-import { AiBusyError, AiDisabledError, AiLimitError } from "@/features/ai/gemini";
+import { AiBusyError, AiDisabledError, AiLimitError, AiUnavailableError } from "@/features/ai/gemini";
 
 export function handleApiError(error: unknown) {
   if (error instanceof HttpError) {
@@ -12,6 +12,9 @@ export function handleApiError(error: unknown) {
   }
   if (error instanceof AiBusyError) {
     return NextResponse.json({ error: "ai_busy" }, { status: 503 });
+  }
+  if (error instanceof AiUnavailableError) {
+    return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
   }
   if (error instanceof AiDisabledError) {
     return NextResponse.json({ error: "ai_feature_disabled" }, { status: 503 });

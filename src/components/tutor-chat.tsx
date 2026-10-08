@@ -40,6 +40,7 @@ export function TutorChat({ wordId }: { wordId?: string }) {
           daily_ai_limit_reached: "tutor.limit",
           ai_feature_disabled: "tutor.disabled",
           ai_busy: "tutor.busy",
+          ai_unavailable: "tutor.unavailable",
         };
         setError(t(known[data.error] ?? "tutor.error"));
         return;

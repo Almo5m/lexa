@@ -39,6 +39,7 @@ export function AddFlow({ maxImages, maxImageMb }: Props) {
       "daily_ai_limit_reached",
       "ai_feature_disabled",
       "ai_busy",
+      "ai_unavailable",
       "unsupported_image_type",
       "image_too_large",
       "too_many_images",

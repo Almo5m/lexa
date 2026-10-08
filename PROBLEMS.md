@@ -60,3 +60,14 @@ The build and tests pass, but nothing could be rendered here. Layout, spacing, t
 
 ## Environment variables empty in the browser
 `env.ts` first read variables by a computed name. Next.js replaces `process.env.NEXT_PUBLIC_...` only when it is written out in full, so the browser code got `undefined` and threw "Missing environment variable". It was found when the app ran for real. The build with dummy values did not catch it because the build never runs the browser code. Fix: each variable is passed by its literal name. A unit test now fails if any file in `src` looks a variable up by a computed name.
+
+## AI not working anywhere on the site
+Reading the code found real causes that all end in the same useless message for the student:
+- If the main model and the fallback were both retired (404), the raw error escaped and every feature showed a generic failure. A bad key did the same.
+- A quota error (429) was retried on the same model, which spends more quota and makes the free tier worse.
+- A failed log write could hide the real error or turn a good answer into an error.
+Fix: errors are now sorted into busy, quota, model, key and other. Busy waits and retries, then tries the fallback. Quota and retired models move to the fallback at once. A bad key stops at once. The student sees a clear message ("busy" or "not available, tell the admin"), and the real Google message is stored for the admin. A failed log write is ignored.
+The AI tab in the dashboard tests both models live, lists the models Google allows for the key (with one-click "make main" and "make fallback"), and checks the keys and the database.
+
+## Dashboard tabs and what to look at first
+The old dashboard was one long page. It now has three tabs: Overview (numbers, chart, errors with a plain-language hint), AI (connection test and model list), Settings (grouped, each with a short explanation, save bar appears only when something changed).

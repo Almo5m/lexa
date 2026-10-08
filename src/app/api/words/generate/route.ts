@@ -4,7 +4,7 @@ import { handleApiError } from "@/lib/api";
 import { loadSettings } from "@/lib/settings-server";
 import { cardBatchSchema } from "@/features/ai/schemas";
 import { CARDS_SYSTEM } from "@/features/ai/prompts";
-import { AiBusyError, assertWithinDailyLimit, callGeminiJson } from "@/features/ai/gemini";
+import { AiBusyError, AiUnavailableError, assertWithinDailyLimit, callGeminiJson } from "@/features/ai/gemini";
 
 export const maxDuration = 60;
 
@@ -30,7 +30,7 @@ export async function POST() {
     try {
       cards = await requestCards(user.id, settings.aiModel, settings.aiFallbackModel, pending.map((word) => word.term));
     } catch (aiError) {
-      if (!(aiError instanceof AiBusyError)) {
+      if (!(aiError instanceof AiBusyError) && !(aiError instanceof AiUnavailableError)) {
         await supabase
           .from("words")
           .update({ card_status: "failed" })
