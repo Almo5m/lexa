@@ -19,6 +19,7 @@ export default async function PracticePage() {
       <ul className="divide-y divide-line border-y border-line">
         <Row href="/review" icon={<ReviewIcon />} title={t("practice.review")} hint={t("practice.reviewHint")} />
         <Row href="/quiz" icon={<WordsIcon />} title={t("practice.quiz")} hint={t("practice.quizHint")} />
+        <Row href="/talk" icon={<ChatIcon />} title={t("practice.talk")} hint={t("practice.talkHint")} />
         <Row href="/translate" icon={<ChatIcon />} title={t("practice.translate")} hint={t("practice.translateHint")} />
       </ul>
 

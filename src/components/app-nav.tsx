@@ -21,9 +21,10 @@ interface NavLink {
   label: DictKey;
   icon: ReactNode;
   also?: string[];
+  tour?: string;
 }
 
-const PRACTICE_PATHS = ["/review", "/quiz", "/translate", "/level", "/suggest"];
+const PRACTICE_PATHS = ["/review", "/quiz", "/translate", "/level", "/suggest", "/talk"];
 
 export function AppNav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
@@ -35,8 +36,8 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
       : [link.href, ...(link.also ?? [])].some((prefix) => pathname.startsWith(prefix));
 
   const home: NavLink = { href: "/", label: "nav.home", icon: <HomeIcon /> };
-  const words: NavLink = { href: "/words", label: "nav.words", icon: <WordsIcon /> };
-  const practice: NavLink = { href: "/practice", label: "nav.practice", icon: <PracticeIcon />, also: PRACTICE_PATHS };
+  const words: NavLink = { href: "/words", label: "nav.words", icon: <WordsIcon />, tour: "words" };
+  const practice: NavLink = { href: "/practice", label: "nav.practice", icon: <PracticeIcon />, also: PRACTICE_PATHS, tour: "practice" };
   const add: NavLink = { href: "/add", label: "nav.add", icon: <CameraIcon /> };
 
   const tabClass = (active: boolean) =>
@@ -48,6 +49,7 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
     <Link
       key={link.href}
       href={link.href}
+      data-tour={link.tour}
       aria-current={isActive(link) ? "page" : undefined}
       className={tabClass(isActive(link))}
     >
@@ -68,6 +70,7 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
 
       <Link
         href={add.href}
+        data-tour="add"
         aria-current={addActive ? "page" : undefined}
         className="-mt-5 flex flex-col items-center gap-1 text-xs font-semibold text-indigo md:mt-0 md:flex-row md:gap-3 md:rounded-full md:px-4 md:py-2 md:text-base"
       >
@@ -79,7 +82,7 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
 
       {plain(practice)}
 
-      <LexaChatLauncher className={tabClass(false)}>
+      <LexaChatLauncher className={tabClass(false)} tour="lexa">
         <LexaIcon />
         {t("nav.lexa")}
       </LexaChatLauncher>

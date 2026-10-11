@@ -39,8 +39,8 @@ The identity comes from the Lexa logo: indigo, violet, blue and cyan, with amber
 
 ## Setup
 
-1. Create a Supabase project. Run `supabase/schema.sql` in the SQL editor.
-   If your database already has phase 1, run only `supabase/migrations/002_phase2.sql`.
+1. Create a Supabase project and run `supabase/setup.sql` in the SQL editor. That's the only database file you need.
+   It's safe to run again any time: on an empty database or on one from any earlier version, it adds what's missing and never deletes data. Run it again after every update.
 2. Copy `.env.example` to `.env.local` and fill in the four values.
 3. Install and run:
 
@@ -88,3 +88,21 @@ Server and client code are separate. All Gemini calls happen on the server.
 
 Copyright (c) 2026 Moaz (AlMo). All Rights Reserved.
 This project is proprietary. Copying, modification or distribution without written permission is not allowed. See `LICENSE` and `PRIVACY.md`.
+
+## Landing page and the visitor demo
+
+`/welcome` is the first page a visitor sees. Anyone can type a word, get a real Lexa card, write a sentence and get it checked, without an account. Because there's no login, the demo is limited: each visitor (by a salted hash of the IP, the raw IP is never saved) gets a few tries a day, and the whole demo closes for the day after a total ceiling. Both numbers, and an on/off switch, are in the dashboard settings under "Visitor demo". Run `004_demo.sql` before using it.
+
+New students also get a short tour on their first visit. It can be replayed from the menu.
+
+## Cards written for the student
+
+In "My interests" (`/me`) the student picks up to six things he likes (football, gaming, music...). New cards then use those worlds for some of the example sentences. The interests are a fixed list of ids, so nothing a student types ever goes into an AI prompt. Every new card also has a "memory hook": a short Arabic sound-alike or a vivid picture that helps the word stick. Old cards don't have one and still work.
+
+## Talk to Lexa and the language profile
+
+In Practice, "Talk to Lexa" gives a topic (from the student's interests when he picked some). He writes freely in English, or speaks if his browser supports it, and Lexa returns: levels for vocabulary, grammar and clarity (A1 to C1), the mistakes that matter with a short Arabic reason, and the whole text said the way a fluent speaker would say it. Every text is saved, and the "language profile" shows the average of the latest texts and the mistakes that keep coming back, with why Arabic speakers make them (missing is/am/are, a/the, prepositions...). The levels are Lexa's estimates, not an official certificate, and the page says so. XP is paid for the first three texts a day only.
+
+## Progress link for parents and teachers
+
+From "My interests" (`/me`) a student can make a private link. A parent or teacher opens it with no account and sees a short report: first name, XP, level, streak, word counts, the last seven days, and the language level. The student decides: the link lasts 30 days, making a new one cancels the old one, and he can stop it whenever he wants. The link is shown once when it's made, because only a hash of it is saved. Details of what is and isn't shared are in `PRIVACY.md`.

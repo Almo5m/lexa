@@ -17,7 +17,7 @@ export default async function HomePage() {
   const today = toDateKey(new Date());
 
   const [{ data: profile }, { data: wordsData }, { data: day }] = await Promise.all([
-    supabase.from("profiles").select("display_name, total_xp, level_band").eq("id", user.id).single(),
+    supabase.from("profiles").select("display_name, total_xp, level_band, onboarded").eq("id", user.id).single(),
     supabase.from("words").select("id, term, card_status, ease, interval_days, repetitions, lapses, correct_count, wrong_count, due_at, last_reviewed_at, group_id"),
     supabase.from("daily_progress").select("new_words, reviews, xp, goal_reached").eq("user_id", user.id).eq("day", today).maybeSingle(),
   ]);
@@ -44,6 +44,15 @@ export default async function HomePage() {
           <p className="text-ink-soft">{goalDone ? t("home.goalDone") : due > 0 ? t("home.due", { n: due }) : t("home.nothingDue")}</p>
         </div>
       </section>
+
+      {profile && !profile.onboarded && (
+        <section className="sheet flex flex-wrap items-center justify-between gap-3 p-5" aria-label={t("me.title")}>
+          <p className="flex-1 font-medium">{t("me.banner")}</p>
+          <Link href="/me" className="tag-btn tag-btn-grad">
+            {t("me.bannerButton")}
+          </Link>
+        </section>
+      )}
 
       <section className="hero-card p-6" aria-labelledby="focus-title">
         <h1 id="focus-title" className="text-xl font-semibold">

@@ -5,7 +5,7 @@ import { comboBonus, levelFromXp } from "@/features/gamification/xp";
 import { classifyWord, isDue, scheduleReview } from "./scheduler";
 import type { Grade, SrsState, WordStatus } from "./types";
 
-export type AnswerMode = "recall" | "write" | "listen" | "quiz" | "translate";
+export type AnswerMode = "recall" | "write" | "listen" | "sentence" | "quiz" | "translate";
 
 export interface WordStateRow {
   id: string;

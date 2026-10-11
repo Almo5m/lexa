@@ -20,3 +20,11 @@ export const gradeSchema = z.object({
 
 export type TranslationExercise = z.infer<typeof exerciseSchema>;
 export type TranslationGrade = z.infer<typeof gradeSchema>;
+
+export const sentenceGradeSchema = z.object({
+  usedWord: z.boolean(),
+  targetWordCorrect: z.boolean(),
+  score: z.number().min(0).max(1),
+  correctedVersion: z.string().max(400),
+  explanationAr: z.string().max(500),
+});

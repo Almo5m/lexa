@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { WordCardView } from "@/components/word-card-view";
+import { RichText } from "@/components/rich-text";
 import { SpeakButton, speak } from "@/components/speak-button";
 import { LexaMascot } from "@/components/lexa-mascot";
 import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { WordCard } from "@/features/ai/schemas";
 import type { ReviewMode } from "@/features/srs/session";
-import type { Grade } from "@/features/srs/types";
 
 export interface SessionWord {
   id: string;
@@ -25,13 +24,13 @@ interface Result {
   levelUp: boolean;
   goalReachedNow: boolean;
   countedForProgress: boolean;
+  feedback: { correctedVersion: string; explanationAr: string } | null;
 }
 
 export function ReviewSession({ words }: { words: SessionWord[] }) {
   const { t } = useT();
   const [queue, setQueue] = useState(words);
   const [index, setIndex] = useState(0);
-  const [revealed, setRevealed] = useState(false);
   const [answer, setAnswer] = useState("");
   const [hint, setHint] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -46,14 +45,13 @@ export function ReviewSession({ words }: { words: SessionWord[] }) {
 
   function next() {
     setIndex((value) => value + 1);
-    setRevealed(false);
     setAnswer("");
     setHint(false);
     setResult(null);
     setError(false);
   }
 
-  async function submit(payload: { grade?: Grade; answer?: string }) {
+  async function submit(payload: { answer: string }) {
     if (!current || busy) return;
     setBusy(true);
     setError(false);
@@ -87,8 +85,7 @@ export function ReviewSession({ words }: { words: SessionWord[] }) {
       totals.current.levelUp ||= data.levelUp;
       totals.current.goal ||= data.goalReachedNow;
 
-      if (current.mode === "recall") next();
-      else setResult(data);
+      setResult(data);
     } catch {
       setError(true);
     } finally {
@@ -115,40 +112,13 @@ export function ReviewSession({ words }: { words: SessionWord[] }) {
     );
   }
 
-  const gradeButtons: { grade: Grade; label: string }[] = [
-    { grade: "again", label: t("review.again") },
-    { grade: "hard", label: t("review.hard") },
-    { grade: "good", label: t("review.good") },
-    { grade: "easy", label: t("review.easy") },
-  ];
-
   return (
     <section className="space-y-5">
       <p className="text-sm text-ink-faint" aria-live="polite">
         {t("review.progress", { a: Math.min(index + 1, queue.length), b: queue.length })}
       </p>
 
-      {current.mode === "recall" && (
-        <div className="space-y-5">
-          <p className="text-ink-soft">{t("review.recallPrompt")}</p>
-          <WordCardView key={current.id} card={current.card} onRevealChange={setRevealed} />
-          <div className="flex flex-wrap gap-3" role="group" aria-label={t("review.title")}>
-            {gradeButtons.map((item) => (
-              <TagButton
-                key={item.grade}
-                quiet={item.grade !== "good"}
-                loading={busy}
-                disabled={!revealed}
-                onClick={() => submit({ grade: item.grade })}
-              >
-                {item.label}
-              </TagButton>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {current.mode !== "recall" && (
+      {(
         <TypedExercise
           key={`${current.id}-${index}`}
           word={current}
@@ -164,9 +134,16 @@ export function ReviewSession({ words }: { words: SessionWord[] }) {
       )}
 
       {error && (
-        <p role="alert" className="pen-error text-pen-red">
-          {t("common.error")}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p role="alert" className="pen-error text-pen-red">
+            {t("common.error")}
+          </p>
+          {current.mode === "sentence" && (
+            <TagButton quiet onClick={next}>
+              {t("review.skip")}
+            </TagButton>
+          )}
+        </div>
       )}
     </section>
   );
@@ -187,6 +164,7 @@ interface TypedProps {
 function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, onCheck, onNext }: TypedProps) {
   const { t } = useT();
   const isListen = word.mode === "listen";
+  const isSentence = word.mode === "sentence";
 
   return (
     <form
@@ -200,6 +178,12 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
         <div className="flex items-center gap-4">
           <SpeakButton text={word.term} label={t("card.listen")} />
           <p>{t("review.listenPrompt")}</p>
+        </div>
+      ) : isSentence ? (
+        <div className="space-y-2">
+          <p className="text-ink-soft">{t("review.sentencePrompt")}</p>
+          <p className="ltr-text text-2xl font-semibold">{word.term}</p>
+          <p className="text-sm text-ink-faint">{word.card.meaningsAr.join("، ")}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -218,11 +202,12 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
           value={answer}
           onChange={(event) => setAnswer(event.target.value)}
           disabled={result !== null}
-          placeholder={t("review.typeHere")}
+          placeholder={isSentence ? t("review.sentencePlaceholder") : t("review.typeHere")}
           className="field ltr-text text-xl"
           aria-invalid={result && !result.correct ? true : undefined}
+          maxLength={isSentence ? 300 : 60}
           autoComplete="off"
-          autoCapitalize="none"
+          autoCapitalize={isSentence ? "sentences" : "none"}
           spellCheck={false}
         />
       </div>
@@ -238,7 +223,7 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
         {result &&
           (result.correct ? (
             <p className="marker px-1 font-semibold">{t("review.correct")}</p>
-          ) : (
+          ) : isSentence ? null : (
             <p className="pen-error ltr-text font-semibold text-pen-red">
               {t("review.wrong", { word: result.answer })}
             </p>
@@ -248,7 +233,19 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
         )}
       </div>
 
-      {result && !result.correct && (
+      {result?.feedback && (
+        <div className="space-y-2 rounded-lg border border-line bg-paper-deep p-4">
+          <RichText text={result.feedback.explanationAr} />
+          {result.feedback.correctedVersion && (
+            <p className="ltr-text text-ink-soft">
+              <span className="text-sm text-ink-faint">{t("review.yourSentence")} </span>
+              {result.feedback.correctedVersion}
+            </p>
+          )}
+        </div>
+      )}
+
+      {result && !result.correct && !isSentence && (
         <button
           type="button"
           onClick={() => speak(word.card.sentence)}
@@ -264,7 +261,7 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
             <TagButton type="submit" loading={busy} disabled={answer.trim().length === 0}>
               {t("review.check")}
             </TagButton>
-            {!hint && (
+            {!hint && !isSentence && (
               <TagButton quiet onClick={() => setHint(true)}>
                 {t("review.hintButton")}
               </TagButton>

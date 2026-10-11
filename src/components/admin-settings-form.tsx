@@ -41,7 +41,16 @@ const GROUPS: { title: DictKey; fields: FieldSpec[] }[] = [
       { key: "xpNewWord", kind: "number" },
       { key: "xpCorrectAnswer", kind: "number" },
       { key: "xpDailyGoal", kind: "number" },
+      { key: "xpTalkSession", kind: "number" },
       { key: "streakFreezesPerWeek", kind: "number" },
+    ],
+  },
+  {
+    title: "admin.group.demo",
+    fields: [
+      { key: "demoEnabled", kind: "boolean" },
+      { key: "demoDailyLimitPerVisitor", kind: "number" },
+      { key: "demoDailyLimitTotal", kind: "number" },
     ],
   },
   {

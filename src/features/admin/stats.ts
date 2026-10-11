@@ -1,5 +1,5 @@
 export interface UsageRow {
-  feature: "extract" | "cards" | "tutor" | "translate";
+  feature: "extract" | "cards" | "tutor" | "translate" | "review" | "demo" | "talk";
   ok: boolean;
   latency_ms: number;
   created_at: string;
@@ -14,7 +14,7 @@ export interface UsageSummary {
 }
 
 export function summarizeUsage(rows: UsageRow[]): UsageSummary {
-  const byFeature = { extract: 0, cards: 0, tutor: 0, translate: 0 };
+  const byFeature = { extract: 0, cards: 0, tutor: 0, translate: 0, review: 0, demo: 0, talk: 0 };
   let failed = 0;
   let latencySum = 0;
   for (const row of rows) {
@@ -56,7 +56,7 @@ export interface FeatureSummary {
 }
 
 export function summarizeByFeature(rows: UsageRow[]): FeatureSummary[] {
-  const features: UsageRow["feature"][] = ["extract", "cards", "tutor", "translate"];
+  const features: UsageRow["feature"][] = ["extract", "cards", "tutor", "translate", "review", "demo", "talk"];
   return features.map((feature) => {
     const own = rows.filter((row) => row.feature === feature);
     const total = own.length;

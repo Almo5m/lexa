@@ -55,6 +55,7 @@ export function WordCardView({ card, startRevealed = false, onRevealChange }: Pr
           <p className="text-ink-soft">{card.sentenceAr}</p>
 
           <Block title={t("card.situation")}>{card.situationAr}</Block>
+          {card.memoryHookAr && <Block title={t("card.hook")}>{card.memoryHookAr}</Block>}
           <Block title={t("card.usage")}>{card.usageNoteAr}</Block>
 
           {card.extraExamples.length > 0 && (

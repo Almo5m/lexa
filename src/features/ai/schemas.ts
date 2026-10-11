@@ -13,6 +13,8 @@ export const cardSchema = z.object({
   sentence: z.string(),
   sentenceAr: z.string(),
   usageNoteAr: z.string(),
+  // Older cards were made before the hook existed, so it defaults to empty.
+  memoryHookAr: z.string().default(""),
   extraExamples: z.array(z.object({ en: z.string(), ar: z.string() })).max(3),
   related: z.array(z.object({ word: z.string(), noteAr: z.string() })).max(4),
   confusableWith: z

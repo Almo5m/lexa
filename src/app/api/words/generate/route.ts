@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api";
+import { interestsPromptLine } from "@/features/profile/interests";
 import { loadSettings } from "@/lib/settings-server";
 import { cardBatchSchema } from "@/features/ai/schemas";
 import { CARDS_SYSTEM } from "@/features/ai/prompts";
@@ -8,12 +9,15 @@ import { AiBusyError, AiUnavailableError, assertWithinDailyLimit, callGeminiJson
 
 export const maxDuration = 60;
 
-const BATCH_SIZE = 5;
+const BATCH_SIZE = 8;
 
 export async function POST() {
   try {
     const { supabase, user } = await requireUser();
     const settings = await loadSettings();
+
+    const { data: profile } = await supabase.from("profiles").select("interests").eq("id", user.id).single();
+    const interestsLine = interestsPromptLine(profile?.interests ?? []);
 
     const { data: pending, error } = await supabase
       .from("words")
@@ -28,7 +32,7 @@ export async function POST() {
 
     let cards: Awaited<ReturnType<typeof requestCards>>;
     try {
-      cards = await requestCards(user.id, settings.aiModel, settings.aiFallbackModel, pending.map((word) => word.term));
+      cards = await requestCards(user.id, settings.aiModel, settings.aiFallbackModel, pending.map((word) => word.term), interestsLine);
     } catch (aiError) {
       if (!(aiError instanceof AiBusyError) && !(aiError instanceof AiUnavailableError)) {
         await supabase
@@ -60,7 +64,7 @@ export async function POST() {
   }
 }
 
-function requestCards(userId: string, model: string, fallbackModel: string, terms: string[]) {
+function requestCards(userId: string, model: string, fallbackModel: string, terms: string[], interestsLine: string) {
   return callGeminiJson(
     {
       userId,
@@ -68,7 +72,7 @@ function requestCards(userId: string, model: string, fallbackModel: string, term
       model,
       fallbackModel,
       system: CARDS_SYSTEM,
-      prompt: `Write cards for these words: ${JSON.stringify(terms)}`,
+      prompt: `Write cards for these words: ${JSON.stringify(terms)}${interestsLine ? `\n${interestsLine}` : ""}`,
       temperature: 0.8,
     },
     cardBatchSchema,

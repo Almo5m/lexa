@@ -56,3 +56,38 @@ Log of decisions and events, newest at the bottom.
 - AI errors are now classified, handled by kind, and stored readably. New student message when the model or key is wrong.
 - Dashboard rebuilt with Overview, AI and Settings tabs. The AI tab runs a live test, a system check, and lists the models the key can use.
 - 98 unit tests pass and the production build passes. Not checked against the real services or in a browser.
+
+## 2026-10-09 (speed, formatting, typed review)
+- Moaz reported slow responses everywhere, broken formatting in Lexa's replies, and that the Forgot/Remembered review is not a real test.
+- Speed: local token check, cached settings, usage logged after the response, Gemini thinking off for 2.5 flash, fewer retries, bigger card batches, loader pages.
+- Lexa replies render bold, lists and mixed Arabic/English correctly.
+- Review is typed only (word from meaning, word from audio, sentence). The system decides the grade. Migration 003 added.
+- 105 unit tests pass and the production build passes. Not checked against the real services or in a browser.
+
+## 2026-10-10 (phase 2.6: landing, demo, tour)
+- Moaz set the direction: Lexa is a trusted brand, not a simple app. Needs: talk in the student's own world, language assessment of the student's own English, a landing page with try-before-signup, an in-app tour, features competitors lack. Theme tweaks wait until the end. Name meaning proposed: Lex (Greek lexis, word) + X as the crossing point of the student's language and English.
+- Built: `/welcome` landing page, public demo (card + sentence check) with per-visitor and daily limits, dashboard settings for the demo, first-run tour with replay, card prompt now writes from an Egyptian student's daily life.
+- Migration 004 added. 111 unit tests pass and the production build passes. Not checked against the real services or in a browser.
+- Next: 2.7 student profile and life-context cards, memory hooks; 2.8 Talk to Lexa and language profile.
+
+## 2026-10-10 (phase 2.7: interests and memory hooks)
+- Added `/me` where the student picks up to six interests. Cards generated after that use those worlds. Each new card has a memory hook (Arabic sound-alike or vivid picture). Home shows a banner until the student has chosen. Migration 005 added.
+- 113 unit tests pass and the production build passes. Not checked against the real services or in a browser.
+- Next: 2.8 Talk to Lexa and the language profile (recurring mistakes of Arabic speakers).
+
+## 2026-10-10 (phase 2.8: Talk to Lexa and language profile)
+- Added `/talk`: free writing (or voice where the browser allows) on a topic, analyzed by Lexa into three levels, the useful mistakes with Arabic reasons, and a natural rewrite. Saved in `talk_sessions`. The language profile shows the recent average and recurring mistake patterns with why Arabic speakers make them. XP for the first three texts a day (setting in the dashboard). Migration 006 added.
+- 119 unit tests pass and the production build passes. Not checked against the real services or in a browser.
+- Next: 2.9 parent/teacher progress link, then phase 3 (games, achievements, stats page). Logo and name-meaning to be settled before the theme work.
+
+## 2026-10-10 (phase 2.9: parent/teacher progress link)
+- Added the private progress link (`/share/[token]`), managed from `/me`. Migration 007 added. PRIVACY.md updated with the demo, talk texts, interests and the link.
+- 124 unit tests pass and the production build passes. Not checked against the real services or in a browser.
+- Next: phase 3 (games, achievements, stats page). Logo and name-meaning, then the theme, at the end.
+
+## 2026-10-11 (one re-runnable database file)
+- Moaz ran `schema.sql` on a database that already had tables and got "relation profiles already exists", and said he can't remember which SQL ran and wants to run everything every time.
+- Replaced `schema.sql` with `supabase/setup.sql`: one idempotent file, safe to run any number of times on any version. Tested on PostgreSQL 16. Migration files made re-runnable too.
+
+## 2026-10-11 (migrations folder removed)
+- Moaz asked to delete `supabase/migrations`, since `setup.sql` covers everything. Removed it, and the README and notes now point only to `setup.sql`. The change history stays in the earlier ZIPs and in this file.

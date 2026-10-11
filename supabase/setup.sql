@@ -1,0 +1,237 @@
+-- Lexa — complete database setup.
+--
+-- Run THIS ONE FILE in the Supabase SQL editor. It is safe to run as many times as you like,
+-- on an empty database or on one that already has any earlier version of Lexa:
+-- it creates what is missing and fixes what is outdated, and never deletes data.
+
+create extension if not exists "pgcrypto";
+
+-- Profiles -----------------------------------------------------------------
+create table if not exists public.profiles (
+  id uuid primary key references auth.users (id) on delete cascade,
+  display_name text not null default '',
+  role text not null default 'student' check (role in ('student', 'admin')),
+  stage text not null default 'secondary',
+  total_xp integer not null default 0 check (total_xp >= 0),
+  streak_current integer not null default 0,
+  streak_longest integer not null default 0,
+  streak_last_date date,
+  streak_freezes integer not null default 1,
+  created_at timestamptz not null default now()
+);
+
+-- Columns added in later phases
+alter table public.profiles add column if not exists level_band integer check (level_band between 1 and 5);
+alter table public.profiles add column if not exists level_tested_at timestamptz;
+alter table public.profiles add column if not exists interests text[] not null default '{}';
+alter table public.profiles add column if not exists onboarded boolean not null default false;
+
+alter table public.profiles drop constraint if exists profiles_interests_check;
+alter table public.profiles add constraint profiles_interests_check
+  check (
+    cardinality(interests) <= 6
+    and interests <@ array['football','gaming','music','movies','social','cooking','cars','travel','drawing','tech','fashion','fitness']
+  );
+
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, display_name)
+  values (new.id, coalesce(new.raw_user_meta_data ->> 'display_name', ''));
+  return new;
+end $$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users
+for each row execute function public.handle_new_user();
+
+create or replace function public.is_admin() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
+$$;
+
+-- Word groups --------------------------------------------------------------
+create table if not exists public.word_groups (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  name text not null check (char_length(name) between 1 and 60),
+  created_at timestamptz not null default now(),
+  unique (user_id, name)
+);
+
+-- Words (card content + review state) --------------------------------------
+create table if not exists public.words (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  group_id uuid references public.word_groups (id) on delete set null,
+  term text not null check (char_length(term) between 2 and 40),
+  card jsonb,
+  card_status text not null default 'pending' check (card_status in ('pending', 'ready', 'failed')),
+  ease real not null default 2.5,
+  interval_days real not null default 0,
+  repetitions integer not null default 0,
+  lapses integer not null default 0,
+  correct_count integer not null default 0,
+  wrong_count integer not null default 0,
+  due_at timestamptz not null default now(),
+  last_reviewed_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (user_id, term)
+);
+create index if not exists words_user_due_idx on public.words (user_id, due_at);
+
+-- Review log ---------------------------------------------------------------
+create table if not exists public.review_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  word_id uuid not null references public.words (id) on delete cascade,
+  mode text not null,
+  grade text not null check (grade in ('again', 'hard', 'good', 'easy')),
+  created_at timestamptz not null default now()
+);
+create index if not exists review_logs_user_idx on public.review_logs (user_id, created_at desc);
+
+alter table public.review_logs drop constraint if exists review_logs_mode_check;
+alter table public.review_logs add constraint review_logs_mode_check
+  check (mode in ('recall', 'write', 'listen', 'sentence', 'quiz', 'translate'));
+
+-- Daily progress -----------------------------------------------------------
+create table if not exists public.daily_progress (
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  day date not null,
+  new_words integer not null default 0,
+  reviews integer not null default 0,
+  xp integer not null default 0,
+  goal_reached boolean not null default false,
+  primary key (user_id, day)
+);
+
+-- AI usage (for limits and the admin dashboard) ----------------------------
+create table if not exists public.ai_usage (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles (id) on delete set null,
+  feature text not null,
+  ok boolean not null,
+  latency_ms integer not null,
+  error text,
+  created_at timestamptz not null default now()
+);
+create index if not exists ai_usage_created_idx on public.ai_usage (created_at desc);
+create index if not exists ai_usage_user_day_idx on public.ai_usage (user_id, created_at desc);
+
+alter table public.ai_usage drop constraint if exists ai_usage_feature_check;
+alter table public.ai_usage add constraint ai_usage_feature_check
+  check (feature in ('extract', 'cards', 'tutor', 'translate', 'review', 'demo', 'talk'));
+
+-- Talk to Lexa: free writing, analyzed --------------------------------------
+create table if not exists public.talk_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  topic text not null,
+  text text not null,
+  vocabulary_level integer not null check (vocabulary_level between 1 and 5),
+  grammar_level integer not null check (grammar_level between 1 and 5),
+  clarity_level integer not null check (clarity_level between 1 and 5),
+  mistakes jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now()
+);
+create index if not exists talk_sessions_user_idx on public.talk_sessions (user_id, created_at desc);
+
+-- Parent / teacher progress link (only the token hash is stored) -------------
+create table if not exists public.share_links (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  token_hash text not null unique,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null
+);
+create index if not exists share_links_user_idx on public.share_links (user_id);
+
+-- Public landing-page demo: one counter per day per hashed visitor ----------
+create table if not exists public.demo_usage (
+  day date not null,
+  visitor_hash text not null,
+  hits integer not null default 0,
+  primary key (day, visitor_hash)
+);
+
+create or replace function public.demo_hit(p_day date, p_visitor text)
+returns table (visitor_hits integer, total_hits bigint)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.demo_usage (day, visitor_hash, hits) values (p_day, p_visitor, 1)
+  on conflict (day, visitor_hash) do update set hits = public.demo_usage.hits + 1;
+  return query
+    select (select hits from public.demo_usage where day = p_day and visitor_hash = p_visitor),
+           (select coalesce(sum(hits), 0) from public.demo_usage where day = p_day);
+end;
+$$;
+revoke all on function public.demo_hit(date, text) from public, anon, authenticated;
+grant execute on function public.demo_hit(date, text) to service_role;
+
+-- Admin-editable settings --------------------------------------------------
+create table if not exists public.app_settings (
+  id integer primary key default 1 check (id = 1),
+  values jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+insert into public.app_settings (id) values (1) on conflict do nothing;
+
+-- Row level security -------------------------------------------------------
+alter table public.profiles enable row level security;
+alter table public.word_groups enable row level security;
+alter table public.words enable row level security;
+alter table public.review_logs enable row level security;
+alter table public.daily_progress enable row level security;
+alter table public.ai_usage enable row level security;
+alter table public.app_settings enable row level security;
+alter table public.talk_sessions enable row level security;
+alter table public.share_links enable row level security;
+alter table public.demo_usage enable row level security;
+-- demo_usage has no policies on purpose: only the server (service role) can touch it.
+
+drop policy if exists "profiles read own or admin" on public.profiles;
+create policy "profiles read own or admin" on public.profiles
+  for select using (id = auth.uid() or public.is_admin());
+drop policy if exists "profiles update own" on public.profiles;
+create policy "profiles update own" on public.profiles
+  for update using (id = auth.uid()) with check (id = auth.uid() and role = (select role from public.profiles where id = auth.uid()));
+
+drop policy if exists "groups own" on public.word_groups;
+create policy "groups own" on public.word_groups for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists "words own" on public.words;
+create policy "words own" on public.words for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists "logs own read" on public.review_logs;
+create policy "logs own read" on public.review_logs for select using (user_id = auth.uid());
+drop policy if exists "logs own insert" on public.review_logs;
+create policy "logs own insert" on public.review_logs for insert with check (user_id = auth.uid());
+drop policy if exists "progress own" on public.daily_progress;
+create policy "progress own" on public.daily_progress for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+drop policy if exists "usage admin read" on public.ai_usage;
+create policy "usage admin read" on public.ai_usage for select using (public.is_admin());
+drop policy if exists "settings read" on public.app_settings;
+create policy "settings read" on public.app_settings for select using (true);
+drop policy if exists "settings admin write" on public.app_settings;
+create policy "settings admin write" on public.app_settings for update using (public.is_admin());
+
+drop policy if exists "talk own read" on public.talk_sessions;
+create policy "talk own read" on public.talk_sessions for select using (user_id = auth.uid());
+drop policy if exists "talk own insert" on public.talk_sessions;
+create policy "talk own insert" on public.talk_sessions for insert with check (user_id = auth.uid());
+
+drop policy if exists "share own read" on public.share_links;
+create policy "share own read" on public.share_links for select using (user_id = auth.uid());
+drop policy if exists "share own delete" on public.share_links;
+create policy "share own delete" on public.share_links for delete using (user_id = auth.uid());
+
+-- Progress columns on profiles are written by trusted server code only.
+-- Students can edit just their name, interests and the "onboarded" flag, never XP, streak or role.
+revoke update on public.profiles from authenticated;
+grant update (display_name, interests, onboarded) on public.profiles to authenticated;

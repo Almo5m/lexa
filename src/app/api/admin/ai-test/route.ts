@@ -24,7 +24,7 @@ async function runChecks(): Promise<Check[]> {
   const settingsRead = await db.from("app_settings").select("id").limit(1);
   checks.push({ id: "settings", ok: !settingsRead.error, message: settingsRead.error?.message });
 
-  // Writing a row with the newest feature name also proves the phase 2 migration was run.
+  // Writing a row with the newest feature name also proves `supabase/setup.sql` was run.
   const written = await db
     .from("ai_usage")
     .insert({ user_id: null, feature: "translate", ok: true, latency_ms: 0, error: "admin check" })

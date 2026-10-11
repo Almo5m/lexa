@@ -13,11 +13,15 @@ export const settingsSchema = z.object({
   xpNewWord: z.number().int().min(0).max(100),
   xpCorrectAnswer: z.number().int().min(0).max(100),
   xpDailyGoal: z.number().int().min(0).max(500),
+  xpTalkSession: z.number().int().min(0).max(100),
   srsStartingEase: z.number().min(1.3).max(3.5),
   srsFirstIntervalDays: z.number().min(0.1).max(10),
   srsMasteredIntervalDays: z.number().int().min(7).max(365),
   srsWeakLapses: z.number().int().min(1).max(10),
   streakFreezesPerWeek: z.number().int().min(0).max(7),
+  demoEnabled: z.boolean(),
+  demoDailyLimitPerVisitor: z.number().int().min(1).max(50),
+  demoDailyLimitTotal: z.number().int().min(0).max(5000),
 });
 
 export type AppSettings = z.infer<typeof settingsSchema>;
@@ -35,11 +39,15 @@ export const defaultSettings: AppSettings = {
   xpNewWord: 10,
   xpCorrectAnswer: 5,
   xpDailyGoal: 50,
+  xpTalkSession: 15,
   srsStartingEase: 2.5,
   srsFirstIntervalDays: 1,
   srsMasteredIntervalDays: 21,
   srsWeakLapses: 3,
   streakFreezesPerWeek: 1,
+  demoEnabled: true,
+  demoDailyLimitPerVisitor: 6,
+  demoDailyLimitTotal: 300,
 };
 
 export function mergeSettings(stored: unknown): AppSettings {

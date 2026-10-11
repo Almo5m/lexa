@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import type { z } from "zod";
 import { serverEnv } from "@/lib/env";
@@ -5,7 +6,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { classifyAiError, readableAiMessage } from "./errors";
 import { runWithFallback } from "./retry";
 
-export type AiFeature = "extract" | "cards" | "tutor" | "translate";
+export type AiFeature = "extract" | "cards" | "tutor" | "translate" | "review" | "demo" | "talk";
 
 export class AiLimitError extends Error {
   constructor() {
@@ -50,13 +51,24 @@ export async function assertWithinDailyLimit(userId: string, limit: number): Pro
   if ((count ?? 0) >= limit) throw new AiLimitError();
 }
 
-async function logUsage(userId: string, feature: AiFeature, ok: boolean, startedAt: number, error?: string) {
+/** Writes the usage row after the response is sent, so logging never makes the student wait. */
+function logUsage(userId: string | null, feature: AiFeature, ok: boolean, startedAt: number, error?: string) {
+  const latency = Date.now() - startedAt;
+  const job = () => writeUsage(userId, feature, ok, latency, error);
+  try {
+    after(job);
+  } catch {
+    void job();
+  }
+}
+
+async function writeUsage(userId: string | null, feature: AiFeature, ok: boolean, latencyMs: number, error?: string) {
   try {
     await createSupabaseAdminClient().from("ai_usage").insert({
       user_id: userId,
       feature,
       ok,
-      latency_ms: Date.now() - startedAt,
+      latency_ms: latencyMs,
       error: error ? error.slice(0, 300) : null,
     });
   } catch (loggingError) {
@@ -71,7 +83,8 @@ export interface InlineImage {
 }
 
 interface CallOptions {
-  userId: string;
+  /** null for the public landing-page demo, where the visitor has no account. */
+  userId: string | null;
   feature: AiFeature;
   model: string;
   fallbackModel?: string;
@@ -101,17 +114,19 @@ export async function callGemini(options: CallOptions): Promise<string> {
             systemInstruction: options.system,
             temperature: options.temperature ?? 0.7,
             ...(options.json ? { responseMimeType: "application/json" } : {}),
+            // Short vocabulary answers do not need long reasoning; turning it off is the biggest speed win.
+            ...(/2\.5-flash/.test(model) ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
           },
         }),
-      { retriesPerModel: 2, baseDelayMs: 800 },
+      { retriesPerModel: 1, baseDelayMs: 500 },
     );
     const text = response.text ?? "";
     if (!text) throw new Error("empty_response");
-    await logUsage(options.userId, options.feature, true, startedAt);
+    logUsage(options.userId, options.feature, true, startedAt);
     return text;
   } catch (error) {
     const kind = classifyAiError(error);
-    await logUsage(options.userId, options.feature, false, startedAt, `[${kind}] ${readableAiMessage(error)}`);
+    logUsage(options.userId, options.feature, false, startedAt, `[${kind}] ${readableAiMessage(error)}`);
     if (kind === "busy" || kind === "quota") throw new AiBusyError();
     if (kind === "model" || kind === "auth") throw new AiUnavailableError();
     throw error;

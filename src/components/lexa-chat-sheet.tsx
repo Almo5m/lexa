@@ -7,7 +7,15 @@ import { useT } from "@/lib/i18n/provider";
 import { LexaMascot } from "@/components/lexa-mascot";
 
 /** The navigation entry that opens Lexa from any page. */
-export function LexaChatLauncher({ children, className }: { children?: ReactNode; className?: string }) {
+export function LexaChatLauncher({
+  children,
+  className,
+  tour,
+}: {
+  children?: ReactNode;
+  className?: string;
+  tour?: string;
+}) {
   const { t } = useT();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -23,7 +31,7 @@ export function LexaChatLauncher({ children, className }: { children?: ReactNode
 
   return (
     <>
-      <button type="button" className={className} onClick={() => dialogRef.current?.showModal()}>
+      <button type="button" className={className} data-tour={tour} onClick={() => dialogRef.current?.showModal()}>
         {children ?? (
           <>
             <LexaIcon />

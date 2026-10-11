@@ -2,6 +2,7 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { ChatIcon } from "@/components/icons";
+import { RichText } from "@/components/rich-text";
 import { LexaLoader } from "@/components/lexa-loader";
 import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
@@ -71,16 +72,16 @@ export function TutorChat({ wordId }: { wordId?: string }) {
       <div className="space-y-3" aria-live="polite">
         {messages.length === 0 && <p className="text-ink-soft">{t("tutor.intro")}</p>}
         {messages.map((message, index) => (
-          <p
+          <div
             key={index}
-            className={`max-w-[92%] whitespace-pre-wrap rounded-lg px-4 py-2 ${
+            className={`max-w-[92%] rounded-lg px-4 py-2 ${
               message.role === "student"
-                ? "ms-auto bg-paper-deep"
+                ? "ms-auto whitespace-pre-wrap bg-paper-deep"
                 : "border border-line bg-sheet"
             }`}
           >
-            {message.text}
-          </p>
+            {message.role === "tutor" ? <RichText text={message.text} /> : message.text}
+          </div>
         ))}
         {busy && (
           <div className="flex items-center gap-3 text-ink-faint">

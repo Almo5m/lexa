@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppNav } from "@/components/app-nav";
 import { AlmoSignature } from "@/components/almo-signature";
+import { AppTour, TourReplayButton } from "@/components/app-tour";
 import { FlameIcon, XpIcon } from "@/components/icons";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
@@ -28,7 +29,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           </Link>
           <AppNav isAdmin={profile?.role === "admin"} />
         </div>
-        <div className="hidden gap-4 px-6 text-sm md:flex">
+        <div className="hidden flex-wrap gap-x-4 px-6 text-sm md:flex">
+          <Link href="/me" className="flex min-h-11 items-center text-ink-soft underline underline-offset-4">
+            {t("me.link")}
+          </Link>
+          <TourReplayButton className="min-h-11 text-ink-soft underline underline-offset-4" />
           <form action={setLanguage.bind(null, lang === "ar" ? "en" : "ar")}>
             <button type="submit" className="min-h-11 text-ink-soft underline underline-offset-4">
               {t("nav.language")}
@@ -49,6 +54,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <span className="text-xl font-bold tracking-tight">Lexa</span>
           </Link>
           <div className="flex items-center gap-2">
+            <span data-tour="progress" className="flex items-center gap-2">
             <span
               className="inline-flex items-center gap-1.5 rounded-full bg-sheet px-3 py-1.5 text-sm font-semibold shadow-[var(--shadow-1)]"
               aria-label={`${streak}`}
@@ -63,12 +69,17 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               <XpIcon width={20} height={20} />
               {profile?.total_xp ?? 0}
             </span>
+            </span>
             <details className="relative md:hidden">
               <summary className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full bg-sheet text-lg shadow-[var(--shadow-1)]">
                 <span aria-hidden="true">⋯</span>
                 <span className="sr-only">{t("nav.language")} / {t("nav.logout")}</span>
               </summary>
               <div className="absolute end-0 z-30 mt-2 w-44 rounded-[var(--r-md)] bg-sheet p-2 shadow-[var(--shadow-2)]">
+                <Link href="/me" className="flex min-h-11 w-full items-center rounded-lg px-3 hover:bg-paper-deep">
+                  {t("me.link")}
+                </Link>
+                <TourReplayButton className="min-h-11 w-full rounded-lg px-3 text-start hover:bg-paper-deep" />
                 <form action={setLanguage.bind(null, lang === "ar" ? "en" : "ar")}>
                   <button type="submit" className="min-h-11 w-full rounded-lg px-3 text-start hover:bg-paper-deep">
                     {t("nav.language")}
@@ -86,6 +97,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <main className="flex-1 px-5 pt-5 md:px-8 md:pt-6">{children}</main>
         <AlmoSignature />
       </div>
+      <AppTour />
     </div>
   );
 }

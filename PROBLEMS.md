@@ -71,3 +71,40 @@ The AI tab in the dashboard tests both models live, lists the models Google allo
 
 ## Dashboard tabs and what to look at first
 The old dashboard was one long page. It now has three tabs: Overview (numbers, chart, errors with a plain-language hint), AI (connection test and model list), Settings (grouped, each with a short explanation, save bar appears only when something changed).
+
+## Everything felt slow
+Several small costs added up on every request: the proxy and the route both asked Supabase "who is this" over the network, the settings table was read on every call, the usage log was written before the answer was sent, Gemini was "thinking" before short vocabulary answers, and failed calls were retried up to three times with long waits.
+Fix: the login token is checked locally (`getClaims`), settings are cached for 30 seconds (and cleared when the admin saves), usage is logged after the response, thinking is turned off for the 2.5 flash models, retries are one per model with a short wait, card batches are 8 words instead of 5, and pages show the Lexa loader while they load. Not measured against the real services yet, so compare the Latency numbers in the dashboard before and after.
+
+## Lexa's replies showed raw asterisks
+The model writes `**word**` and the chat printed it as plain text. Fix: Lexa's replies go through a small safe parser (bold, italic, lists, headings turned into bold) that never builds HTML, and English words inside Arabic lines keep their direction. The prompt also tells Lexa how to format.
+
+## "Forgot / Remembered" was not a real test
+The student graded himself, so the schedule depended on honesty. Review is now typed only: write the word from its meaning, write it from audio, or write a sentence with it. The server decides. Words are checked exactly (a hint lowers the grade). Sentences are first checked for the word locally, then Lexa judges meaning and grammar and explains the mistake. If the AI is down the student can skip a sentence without a penalty. Needs the database update (`supabase/setup.sql`).
+
+## A free demo is an open door to the AI bill
+The landing-page demo has no login, so anyone (or a script) can call it. Counting per account is impossible. Fix: each request is counted per day per salted IP hash in one atomic database function, there is a daily ceiling for the whole demo, requests from other websites are refused, and the input is limited to one English word or one short sentence. The counter table has no public policies, so only the server can read or write it. Known limit: IPs can be rotated, so the daily ceiling is the real protection. A bot check (Cloudflare Turnstile) is the next step if abuse shows up in the dashboard.
+
+## Dashboard stats test expected four AI features
+Adding the "review" and "demo" features made the old stats tests fail. The tests now list all six. The dashboard tables show them too.
+
+## Personalizing the prompt without opening it to injection
+Sending the student's own text ("I like...") into the card prompt would let anyone change what the AI writes. Interests are picked from a fixed list of twelve ids, checked on the server and again by a database constraint, and only the ids are put in the prompt. The student can edit his interests, but the grant covers only `display_name`, `interests` and `onboarded`. XP, streak and role stay locked.
+
+## Memory hooks can be forced
+A sound-alike trick only works for some words, and a bad one teaches the wrong thing. The prompt says to use a vivid picture when there is no natural sound-alike, to never force a false link, and allows an empty hook. Needs a teacher to read a sample of hooks before launch.
+
+## Levels from an AI are noisy
+One text can score high or low by luck. The profile shows the average of the latest three texts instead of the last one, the levels are shown as bands (A1 to C1) and not fake-precise percentages, and the page says they are estimates. The prompt asks for fair judging for a secondary student and says not to give the top level easily. Needs real student texts checked by a teacher before the numbers are trusted.
+
+## The AI can invent a mistake label
+If the model returned a label outside the fixed list, the whole answer would fail validation and the student would lose his result. Unknown labels now become "other", and "other" is left out of the "mistakes that keep coming back" list because it says nothing useful.
+
+## Farming XP with fake texts
+Anyone could paste text again and again for XP. Only text that is mostly English letters is accepted, the length is capped, and XP is paid for the first three texts a day. The AI daily limit applies too.
+
+## A progress link for a minor must be safe by design
+Most students here are under 18, so a public link to their progress is a real risk. Decisions: the student creates it himself (opt-in), the token is 256 random bits, only its hash is stored (a leaked database gives no working links), it expires after 30 days, one active link per student (a new one cancels the old), he can stop it at any time, the page is `noindex` and never cached, and a wrong or expired link shows the same message so nobody can tell which tokens exist. The report is built on the server with a fixed list of fields: first name only, no words, no texts, no email. Known limit: whoever gets the link can forward it, so the page says clearly what it shows and the student sees the same list before making it.
+
+## Running the SQL twice failed ("relation profiles already exists")
+`schema.sql` was written to run once on an empty database, so running it again, or on a database from an earlier phase, stopped with an error, and Moaz could not tell which updates had been applied. Fix: one file, `supabase/setup.sql`, that can be run any number of times. Every table and index uses `if not exists`, new columns use `add column if not exists`, constraints and policies are dropped and recreated, and nothing deletes data. The old `schema.sql` was removed so there is no second file to mix up. It was tested on a real PostgreSQL 16 with Supabase-like roles: an empty database run three times; a database built from the phase 2.4 schema with a student's data in it, upgraded and run twice; the exact error reproduced and then fixed; and all migration files run twice. After upgrading, the student's XP was untouched, a student can edit his interests but not his XP or role, and the demo counter table is invisible to students. Not tested on Supabase itself (its own auth and storage schemas were stubbed).

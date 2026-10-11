@@ -12,9 +12,12 @@ export class HttpError extends Error {
 
 export async function getCurrentUser() {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims checks the signed token locally, so it skips a network round trip to Supabase on every request.
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  const user = claims?.sub
+    ? { id: claims.sub, email: typeof claims.email === "string" ? claims.email : undefined }
+    : null;
   return { supabase, user };
 }
 
