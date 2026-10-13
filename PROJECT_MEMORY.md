@@ -91,3 +91,10 @@ Log of decisions and events, newest at the bottom.
 
 ## 2026-10-11 (migrations folder removed)
 - Moaz asked to delete `supabase/migrations`, since `setup.sql` covers everything. Removed it, and the README and notes now point only to `setup.sql`. The change history stays in the earlier ZIPs and in this file.
+
+## 2026-10-13 (phase 2.10: speed, responsive, missing pieces)
+- Moaz said the AI is slow and its replies are not good, the site is missing something he can't name, and it must be responsive on any device.
+- Tutor now streams; cards generate in parallel; new tutor and card prompts (direct answer, example, mini task); thinking minimized; bidi fix for English inside Arabic; microphone policy fixed; centered desktop layout; review screen keyboard flow; touch targets at least 44px.
+- Added forgot/reset password, Account section (change name, delete account and data). PRIVACY.md updated.
+- Checked in a real browser at 360, 820 and 1366 widths on all screens: no horizontal overflow. 127 tests pass and the build passes. Not checked against real Supabase or Gemini.
+- Next: phase 3 (games, achievements, stats page); teacher review of word bank and hooks; logo; theme.

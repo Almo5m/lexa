@@ -35,8 +35,8 @@ export function TutorChat({ wordId }: { wordId?: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ wordId, messages: next.slice(-12) }),
       });
-      const data = await response.json();
       if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
         const known: Record<string, DictKey> = {
           daily_ai_limit_reached: "tutor.limit",
           ai_feature_disabled: "tutor.disabled",
@@ -46,8 +46,26 @@ export function TutorChat({ wordId }: { wordId?: string }) {
         setError(t(known[data.error] ?? "tutor.error"));
         return;
       }
-      setMessages([...next, { role: "tutor", text: data.reply }]);
-      queueMicrotask(() => endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+      const reader = response.body?.getReader();
+      if (!reader) {
+        setError(t("tutor.error"));
+        return;
+      }
+      // The answer is shown while it is still being written.
+      const decoder = new TextDecoder();
+      let reply = "";
+      try {
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          reply += decoder.decode(value, { stream: true });
+          setMessages([...next, { role: "tutor", text: reply }]);
+          endRef.current?.scrollIntoView({ block: "nearest" });
+        }
+      } catch {
+        // A cut connection keeps what already arrived. Only an empty answer is an error.
+        if (!reply) setError(t("tutor.error"));
+      }
     } catch {
       setError(t("tutor.error"));
     } finally {
@@ -80,10 +98,10 @@ export function TutorChat({ wordId }: { wordId?: string }) {
                 : "border border-line bg-sheet"
             }`}
           >
-            {message.role === "tutor" ? <RichText text={message.text} /> : message.text}
+            {message.role === "tutor" ? <RichText text={message.text} /> : <span dir="auto">{message.text}</span>}
           </div>
         ))}
-        {busy && (
+        {busy && messages[messages.length - 1]?.role !== "tutor" && (
           <div className="flex items-center gap-3 text-ink-faint">
             <LexaLoader size={56} label={t("tutor.thinking")} />
             <span aria-hidden="true">{t("tutor.thinking")}</span>

@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = ["/login", "/signup"];
 // Open to everyone: the landing page, the guarded demo API, and parent/teacher links (the token is the key).
-const OPEN_PATHS = ["/welcome", "/api/demo", "/share/"];
+const OPEN_PATHS = ["/welcome", "/api/demo", "/share/", "/forgot", "/reset"];
 
 export async function proxy(request: NextRequest) {
   if (OPEN_PATHS.some((p) => request.nextUrl.pathname.startsWith(p))) return NextResponse.next({ request });

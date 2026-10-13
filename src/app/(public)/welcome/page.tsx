@@ -29,7 +29,7 @@ export default async function WelcomePage() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-5xl flex-col px-5">
       <header className="flex items-center justify-between gap-3 py-4">
-        <Link href="/welcome" className="flex items-center gap-2">
+        <Link href="/welcome" className="flex min-h-11 items-center gap-2">
           <img src="/lexa/owl.webp" alt="" width={44} height={37} />
           <span className="text-2xl font-bold tracking-tight">Lexa</span>
         </Link>

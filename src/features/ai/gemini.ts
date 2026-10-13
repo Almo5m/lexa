@@ -1,5 +1,5 @@
 import { after } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import type { z } from "zod";
 import { serverEnv } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
@@ -93,6 +93,94 @@ interface CallOptions {
   images?: InlineImage[];
   json?: boolean;
   temperature?: number;
+  /** A hard ceiling on the answer length. Shorter answers also arrive faster. */
+  maxOutputTokens?: number;
+}
+
+/**
+ * Answers for students are short, so long "thinking" before them only costs seconds.
+ * 2.5 models take a token budget (0 = off). Gemini 3 models take a level. A model that does not
+ * understand the setting is retried once without it (see withoutThinkingIfRejected).
+ */
+function generationConfig(model: string, options: CallOptions, thinking: boolean) {
+  return {
+    systemInstruction: options.system,
+    temperature: options.temperature ?? 0.7,
+    ...(options.maxOutputTokens ? { maxOutputTokens: options.maxOutputTokens } : {}),
+    ...(options.json ? { responseMimeType: "application/json" } : {}),
+    ...(thinking && /2\.5-flash/.test(model) ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+    ...(thinking && /gemini-3/.test(model) ? { thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL } } : {}),
+  };
+}
+
+async function withoutThinkingIfRejected<T>(
+  model: string,
+  options: CallOptions,
+  run: (config: ReturnType<typeof generationConfig>) => Promise<T>,
+): Promise<T> {
+  try {
+    return await run(generationConfig(model, options, true));
+  } catch (error) {
+    if (/thinking/i.test(readableAiMessage(error))) return run(generationConfig(model, options, false));
+    throw error;
+  }
+}
+
+function toPublicError(error: unknown): unknown {
+  const kind = classifyAiError(error);
+  if (kind === "busy" || kind === "quota") return new AiBusyError();
+  if (kind === "model" || kind === "auth") return new AiUnavailableError();
+  return error;
+}
+
+/**
+ * Streams the answer as it is written, so the student starts reading in about a second
+ * instead of waiting for the whole text. Models can be switched only before the first piece
+ * arrives. After that, a failure ends the stream and the caller keeps what was already sent.
+ */
+export async function* streamGemini(options: CallOptions): AsyncGenerator<string> {
+  const startedAt = Date.now();
+  const models = [...new Set([options.model, options.fallbackModel ?? ""].filter(Boolean))];
+  let lastError: unknown;
+
+  for (const model of models) {
+    for (let attempt = 0; attempt <= 1; attempt++) {
+      let started = false;
+      try {
+        const stream = await withoutThinkingIfRejected(model, options, (config) =>
+          getClient().models.generateContentStream({
+            model,
+            contents: [{ role: "user", parts: [{ text: options.prompt }] }],
+            config,
+          }),
+        );
+        for await (const chunk of stream) {
+          const text = chunk.text ?? "";
+          if (!text) continue;
+          started = true;
+          yield text;
+        }
+        if (!started) throw new Error("empty_response");
+        logUsage(options.userId, options.feature, true, startedAt);
+        return;
+      } catch (error) {
+        lastError = error;
+        const kind = classifyAiError(error);
+        if (started || kind === "auth" || kind === "other") {
+          logUsage(options.userId, options.feature, false, startedAt, `[${kind}] ${readableAiMessage(error)}`);
+          throw toPublicError(error);
+        }
+        if (kind === "busy" && attempt === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          continue;
+        }
+        break;
+      }
+    }
+  }
+  const kind = classifyAiError(lastError);
+  logUsage(options.userId, options.feature, false, startedAt, `[${kind}] ${readableAiMessage(lastError)}`);
+  throw toPublicError(lastError);
 }
 
 export async function callGemini(options: CallOptions): Promise<string> {
@@ -106,18 +194,9 @@ export async function callGemini(options: CallOptions): Promise<string> {
     ];
     const { value: response } = await runWithFallback(
       [options.model, options.fallbackModel ?? ""],
-      (model) =>
-        getClient().models.generateContent({
-          model,
-          contents: [{ role: "user", parts }],
-          config: {
-            systemInstruction: options.system,
-            temperature: options.temperature ?? 0.7,
-            ...(options.json ? { responseMimeType: "application/json" } : {}),
-            // Short vocabulary answers do not need long reasoning; turning it off is the biggest speed win.
-            ...(/2\.5-flash/.test(model) ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
-          },
-        }),
+      (model) => withoutThinkingIfRejected(model, options, (config) =>
+        getClient().models.generateContent({ model, contents: [{ role: "user", parts }], config }),
+      ),
       { retriesPerModel: 1, baseDelayMs: 500 },
     );
     const text = response.text ?? "";
@@ -127,9 +206,7 @@ export async function callGemini(options: CallOptions): Promise<string> {
   } catch (error) {
     const kind = classifyAiError(error);
     logUsage(options.userId, options.feature, false, startedAt, `[${kind}] ${readableAiMessage(error)}`);
-    if (kind === "busy" || kind === "quota") throw new AiBusyError();
-    if (kind === "model" || kind === "auth") throw new AiUnavailableError();
-    throw error;
+    throw toPublicError(error);
   }
 }
 

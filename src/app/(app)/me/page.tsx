@@ -1,3 +1,4 @@
+import { AccountForm } from "@/components/account-form";
 import { ShareManager } from "@/components/share-manager";
 import { isActive } from "@/features/share/token";
 import { InterestsForm } from "@/components/interests-form";
@@ -11,7 +12,7 @@ export default async function MePage() {
   const { supabase, user } = await requireUserPage();
   const { t } = await getT();
   const [{ data: profile }, { data: link }] = await Promise.all([
-    supabase.from("profiles").select("interests").eq("id", user.id).single(),
+    supabase.from("profiles").select("interests, display_name").eq("id", user.id).single(),
     supabase.from("share_links").select("expires_at").eq("user_id", user.id).maybeSingle(),
   ]);
   const activeUntil = link && isActive(link.expires_at) ? link.expires_at : null;
@@ -34,6 +35,13 @@ export default async function MePage() {
           {t("share.title")}
         </h2>
         <ShareManager activeUntil={activeUntil} />
+      </section>
+
+      <section aria-labelledby="account-title" className="sheet p-6">
+        <h2 id="account-title" className="mb-4 text-xl font-bold">
+          {t("account.title")}
+        </h2>
+        <AccountForm initialName={profile?.display_name ?? ""} />
       </section>
     </div>
   );

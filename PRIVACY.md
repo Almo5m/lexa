@@ -25,4 +25,4 @@ The demo needs no account. Each visitor is counted per day using a salted hash o
 The student decides. He makes a private link, and anyone who has it sees: his first name, XP, level and streak, how many words he has (and how many are mastered or weak), the last seven days of activity, and his language level with the kinds of mistakes that repeat. They do not see his words, his texts or his email. The link expires after 30 days, a new link cancels the old one, and the student can stop it at any time. The page is not indexed by search engines.
 
 ## Student rights
-A student can ask for their account and all related data to be deleted. Deleting the account in Supabase removes everything linked to it.
+A student can delete his own account and all related data from the Account page (/me) at any time. Deleting the login removes everything linked to it: words, progress, chats, language texts and the progress link. Usage records of the AI stay only without his id, as numbers.

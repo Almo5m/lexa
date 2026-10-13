@@ -108,3 +108,15 @@ Most students here are under 18, so a public link to their progress is a real ri
 
 ## Running the SQL twice failed ("relation profiles already exists")
 `schema.sql` was written to run once on an empty database, so running it again, or on a database from an earlier phase, stopped with an error, and Moaz could not tell which updates had been applied. Fix: one file, `supabase/setup.sql`, that can be run any number of times. Every table and index uses `if not exists`, new columns use `add column if not exists`, constraints and policies are dropped and recreated, and nothing deletes data. The old `schema.sql` was removed so there is no second file to mix up. It was tested on a real PostgreSQL 16 with Supabase-like roles: an empty database run three times; a database built from the phase 2.4 schema with a student's data in it, upgraded and run twice; the exact error reproduced and then fixed; and all migration files run twice. After upgrading, the student's XP was untouched, a student can edit his interests but not his XP or role, and the demo counter table is invisible to students. Not tested on Supabase itself (its own auth and storage schemas were stubbed).
+
+## The AI felt slow
+The student waited for the whole reply before seeing anything. Fixes: the tutor streams its answer word by word (first text in about 1 second against 2.3 for the full reply on the test server), thinking is turned off or kept minimal in the Gemini call, the token is checked locally, settings are cached for 30 seconds, queries run in parallel, history is cut to 8 turns, and cards are generated in groups of 4 with 3 running together. Not measured on the real Gemini yet. What can still make it slow in production: the model chosen in the dashboard, and a hosting region far from Supabase (choose the function region next to the Supabase project).
+
+## English sentences came out scrambled in Arabic chat
+When bold split an English sentence into pieces inside an Arabic line, the pieces were reordered. The renderer now puts each English run inside one left-to-right isolate, and the student's own messages use auto direction.
+
+## The microphone was blocked by our own header
+The security header said `microphone=()`, so voice in /talk could never work. Changed to `microphone=(self)`. Camera and location stay blocked.
+
+## Things the site was missing
+Found by walking through it as a student: no way to reset a forgotten password, no place to change the name, and no way to delete the account although the privacy page promised it. All three added (/forgot, /reset, and the Account section in /me). The reset form never says whether an email is registered. Deleting needs typing a confirmation word and is checked on the server for same-origin.

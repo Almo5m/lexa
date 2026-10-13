@@ -1,35 +1,73 @@
 import { parseRichText, splitLatinRuns, type Inline } from "@/features/text/rich";
 
-function Runs({ text }: { text: string }) {
-  return (
-    <>
-      {splitLatinRuns(text).map((run, index) =>
-        run.latin ? (
-          <bdi key={index} dir="ltr">
-            {run.text}
-          </bdi>
-        ) : (
-          <span key={index}>{run.text}</span>
-        ),
-      )}
-    </>
+interface Token {
+  style: Inline["kind"];
+  latin: boolean;
+  text: string;
+}
+
+type Group = { latin: boolean; tokens: Token[] };
+
+/**
+ * An English sentence must read left to right as one piece, even when a word inside it is bold.
+ * So English runs that touch each other (or are only separated by spaces) share one isolate.
+ */
+function groupTokens(inlines: Inline[]): Group[] {
+  const tokens: Token[] = inlines.flatMap((part) =>
+    splitLatinRuns(part.text).map((run) => ({ style: part.kind, latin: run.latin, text: run.text })),
   );
+  const groups: Group[] = [];
+  let pending: Token[] = [];
+
+  const flushPending = () => {
+    if (pending.length === 0) return;
+    groups.push({ latin: false, tokens: pending });
+    pending = [];
+  };
+
+  for (const token of tokens) {
+    const last = groups[groups.length - 1];
+    if (token.latin) {
+      if (last?.latin) {
+        last.tokens.push(...pending, token);
+        pending = [];
+      } else {
+        flushPending();
+        groups.push({ latin: true, tokens: [token] });
+      }
+    } else if (last?.latin && token.text.trim() === "") {
+      pending.push(token);
+    } else {
+      flushPending();
+      groups.push({ latin: false, tokens: [token] });
+    }
+  }
+  flushPending();
+  return groups;
+}
+
+function Piece({ token }: { token: Token }) {
+  if (token.style === "bold") return <strong className="font-bold text-indigo">{token.text}</strong>;
+  if (token.style === "italic") return <em>{token.text}</em>;
+  return <>{token.text}</>;
 }
 
 function Inlines({ inlines }: { inlines: Inline[] }) {
   return (
     <>
-      {inlines.map((part, index) =>
-        part.kind === "bold" ? (
-          <strong key={index} className="font-bold text-indigo">
-            <Runs text={part.text} />
-          </strong>
-        ) : part.kind === "italic" ? (
-          <em key={index}>
-            <Runs text={part.text} />
-          </em>
+      {groupTokens(inlines).map((group, index) =>
+        group.latin ? (
+          <bdi key={index} dir="ltr">
+            {group.tokens.map((token, i) => (
+              <Piece key={i} token={token} />
+            ))}
+          </bdi>
         ) : (
-          <Runs key={index} text={part.text} />
+          <span key={index}>
+            {group.tokens.map((token, i) => (
+              <Piece key={i} token={token} />
+            ))}
+          </span>
         ),
       )}
     </>

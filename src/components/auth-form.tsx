@@ -108,8 +108,16 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         {isSignup ? t("auth.signup") : t("auth.login")}
       </TagButton>
 
+      {!isSignup && (
+        <p className="text-center text-sm">
+          <Link href="/forgot" className="inline-flex min-h-11 items-center text-ink-soft underline underline-offset-4">
+            {t("auth.forgot")}
+          </Link>
+        </p>
+      )}
+
       <p className="text-center text-sm">
-        <Link href={isSignup ? "/login" : "/signup"} className="text-ink-soft underline underline-offset-4">
+        <Link href={isSignup ? "/login" : "/signup"} className="inline-flex min-h-11 items-center text-ink-soft underline underline-offset-4">
           {isSignup ? t("auth.toLogin") : t("auth.toSignup")}
         </Link>
       </p>

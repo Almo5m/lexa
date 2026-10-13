@@ -206,6 +206,7 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
           className="field ltr-text text-xl"
           aria-invalid={result && !result.correct ? true : undefined}
           maxLength={isSentence ? 300 : 60}
+          autoFocus
           autoComplete="off"
           autoCapitalize={isSentence ? "sentences" : "none"}
           spellCheck={false}
@@ -218,7 +219,10 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
         </p>
       )}
 
-      <div aria-live="polite" className="flex min-h-8 flex-wrap items-center gap-3">
+      <p className="sr-only" aria-live="polite">
+        {result ? (result.correct ? t("review.correct") : isSentence ? "" : t("review.wrong", { word: result.answer })) : ""}
+      </p>
+      <div className="flex flex-wrap items-center gap-3 empty:hidden">
         {result && <LexaMascot mood={result.correct ? "happy" : "sad"} size={76} />}
         {result &&
           (result.correct ? (
@@ -268,7 +272,9 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
             )}
           </>
         ) : (
-          <TagButton onClick={onNext}>{t("review.next")}</TagButton>
+          <button type="button" autoFocus className="tag-btn" onClick={onNext}>
+            {t("review.next")}
+          </button>
         )}
       </div>
     </form>

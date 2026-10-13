@@ -45,6 +45,23 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="hero-card p-6" aria-labelledby="focus-title">
+        <h1 id="focus-title" className="text-xl font-semibold">
+          {t("home.focus")}
+        </h1>
+        <p className="mb-5 mt-1 opacity-85">{t("home.focusHint")}</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          {canReview && (
+            <Link href="/review" className="tag-btn justify-center">
+              {t("home.start")}
+            </Link>
+          )}
+          <Link href="/add" className="tag-btn justify-center">
+            {t("home.add")}
+          </Link>
+        </div>
+      </section>
+
       {profile && !profile.onboarded && (
         <section className="sheet flex flex-wrap items-center justify-between gap-3 p-5" aria-label={t("me.title")}>
           <p className="flex-1 font-medium">{t("me.banner")}</p>
@@ -53,23 +70,6 @@ export default async function HomePage() {
           </Link>
         </section>
       )}
-
-      <section className="hero-card p-6" aria-labelledby="focus-title">
-        <h1 id="focus-title" className="text-xl font-semibold">
-          {t("home.focus")}
-        </h1>
-        <p className="mb-5 mt-1 opacity-85">{t("home.focusHint")}</p>
-        <div className="flex flex-wrap gap-3">
-          {canReview && (
-            <Link href="/review" className="tag-btn">
-              {t("home.start")}
-            </Link>
-          )}
-          <Link href="/add" className="tag-btn">
-            {t("home.add")}
-          </Link>
-        </div>
-      </section>
 
       {profile?.level_band == null && (
         <Link href="/level" className="sheet flex min-h-14 items-center gap-3 px-5 font-medium text-indigo">

@@ -48,8 +48,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col pb-24 md:pb-0">
-        <header className="flex items-center justify-between gap-3 px-5 pt-4 md:justify-end md:px-8 md:pt-6">
-          <Link href="/" className="flex items-center gap-2 md:hidden">
+        <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-5 pt-4 md:justify-end md:px-8 md:pt-6">
+          <Link href="/" className="flex min-h-11 items-center gap-2 md:hidden">
             <img src="/lexa/owl.webp" alt="" width={40} height={34} />
             <span className="text-xl font-bold tracking-tight">Lexa</span>
           </Link>
@@ -94,8 +94,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             </details>
           </div>
         </header>
-        <main className="flex-1 px-5 pt-5 md:px-8 md:pt-6">{children}</main>
-        <AlmoSignature />
+        <main className="flex-1 px-5 pt-5 md:px-8 md:pt-6 [&>*]:mx-auto">{children}</main>
+        <div className="mx-auto w-full max-w-3xl">
+          <AlmoSignature />
+        </div>
       </div>
       <AppTour />
     </div>

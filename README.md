@@ -55,6 +55,8 @@ npm run dev
 update public.profiles set role = 'admin' where id = (select id from auth.users where email = 'your@email.com');
 ```
 
+لو هتنشره على Vercel، اختار الـFunction Region اللي جنب مشروع Supabase بتاعك. المسافة بينهم بتفرق في سرعة كل طلب.
+
 ## Commands
 
 ```bash
@@ -106,3 +108,6 @@ In Practice, "Talk to Lexa" gives a topic (from the student's interests when he 
 ## Progress link for parents and teachers
 
 From "My interests" (`/me`) a student can make a private link. A parent or teacher opens it with no account and sees a short report: first name, XP, level, streak, word counts, the last seven days, and the language level. The student decides: the link lasts 30 days, making a new one cancels the old one, and he can stop it whenever he wants. The link is shown once when it's made, because only a hash of it is saved. Details of what is and isn't shared are in `PRIVACY.md`.
+
+## Account
+Forgot password (/forgot) sends a reset link by email; /reset sets the new one. The Account section in /me changes the name and deletes the account with all its data. In Supabase, add your site address plus `/reset` under Authentication > URL Configuration > Redirect URLs, or the reset link will not work.
