@@ -9,6 +9,8 @@ import { applyProgress } from "@/features/gamification/award";
 import { MAX_CHARS, MIN_CHARS, looksEnglish } from "@/features/talk/analyze";
 import { talkAnalysisSchema } from "@/features/talk/schemas";
 import { topicById } from "@/features/talk/topics";
+import { SPEAK_WORDS, WORDS_TOPIC, recentWords, wordsTopicPrompt } from "@/features/curriculum/today";
+import { sentenceMentionsWord } from "@/features/srs/judge";
 
 export const maxDuration = 60;
 
@@ -24,7 +26,16 @@ export async function POST(request: Request) {
   try {
     const { supabase, user } = await requireUser();
     const body = bodySchema.parse(await request.json());
-    const topic = topicById(body.topic);
+    // The "words" topic is built here from what he learned lately, so the browser cannot choose the words.
+    let targetWords: string[] = [];
+    let topic: { id: string; prompt: string } | undefined;
+    if (body.topic === WORDS_TOPIC) {
+      targetWords = await recentWords(supabase, SPEAK_WORDS);
+      if (targetWords.length < 2) throw new HttpError(400, "no_words");
+      topic = { id: WORDS_TOPIC, prompt: wordsTopicPrompt(targetWords) };
+    } else {
+      topic = topicById(body.topic);
+    }
     if (!topic) throw new HttpError(400, "invalid_topic");
     if (!looksEnglish(body.text)) throw new HttpError(400, "not_english");
 
@@ -68,7 +79,8 @@ export async function POST(request: Request) {
       xpGained = settings.xpTalkSession + result.bonusXp;
     }
 
-    return NextResponse.json({ analysis, xpGained });
+    const wordsUsed = targetWords.length > 0 ? { target: targetWords, used: targetWords.filter((word) => sentenceMentionsWord(body.text, word)) } : null;
+    return NextResponse.json({ analysis, xpGained, wordsUsed });
   } catch (error) {
     return handleApiError(error);
   }

@@ -4,9 +4,8 @@ import { requireUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api";
 import { interestsPromptLine } from "@/features/profile/interests";
 import { loadSettings } from "@/lib/settings-server";
-import { cardBatchSchema } from "@/features/ai/schemas";
-import { CARDS_SYSTEM } from "@/features/ai/prompts";
-import { AiBusyError, AiUnavailableError, assertWithinDailyLimit, callGeminiJson } from "@/features/ai/gemini";
+import { requestCards } from "@/features/ai/cards";
+import { AiBusyError, AiUnavailableError, assertWithinDailyLimit } from "@/features/ai/gemini";
 
 export const maxDuration = 60;
 
@@ -80,19 +79,4 @@ export async function POST(request: Request) {
   } catch (error) {
     return handleApiError(error);
   }
-}
-
-function requestCards(userId: string, model: string, fallbackModel: string, terms: string[], interestsLine: string) {
-  return callGeminiJson(
-    {
-      userId,
-      feature: "cards",
-      model,
-      fallbackModel,
-      system: CARDS_SYSTEM,
-      prompt: `Write cards for these words: ${JSON.stringify(terms)}${interestsLine ? `\n${interestsLine}` : ""}`,
-      temperature: 0.8,
-    },
-    cardBatchSchema,
-  );
 }

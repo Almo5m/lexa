@@ -111,3 +111,21 @@ From "My interests" (`/me`) a student can make a private link. A parent or teach
 
 ## Account
 Forgot password (/forgot) sends a reset link by email; /reset sets the new one. The Account section in /me changes the name and deletes the account with all its data. In Supabase, add your site address plus `/reset` under Authentication > URL Configuration > Redirect URLs, or the reset link will not work.
+
+## Learning path (phase 3.1)
+The home screen is now "Today's session": review, new words, translate, speak, always in this order. The student picks 15, 30 or 45 minutes a day and the number of new words follows it (the dashboard sets the 15-minute base, longer days scale from it).
+
+New words come from a hand-written path in `src/features/curriculum` (level A1 for now: 12 units, 300 words). Each word is taught first (meaning, sound, a short phrase), then tested at once by typing, five words at a time. The hand-written card is usable immediately; the AI adds examples and a memory hook in the background and keeps the written meaning first. To add words, add units to the files in that folder. The tests check that no word repeats and every phrase shows its word.
+
+Words from photos still work, under "More tools".
+
+## Understand step (phase 3.2)
+Step 3 of the day is a short reading text (45 to 70 words) that Lexa writes around the words the student learned most recently, followed by three questions: a detail question, true or false, and "what does this word mean here". The right answers stay on the server and are shown only after each answer; the Arabic translation opens after the last question, so it cannot replace reading. One text a day per student (table `reading_sessions`), and the XP for finishing it is set in the dashboard.
+
+## Translate and speak with today's words (phase 3.3)
+From the daily session, "Translate" writes its sentences around the words the student learned most recently (falling back to his weak and due words if there are fewer than two), and "Speak" asks him to write 3 to 5 sentences using at least two of those words. After the text, Lexa shows which of the words he really used. The server picks the words itself; the browser only asks for the "words" topic, so it cannot choose the words.
+
+## Skills and the path map (phase 3.4)
+The home screen shows four bars: words (learned from the path), understanding (average of the reading questions), translation (share right in the latest 20) and speaking (the band from the latest texts). A bar with too little data says so instead of showing a made-up number.
+
+`/path` lists every unit with how many of its words are learned and how many are solid (two correct reviews in a row). A unit is "mastered" when 80 percent of its words are solid. "Unit test" opens a review of that unit's words, weakest first. All of this is computed from the review state, so nothing is typed in by the browser and no new table is needed.

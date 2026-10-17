@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import type { AppSettings } from "@/lib/settings";
+import { isDailyMinutes, newWordsQuota } from "@/features/curriculum/session-plan";
 import { recordActivity, refillFreezes, toDateKey, type StreakState } from "./streak";
 
 export type ProgressEvent = { newWords?: number; reviews?: number; xp: number };
@@ -21,7 +22,7 @@ export async function applyProgress(
   const today = toDateKey(now);
 
   const [{ data: profile }, { data: day }] = await Promise.all([
-    db.from("profiles").select("total_xp, streak_current, streak_longest, streak_last_date, streak_freezes").eq("id", userId).single(),
+    db.from("profiles").select("total_xp, streak_current, streak_longest, streak_last_date, streak_freezes, daily_minutes").eq("id", userId).single(),
     db.from("daily_progress").select("*").eq("user_id", userId).eq("day", today).maybeSingle(),
   ]);
   if (!profile) throw new Error("profile_not_found");
@@ -36,7 +37,7 @@ export async function applyProgress(
   let bonusXp = 0;
   let goalReachedNow = false;
   const goalMet =
-    progress.new_words >= settings.dailyGoalNewWords || progress.reviews >= settings.dailyGoalReviews;
+    progress.new_words >= newWordsQuota(settings.dailyGoalNewWords, isDailyMinutes(profile.daily_minutes) ? profile.daily_minutes : 15) || progress.reviews >= settings.dailyGoalReviews;
   if (goalMet && !progress.goal_reached) {
     progress.goal_reached = true;
     goalReachedNow = true;

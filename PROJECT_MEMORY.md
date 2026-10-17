@@ -98,3 +98,50 @@ Log of decisions and events, newest at the bottom.
 - Added forgot/reset password, Account section (change name, delete account and data). PRIVACY.md updated.
 - Checked in a real browser at 360, 820 and 1366 widths on all screens: no horizontal overflow. 127 tests pass and the build passes. Not checked against real Supabase or Gemini.
 - Next: phase 3 (games, achievements, stats page); teacher review of word bank and hooks; logo; theme.
+
+## 2026-10-14 (phase 3.1: learning path)
+- Moaz asked me to rethink the whole system as a veteran English teacher: the student must end up able to understand, translate and speak; many words matter; sessions can be longer (15, 30, 45 minutes or by choice); dropping photo extraction as the main path is fine.
+- Wrote docs/LEARNING_DESIGN.md (daily session, unit path A1 to B1, about 3000 words, two kinds of knowing, review cap).
+- Built 3.1: curated A1 content (12 units, 300 words), home screen is now Today's session with four steps and a 15/30/45 minute choice, new learn flow (teach 5, test 5, repeat), basic cards from the hand-written list with background AI enrichment, review rounds scale with the chosen time, path words are kept out of the normal review until learned. Database: words.source/unit_id/enriched and profiles.daily_minutes added to setup.sql (tested twice on PostgreSQL 16).
+- 138 tests pass, build passes, flow checked in a real browser against a mock server. Not checked against the real Supabase or Gemini.
+- Next: 3.2 Understand (short text and questions), 3.3 translate and speak inside the session with today's words, 3.4 unit tests and skill meters; write A2 and B1 lists; teacher review of all lists.
+
+## 2026-10-15 (phase 3.2: understand step)
+- Moaz said continue. Found a partly built reading feature on disk (routes, table, tests, a broken component). Finished it: /read page, dictionary texts, step 3 on the home screen (reads the completion flag with the server key), PRIVACY.md and README updated.
+- 147 tests pass, build passes, setup.sql run twice on PostgreSQL 16, flow checked in a real browser at 360 and 1366 widths against a mock server. Not checked against the real Supabase or Gemini.
+- Next: 3.3 translate and speak inside the session with today's words, 3.4 unit tests and skill meters, A2 and B1 lists, teacher review.
+
+## 2026-10-15 (phase 3.3: translate and speak with today's words)
+- Translate from the daily session uses the newest learned words and the text level from the hardest path word; Speak gets a "use at least two of these words" topic built on the server, and the result shows which words were used. Home steps link to /translate?today=1 and /talk?today=1.
+- 150 tests pass, build passes, pages checked in a real browser at 360 width. The AI parts (translate generation, talk analysis) were not run against the real Gemini.
+- Next: 3.4 unit tests and four skill meters, A2 and B1 lists, teacher review of all lists.
+
+## 2026-10-15 (phase 3.4: skill meters, path map, unit test)
+- Four skill bars on the home screen, a /path map with per-unit state, and a unit test (review of one unit's words). No database change; everything comes from review state.
+- 160 tests pass, build passes, checked in a real browser at 360 and 1366 widths against a mock server.
+- Next: A2 and B1 word lists (the 3000-word target), teacher review of all lists, then games and achievements, then logo and theme.
+
+## 2026-10-15 — Phase 3.5: A2 lists
+- Wrote A2 in three files (a2a, a2b, a2c): 24 units, 600 words. Path total is now about 900 words.
+- Same rules as A1 (enforced by tests/curriculum.test.ts). Still needs teacher review.
+- Next: remaining A2 words (about 400), the B1 lists, level placement that skips A1 for strong students.
+
+## 2026-10-15 — Phase 3.6: more A2
+- Added a2d.ts: units a2-25..a2-32 (verbs, adjectives, place words, quantity, linking words, city). About 70 words dropped because they already existed; replaced with new ones.
+- A2 is now about 800 words, path total about 1100. Teacher review still needed.
+
+## 2026-10-15 — Phase 3.7: more A2
+- Added a2e.ts: units a2-33..a2-37 (128 words). Candidates already on the path were filtered out by script, small topics were merged so every unit has 20-30 words.
+- A2 is about 890 words, path total about 1190. Teacher review still needed.
+
+## 2026-10-17 — Phase 3.8: A2 complete
+- Added a2f.ts: units a2-38..a2-41 (101 words). A2 is now 41 units, about 990 words; path total about 1290.
+- Next: B1 lists (about 1200 words), level placement that skips A1/A2 for strong students, teacher review.
+
+## 2026-10-17 — Phase 3.9: B1 started
+- Added b1a.ts: units b1-01..b1-07 (183 words). Path total about 1480.
+- Next: more B1 units to reach the 3000 target, level placement that skips lower levels, teacher review.
+
+## 2026-10-17 — Phase 4.0: more B1
+- Added b1b.ts: units b1-08..b1-15 (215 words). B1 is 15 units, about 400 words. Path total about 1690.
+- Next: about 1300 more words (rest of B1), level placement, teacher review.

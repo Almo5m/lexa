@@ -4,11 +4,13 @@ import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
 import { recentAverage, topMistakeTypes, type StoredSession } from "@/features/talk/analyze";
 import { topicsFor } from "@/features/talk/topics";
+import { SPEAK_WORDS, WORDS_TOPIC, recentWords, wordsTopicPrompt } from "@/features/curriculum/today";
 import type { DictKey } from "@/lib/i18n/dictionary";
 
 export const metadata = { title: "Talk to Lexa" };
 
-export default async function TalkPage() {
+export default async function TalkPage({ searchParams }: { searchParams: Promise<{ today?: string }> }) {
+  const { today } = await searchParams;
   const { supabase, user } = await requireUserPage();
   const { t } = await getT();
 
@@ -22,7 +24,11 @@ export default async function TalkPage() {
   ]);
 
   const sessions = (sessionsData ?? []) as unknown as StoredSession[];
-  const topics = topicsFor(profile?.interests ?? []).map(({ id, prompt }) => ({ id, prompt }));
+  const todayWords = today === "1" ? await recentWords(supabase, SPEAK_WORDS) : [];
+  const topics = [
+    ...(todayWords.length >= 2 ? [{ id: WORDS_TOPIC, prompt: wordsTopicPrompt(todayWords) }] : []),
+    ...topicsFor(profile?.interests ?? []).map(({ id, prompt }) => ({ id, prompt })),
+  ];
   const average = recentAverage(sessions);
   const patterns = topMistakeTypes(sessions);
 

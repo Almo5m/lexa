@@ -42,6 +42,7 @@ const GROUPS: { title: DictKey; fields: FieldSpec[] }[] = [
       { key: "xpCorrectAnswer", kind: "number" },
       { key: "xpDailyGoal", kind: "number" },
       { key: "xpTalkSession", kind: "number" },
+      { key: "xpReading", kind: "number" },
       { key: "streakFreezesPerWeek", kind: "number" },
     ],
   },

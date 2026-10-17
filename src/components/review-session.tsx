@@ -27,7 +27,7 @@ interface Result {
   feedback: { correctedVersion: string; explanationAr: string } | null;
 }
 
-export function ReviewSession({ words }: { words: SessionWord[] }) {
+export function ReviewSession({ words, onDone }: { words: SessionWord[]; onDone?: () => void }) {
   const { t } = useT();
   const [queue, setQueue] = useState(words);
   const [index, setIndex] = useState(0);
@@ -104,9 +104,15 @@ export function ReviewSession({ words }: { words: SessionWord[] }) {
         {levelUp && <p className="font-semibold text-leaf">{t("review.levelUp")}</p>}
         {goal && <p className="font-semibold text-leaf">{t("review.goalDone")}</p>}
         <div className="pt-2">
-          <Link href="/" className="tag-btn">
-            {t("review.back")}
-          </Link>
+          {onDone ? (
+            <button type="button" autoFocus className="tag-btn" onClick={onDone}>
+              {t("learn.continue")}
+            </button>
+          ) : (
+            <Link href="/" className="tag-btn">
+              {t("review.back")}
+            </Link>
+          )}
         </div>
       </section>
     );
@@ -189,7 +195,7 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
         <div className="space-y-2">
           <p className="text-ink-soft">{t("review.writePrompt")}</p>
           <p className="text-2xl font-semibold">{word.card.meaningsAr.join("، ")}</p>
-          <p className="text-sm text-ink-faint">{word.card.situationAr}</p>
+          {word.card.situationAr && <p className="text-sm text-ink-faint">{word.card.situationAr}</p>}
         </div>
       )}
 

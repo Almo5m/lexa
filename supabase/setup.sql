@@ -25,6 +25,9 @@ alter table public.profiles add column if not exists level_band integer check (l
 alter table public.profiles add column if not exists level_tested_at timestamptz;
 alter table public.profiles add column if not exists interests text[] not null default '{}';
 alter table public.profiles add column if not exists onboarded boolean not null default false;
+alter table public.profiles add column if not exists daily_minutes integer not null default 15;
+alter table public.profiles drop constraint if exists profiles_daily_minutes_check;
+alter table public.profiles add constraint profiles_daily_minutes_check check (daily_minutes in (15, 30, 45));
 
 alter table public.profiles drop constraint if exists profiles_interests_check;
 alter table public.profiles add constraint profiles_interests_check
@@ -80,6 +83,14 @@ create table if not exists public.words (
 );
 create index if not exists words_user_due_idx on public.words (user_id, due_at);
 
+-- Words that come from the learning path (source 'path') start with a hand-written card
+-- (enriched = false) that the AI later fills with examples and a memory hook.
+alter table public.words add column if not exists source text not null default 'own';
+alter table public.words add column if not exists unit_id text;
+alter table public.words add column if not exists enriched boolean not null default true;
+alter table public.words drop constraint if exists words_source_check;
+alter table public.words add constraint words_source_check check (source in ('own', 'path'));
+
 -- Review log ---------------------------------------------------------------
 create table if not exists public.review_logs (
   id uuid primary key default gen_random_uuid(),
@@ -121,7 +132,21 @@ create index if not exists ai_usage_user_day_idx on public.ai_usage (user_id, cr
 
 alter table public.ai_usage drop constraint if exists ai_usage_feature_check;
 alter table public.ai_usage add constraint ai_usage_feature_check
-  check (feature in ('extract', 'cards', 'tutor', 'translate', 'review', 'demo', 'talk'));
+  check (feature in ('extract', 'cards', 'tutor', 'translate', 'review', 'demo', 'talk', 'reading'));
+
+-- Reading: one short text a day with three questions. The passage holds the right answers,
+-- so students have no policy on this table; only the server reads and writes it.
+create table if not exists public.reading_sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  day date not null,
+  words text[] not null,
+  passage jsonb not null,
+  answers jsonb not null default '[]'::jsonb,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (user_id, day)
+);
 
 -- Talk to Lexa: free writing, analyzed --------------------------------------
 create table if not exists public.talk_sessions (
@@ -189,6 +214,7 @@ alter table public.daily_progress enable row level security;
 alter table public.ai_usage enable row level security;
 alter table public.app_settings enable row level security;
 alter table public.talk_sessions enable row level security;
+alter table public.reading_sessions enable row level security;
 alter table public.share_links enable row level security;
 alter table public.demo_usage enable row level security;
 -- demo_usage has no policies on purpose: only the server (service role) can touch it.
@@ -234,4 +260,4 @@ create policy "share own delete" on public.share_links for delete using (user_id
 -- Progress columns on profiles are written by trusted server code only.
 -- Students can edit just their name, interests and the "onboarded" flag, never XP, streak or role.
 revoke update on public.profiles from authenticated;
-grant update (display_name, interests, onboarded) on public.profiles to authenticated;
+grant update (display_name, interests, onboarded, daily_minutes) on public.profiles to authenticated;

@@ -7,14 +7,19 @@ import { TRANSLATE_GENERATE_SYSTEM } from "@/features/ai/prompts";
 import { exerciseBatchSchema } from "@/features/translate/schemas";
 import { classifyWord, isDue } from "@/features/srs/scheduler";
 import { rowToState, type WordRow } from "@/lib/words";
+import { TRANSLATE_WORDS, recentWords } from "@/features/curriculum/today";
+import { readingLevel } from "@/features/reading/select";
+import { z } from "zod";
 
 export const maxDuration = 60;
 
-const EXERCISE_COUNT = 5;
+const EXERCISE_COUNT = TRANSLATE_WORDS;
+const bodySchema = z.object({ today: z.boolean().optional() });
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const { supabase, user } = await requireUser();
+    const { today } = bodySchema.parse(await request.json().catch(() => ({})));
     const settings = await loadSettings();
 
     const { data } = await supabase
@@ -32,9 +37,13 @@ export async function POST() {
       if (state.lastReviewedAt === null) return 2;
       return 3;
     };
-    const chosen = [...rows]
-      .sort((a, b) => rank(a) - rank(b) || Math.random() - 0.5)
-      .slice(0, EXERCISE_COUNT);
+    // From the daily session the sentences use the words he just learned; otherwise the weakest and the due ones come first.
+    const recent = today ? new Set(await recentWords(supabase, EXERCISE_COUNT)) : new Set<string>();
+    const fromToday = rows.filter((row) => recent.has(row.term));
+    const chosen =
+      fromToday.length >= 2
+        ? fromToday.slice(0, EXERCISE_COUNT)
+        : [...rows].sort((a, b) => rank(a) - rank(b) || Math.random() - 0.5).slice(0, EXERCISE_COUNT);
 
     const { data: profile } = await supabase.from("profiles").select("level_band").eq("id", user.id).single();
 
@@ -46,7 +55,7 @@ export async function POST() {
         model: settings.aiModel,
         fallbackModel: settings.aiFallbackModel,
         system: TRANSLATE_GENERATE_SYSTEM,
-        prompt: `Student level: ${profile?.level_band ?? 2} out of 5. Target words: ${JSON.stringify(chosen.map((row) => row.term))}`,
+        prompt: `Student level: ${profile?.level_band ?? 2} out of 5. Text level: ${readingLevel(chosen.map((row) => row.term), profile?.level_band ?? null)}. Target words: ${JSON.stringify(chosen.map((row) => row.term))}`,
         temperature: 0.8,
       },
       exerciseBatchSchema,

@@ -27,7 +27,7 @@ interface Feedback {
 
 const KNOWN_ERRORS = ["daily_ai_limit_reached", "ai_feature_disabled", "ai_busy", "ai_unavailable", "no_words"];
 
-export function TranslateSession() {
+export function TranslateSession({ today = false }: { today?: boolean }) {
   const { t } = useT();
   const [exercises, setExercises] = useState<Exercise[] | null>(null);
   const [index, setIndex] = useState(0);
@@ -49,7 +49,11 @@ export function TranslateSession() {
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch("/api/translate/generate", { method: "POST" });
+      const response = await fetch("/api/translate/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ today }),
+      });
       const data = await response.json();
       if (!response.ok) return setError(describe(data.error));
       setExercises(data.exercises);

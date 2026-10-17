@@ -22,7 +22,9 @@ export function WordCardView({ card, startRevealed = false, onRevealChange }: Pr
         <div className="ltr-text">
           <h2 className="text-4xl font-semibold tracking-tight">{card.term}</h2>
           <p className="mt-1 font-[family-name:var(--font-ipa)] text-ink-soft">
-            {card.ipa} <span className="text-ink-faint">· {card.partOfSpeech}</span>
+            {card.ipa}
+            {card.ipa && " "}
+            <span className="text-ink-faint">{card.ipa && "· "}{card.partOfSpeech}</span>
           </p>
         </div>
         <SpeakButton text={card.term} label={t("card.listen")} />
@@ -54,9 +56,9 @@ export function WordCardView({ card, startRevealed = false, onRevealChange }: Pr
           <p className="marker inline px-1 text-2xl">{card.meaningsAr.join("، ")}</p>
           <p className="text-ink-soft">{card.sentenceAr}</p>
 
-          <Block title={t("card.situation")}>{card.situationAr}</Block>
+          {card.situationAr && <Block title={t("card.situation")}>{card.situationAr}</Block>}
           {card.memoryHookAr && <Block title={t("card.hook")}>{card.memoryHookAr}</Block>}
-          <Block title={t("card.usage")}>{card.usageNoteAr}</Block>
+          {card.usageNoteAr && <Block title={t("card.usage")}>{card.usageNoteAr}</Block>}
 
           {card.extraExamples.length > 0 && (
             <div>

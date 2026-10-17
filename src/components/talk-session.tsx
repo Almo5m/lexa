@@ -16,6 +16,8 @@ interface Props {
 interface Result {
   analysis: TalkAnalysis;
   xpGained: number;
+  /** Set when the topic was "use today's words": which of them the student really used. */
+  wordsUsed: { target: string[]; used: string[] } | null;
 }
 
 interface Recognition {
@@ -187,7 +189,7 @@ export function LevelBar({ label, level }: { label: string; level: number }) {
 
 function ResultView({ result, onAgain }: { result: Result; onAgain: () => void }) {
   const { t } = useT();
-  const { analysis, xpGained } = result;
+  const { analysis, xpGained, wordsUsed } = result;
   return (
     <div className="space-y-5" aria-live="polite">
       <section className="sheet space-y-4 p-5 md:p-6">
@@ -200,6 +202,23 @@ function ResultView({ result, onAgain }: { result: Result; onAgain: () => void }
         <RichText text={analysis.feedbackAr} />
         {xpGained > 0 && <p className="font-semibold text-leaf">{t("talk.xp", { n: xpGained })}</p>}
       </section>
+
+      {wordsUsed && (
+        <section className="sheet space-y-2 p-5 md:p-6">
+          <h3 className="font-bold">{t("talk.wordsTitle", { a: wordsUsed.used.length, b: wordsUsed.target.length })}</h3>
+          <ul className="ltr-text flex flex-wrap gap-2">
+            {wordsUsed.target.map((word) => {
+              const used = wordsUsed.used.includes(word);
+              return (
+                <li key={word} className={`rounded-full px-3 py-1 text-sm font-medium ${used ? "bg-[#d9f5e6] text-leaf" : "bg-paper-deep text-ink-faint"}`}>
+                  {used ? "✓ " : ""}
+                  {word}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <section className="sheet space-y-3 p-5 md:p-6">
         <h3 className="font-bold">{t("talk.mistakes")}</h3>

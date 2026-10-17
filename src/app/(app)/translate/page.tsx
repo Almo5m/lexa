@@ -3,12 +3,13 @@ import { getT } from "@/lib/i18n/server";
 
 export const metadata = { title: "Translation" };
 
-export default async function TranslatePage() {
+export default async function TranslatePage({ searchParams }: { searchParams: Promise<{ today?: string }> }) {
+  const { today } = await searchParams;
   const { t } = await getT();
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">{t("translate.title")}</h1>
-      <TranslateSession />
+      <TranslateSession today={today === "1"} />
     </div>
   );
 }
