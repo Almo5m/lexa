@@ -57,3 +57,16 @@ describe("session plan", () => {
     expect(reviewRoundSize(15)).toBeLessThan(reviewRoundSize(45));
   });
 });
+
+describe("placement start", () => {
+  it("starts at A1 without a reliable test, skips A1 from band 3 and A1+A2 at band 5", async () => {
+    const { startUnitIndex, UNITS: all, nextPathWords: next, pathSizeFrom } = await import("@/features/curriculum");
+    expect(startUnitIndex(null)).toBe(0);
+    expect(startUnitIndex(2)).toBe(0);
+    expect(all[startUnitIndex(3)].level).toBe("A2");
+    expect(all[startUnitIndex(4)].level).toBe("A2");
+    expect(all[startUnitIndex(5)].level).toBe("B1");
+    expect(next(new Set(), 1, startUnitIndex(3))[0].unitId).toBe("a2-01");
+    expect(pathSizeFrom(0)).toBeGreaterThan(pathSizeFrom(startUnitIndex(3)));
+  });
+});

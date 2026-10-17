@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "export:curriculum": "node scripts/export-curriculum.mjs",
     "test": "vitest run"
   },
   "dependencies": {

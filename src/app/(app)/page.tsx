@@ -11,7 +11,7 @@ import { levelProgress } from "@/features/gamification/xp";
 import { toDateKey } from "@/features/gamification/streak";
 import { statusOf, type WordRow } from "@/lib/words";
 import { MinutesPicker } from "@/components/minutes-picker";
-import { PATH_SIZE, UNITS, nextPathWords, unitById } from "@/features/curriculum";
+import { UNITS, nextPathWords, pathSizeFrom, startUnitIndex, unitById } from "@/features/curriculum";
 import { currentUnit, unitProgress, type WordState } from "@/features/curriculum/progress";
 import { QUESTION_COUNT } from "@/features/reading/schemas";
 import { readingMeter, speakMeter, translateMeter, wordsMeter } from "@/features/skills/meters";
@@ -49,7 +49,8 @@ export default async function HomePage() {
   const quota = newWordsQuota(settings.dailyGoalNewWords, minutes);
   const waiting = words.filter((w) => w.source === "path" && w.last_reviewed_at === null).length;
   const learnLeft = Math.max(quota - (day?.new_words ?? 0), waiting);
-  const nextWord = nextPathWords(new Set(words.map((w) => w.term)), 1)[0];
+  const startUnit = startUnitIndex(profile?.level_band);
+  const nextWord = nextPathWords(new Set(words.map((w) => w.term)), 1, startUnit)[0];
   const pathEnded = !nextWord && waiting === 0;
   const unitName = unitById(nextWord?.unitId ?? "")?.titleAr ?? "";
 
@@ -72,10 +73,10 @@ export default async function HomePage() {
     words.filter((w) => w.source === "path").map((w) => [w.term, { learned: w.last_reviewed_at !== null, repetitions: w.repetitions }]),
   );
   const unitsProgress = UNITS.map((unit) => unitProgress(unit, pathStates));
-  const current = currentUnit(unitsProgress);
+  const current = currentUnit(unitsProgress.slice(startUnit));
   const learnedCount = [...pathStates.values()].filter((state) => state.learned).length;
   const meters = [
-    { key: "words", label: t("skills.words"), hint: t("skills.wordsHint"), ...wordsMeter(learnedCount, PATH_SIZE) },
+    { key: "words", label: t("skills.words"), hint: t("skills.wordsHint"), ...wordsMeter(learnedCount, pathSizeFrom(startUnit)) },
     { key: "read", label: t("skills.read"), hint: t("skills.readHint"), ...readingMeter((readingRows ?? []).map((row) => ({ answers: row.answers as { correct: boolean }[] | null, questions: QUESTION_COUNT }))) },
     { key: "translate", label: t("skills.translate"), hint: t("skills.translateHint"), ...translateMeter((translateLogs ?? []).map((row) => row.grade)) },
     { key: "speak", label: t("skills.speak"), hint: t("skills.speakHint"), ...speakMeter((talkRows ?? []) as unknown as StoredSession[]) },

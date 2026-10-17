@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { handleApiError } from "@/lib/api";
 import { loadSettings } from "@/lib/settings-server";
 import { toDateKey } from "@/features/gamification/streak";
-import { entryFor, nextPathWords, pathIndex, unitById } from "@/features/curriculum";
+import { entryFor, nextPathWords, pathIndex, startUnitIndex, unitById } from "@/features/curriculum";
 import { basicCard } from "@/features/curriculum/basic-card";
 import { isDailyMinutes, newWordsQuota } from "@/features/curriculum/session-plan";
 import type { WordCard } from "@/features/ai/schemas";
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const settings = await loadSettings();
 
     const [{ data: profile }, { data: day }, { data: owned }] = await Promise.all([
-      supabase.from("profiles").select("daily_minutes").eq("id", user.id).single(),
+      supabase.from("profiles").select("daily_minutes, level_band").eq("id", user.id).single(),
       supabase.from("daily_progress").select("new_words").eq("user_id", user.id).eq("day", toDateKey(new Date())).maybeSingle(),
       supabase.from("words").select("term, source, last_reviewed_at"),
     ]);
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     const waiting = ownedRows.filter((row) => row.source === "path" && row.last_reviewed_at === null).length;
     const room = more ? Math.max(EXTRA_WORDS - waiting, 0) : Math.max(quota - (day?.new_words ?? 0) - waiting, 0);
 
-    const fresh = nextPathWords(new Set(ownedRows.map((row) => row.term)), room);
+    const fresh = nextPathWords(new Set(ownedRows.map((row) => row.term)), room, startUnitIndex(profile?.level_band));
     if (fresh.length > 0) {
       const { error } = await supabase.from("words").upsert(
         fresh.map((entry) => ({

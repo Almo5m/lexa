@@ -145,3 +145,28 @@ Log of decisions and events, newest at the bottom.
 ## 2026-10-17 — Phase 4.0: more B1
 - Added b1b.ts: units b1-08..b1-15 (215 words). B1 is 15 units, about 400 words. Path total about 1690.
 - Next: about 1300 more words (rest of B1), level placement, teacher review.
+
+## 2026-10-17 — Phase 4.1: level placement
+- startUnitIndex(band), nextPathWords(owned, count, fromUnit), pathSizeFrom(fromUnit) in curriculum/index.ts.
+- /api/path/learn, home and /path use the student's level_band (only stored when the test is reliable). Skipped units are greyed ("path.skipped"). Words meter counts only words from the start unit on.
+- Test added in tests/curriculum.test.ts. No schema change.
+
+## 2026-10-17 — Phase 4.2: more B1
+- Added b1c.ts: units b1-16..b1-21 (153 words). B1 is 21 units, about 550 words. Path total about 1840.
+- Next: about 1150 more words, teacher review, games and achievements.
+
+## 2026-10-17 — Phase 4.3: more B1
+- Added b1d.ts: units b1-22..b1-28 (182 words). B1 is 28 units, about 735 words. Path total about 2025.
+- Next: about 975 more words, teacher review, games and achievements.
+
+## 2026-10-17 — Phase 4.4: more B1
+- Added b1e.ts: units b1-29..b1-34 (147 words). B1 is 34 units, about 880 words. Path total about 2170.
+- Next: about 830 more words, teacher review, games and achievements.
+
+## 2026-10-17 — Phase 4.5: more B1
+- Added b1f.ts: units b1-35..b1-40 (150 words). B1 is 40 units, about 1030 words. Path total 2323.
+- Next: about 680 more words, teacher review, games and achievements.
+
+## 2026-10-17 — Phase 4.6: teacher review export
+- Added scripts/export-curriculum.mjs and the npm script export:curriculum. It writes exports/curriculum-review.csv (2323 words, 93 units, UTF-8 with BOM for Excel). exports/ is git-ignored.
+- Decision: stop adding words for now (about 680 short of 3000); the written lists need a teacher pass first.
