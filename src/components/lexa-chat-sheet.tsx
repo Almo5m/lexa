@@ -40,12 +40,12 @@ export function LexaChatLauncher({
         )}
       </button>
 
-      <dialog ref={dialogRef} className="lexa-sheet" aria-label="Lexa">
+      <dialog ref={dialogRef} className="lexa-sheet" aria-label={t("brand.ai")}>
         <div className="flex max-h-[92dvh] flex-col">
           <div className="flex items-center justify-between gap-3 px-5 pt-5">
             <div className="flex items-center gap-3">
               <LexaMascot mood="neutral" size={48} />
-              <h2 className="text-xl font-semibold">Lexa</h2>
+              <h2 className="text-xl font-semibold">{t("brand.ai")}</h2>
             </div>
             <button
               type="button"

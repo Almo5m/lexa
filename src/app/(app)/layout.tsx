@@ -25,7 +25,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <div>
           <Link href="/" className="hidden items-center gap-3 px-6 pb-4 md:flex">
             <img src="/lexa/owl.webp" alt="" width={46} height={39} />
-            <span className="text-2xl font-bold tracking-tight">Lexa</span>
+            <span className="text-2xl font-bold tracking-tight">{t("brand.app")}</span>
           </Link>
           <AppNav isAdmin={profile?.role === "admin"} />
         </div>
@@ -51,7 +51,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-5 pt-4 md:justify-end md:px-8 md:pt-6">
           <Link href="/" className="flex min-h-11 items-center gap-2 md:hidden">
             <img src="/lexa/owl.webp" alt="" width={40} height={34} />
-            <span className="text-xl font-bold tracking-tight">Lexa</span>
+            <span className="text-xl font-bold tracking-tight">{t("brand.app")}</span>
           </Link>
           <div className="flex items-center gap-2">
             <span data-tour="progress" className="flex items-center gap-2">

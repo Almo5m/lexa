@@ -6,7 +6,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { classifyAiError, readableAiMessage } from "./errors";
 import { runWithFallback } from "./retry";
 
-export type AiFeature = "extract" | "cards" | "tutor" | "translate" | "review" | "demo" | "talk" | "reading";
+export type AiFeature = "extract" | "cards" | "tutor" | "translate" | "review" | "demo" | "talk" | "reading" | "writing";
 
 export class AiLimitError extends Error {
   constructor() {

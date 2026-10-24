@@ -1,14 +1,14 @@
 # Privacy and ownership
 
 ## Ownership
-Lexa is owned by Moaz (AlMo). All Rights Reserved. See `LICENSE`.
+Talib Ilm (طالب علم) is owned by Moaz (AlMo). All Rights Reserved. See `LICENSE`.
 
 ## What the app stores
 - Account: email, display name, and the progress numbers (XP, streak).
 - Words each student adds, the study cards for them, and the review history.
 - Interests the student chose from a fixed list.
-- The texts the student writes in "Talk to Lexa", with Lexa's levels and the mistakes found. Only the student can read them.
-- The daily reading text Lexa writes for him from the words he learned, with his answers to its three questions. Only the server reads this table.
+- The texts the student writes in "Talk to Bo", with Bo's levels and the mistakes found. Only the student can read them.
+- The daily reading text Bo writes for him from the words he learned, with his answers to its three questions. Only the server reads this table.
 - A progress link, if the student makes one. Only a hash of its secret is stored, never the secret itself.
 - AI usage records: which feature ran, success or failure, how long it took, and the error text if it failed. No message text is stored here.
 
@@ -16,7 +16,7 @@ Lexa is owned by Moaz (AlMo). All Rights Reserved. See `LICENSE`.
 Photos are read in memory to extract the words. They are not saved on the server or in the database.
 
 ## What is sent to Gemini
-Photos (for word extraction), words, the sentences the student writes to the tutor or in review, the texts he writes in "Talk to Lexa", and the words used to write his daily reading text. Interests are sent only as ids from a fixed list. The student's name and email are never sent.
+Photos (for word extraction), words, the sentences the student writes to the tutor or in review, the texts he writes in "Talk to Bo", and the words used to write his daily reading text. Interests are sent only as ids from a fixed list. The student's name and email are never sent.
 The free Gemini tier may let Google use submitted content to improve its products. Move to the paid tier before opening the app to students.
 
 ## Visitors on the landing page

@@ -170,3 +170,70 @@ Log of decisions and events, newest at the bottom.
 ## 2026-10-17 — Phase 4.6: teacher review export
 - Added scripts/export-curriculum.mjs and the npm script export:curriculum. It writes exports/curriculum-review.csv (2323 words, 93 units, UTF-8 with BOM for Excel). exports/ is git-ignored.
 - Decision: stop adding words for now (about 680 short of 3000); the written lists need a teacher pass first.
+
+## 2026-10-23 — Phase 5.0: one clear structure
+- Reason: the student said the system was confusing and everything was mixed; focus is third secondary.
+- Five tabs: Today, Plan, Practice, My words, Lexa. The center "add words" button is gone (it is a button on My words).
+- Today rewritten: only the session. Four required steps + speaking as a bonus. Pure logic in curriculum/today-plan.ts (5 tests).
+- Plan page: skill bars + level bar moved here (features/skills/load.ts), units grouped by level in collapsible sections, current unit big, others compact.
+- Practice grouped by skill; "read a text" added to it.
+- StepBanner (step n of 4 + way back) on learn, read, review?from=today, translate?today=1, talk?today=1.
+- Tour updated (path step, add step removed). GoalRing component deleted.
+- Checked on phone and desktop with the mock harness (no overflow, no small targets).
+- Build: compile passes, but the end of `npm run build` reports a Next.js security advisory for 16.4.0 (see PROBLEMS.md).
+
+## Phase 5.1 — shared finished cards (2026-10-24)
+- New table `path_cards` (term, card jsonb, reviewed): one finished card per path word, made once, read by every student. Students read only; writes go through the admin API.
+- `/api/path/learn` and `/api/words/enrich` use the stored card first and call Gemini only for words that have none.
+- Admin tab "كروت المسار": progress bar, generate/resume/stop (8 cards per request, resumable), CSV download for the teacher.
+- setup.sql re-run twice on Postgres 16: no errors; authenticated can select only, anon nothing.
+- Tests: 171 passing, tsc clean.
+
+## Phase 5.2 — book grammar, units 1–3 (2026-10-24)
+- User sent the ministry book (Year 3, Term 1). Built from its Scope and Sequence only; lessons and exercises are written by us, not copied.
+- `src/features/grammar/`: types, normalizeAnswer/isCorrectTyped, unit1 (Present Perfect / Continuous), unit2 (reported statements and commands), unit3 (modals of deduction, regret, blame). 13 exercises each (choose + type), checked by code, no AI call.
+- Pages: /grammar (list), /grammar/[unit] (lesson, drills, score). Entry in Practice under "قواعد الكتاب".
+- Tests: 174 passing, tsc clean. Units 4–6 (adjectives, causatives, reported questions) and writing tasks come next.
+
+## Phase 5.3 — book grammar, units 4–6 (2026-10-24)
+- Added unit4 (adjectives and compound adjectives), unit5 (causative have/get), unit6 (reported questions). Grammar now covers all six units of Year 3 Term 1. Next: writing tasks (persuasive essay, descriptive paragraph, online review).
+
+## Phase 5.4 — book writing tasks (2026-10-24)
+- Three tasks from the book's writing types: persuasive essay (unit 3), descriptive paragraph (unit 4), online review (unit 6). Brief, plan and sentence starters are ours.
+- /writing and /writing/[task]; POST /api/writing/grade looks the task up by id on the server, checks min/max words before any AI call, then Gemini marks content, organization, grammar and vocabulary (0–5 each, total /20) with up to 6 mistakes and a polished version. New AiFeature "writing" (ai_usage check constraint updated in setup.sql: run it again).
+- Results are not stored yet. Tests: 177 passing, tsc clean.
+
+## Phase 5.5 — book link on Today (2026-10-24)
+- Today now has a second link card to /grammar (book grammar and writing), above the plan link. Not a required step; progress for the book is not stored yet.
+
+## Phase 5.6 — book results saved (2026-10-24)
+- New table `book_scores` (user_id, item_id, kind, score, max_score, attempts): best result of each grammar unit and writing task. Students can only read their own rows; the server writes with the admin client after working out the real maximum (grammar: number of exercises, writing: 20).
+- POST /api/book/score for grammar (score clamped to the unit's size); the writing grader saves its total, and a saving failure never hides the feedback.
+- Fifth skill bar "قواعد وكتابة" on the plan page (best results, weighted; shows units tried out of 9).
+- setup.sql re-run twice on Postgres 16: no errors; authenticated can only select. Tests: 180 passing, tsc clean.
+- Known limit: grammar scores come from the browser, so a student could send a false score for his own bar. It affects only his own progress bar, nothing shared.
+
+## Phase 5.7 — book listening and speaking (2026-10-24)
+- Listening: 5 original texts (units 1, 3, 4, 5, 6), 4 questions each. The browser reads the script aloud (Web Speech), up to 3 plays, script shown after answering. /listening and /listening/[task].
+- Speaking: six new topics from the book units added to the Talk topics (role-play, debate, persuasion, invitation).
+- /api/book/score now takes {kind: grammar|listening, itemId, score}; maximum comes from our content. book_scores.kind constraint widened (setup.sql updated, re-run twice on Postgres 16 without errors).
+- The fifth skill bar is now "الكتاب" (grammar, writing and listening, 14 items). Tests: 182 passing, tsc clean.
+- Known limit: Web Speech voices differ by device; some Android browsers have no English voice. The page says so when speech is unsupported.
+
+## Phase 5.8 — achievements, motivation without lost time (2026-10-25)
+- User asked for games that motivate and do not waste time. Decision: no separate mini-games. Badges come only from real study, so every minute stays study.
+- /achievements: 9 groups (words, streak, XP level, reading, translation, talking, grammar units ≥80%, writing ≥15/20, listening all right), 3 to 7 targets each, 29 badges in total. Computed from existing data, no new table.
+- Today shows one line when a badge is at least halfway (words or streak), linking to /achievements. The plan page links to it too.
+- Tests: 186 passing, tsc clean. No setup.sql change in this phase.
+
+## Phase 5.9 — README and launch checklist (2026-10-25)
+- README status rewritten to what the app really is now (daily session, path, book content, badges, admin cards). Added the "generate cards" setup step.
+- New docs/LAUNCH_CHECKLIST.md: the order of steps before going live (Next upgrade, setup.sql, env, admin, cards, limits, test as a student, phone check, teacher pass, privacy, backups, region).
+- Logo and theme are still waiting; they need his decision on the name meaning and are the last step.
+
+## Phase 6.0 — new names (2026-10-25)
+- Direction change: full UI rebuild. Decisions from the user: site name "طالب علم" (Talib Ilm), AI name "بو" (Bo), game-style direction, a real 3D robot companion instead of the owl.
+- `src/lib/brand.ts` holds both names. The dictionary uses `{app}` and `{ai}`; translate() fills them for the active language, so renaming again is one edit.
+- Arabic texts rewritten in the masculine for Bo (the robot), English texts use he/him. AI system prompts say Bo, a friendly little robot, speaking masculine Arabic.
+- Layout titles, manifest, README and PRIVACY updated. Code identifiers still named Lexa (LexaMascot, LexaLoader, LexaIcon, lexa-* files, /public/lexa) stay until the new robot and design system replace them (phases 6.1 and 6.2).
+- Tests: 186 passing, tsc clean.

@@ -16,14 +16,27 @@ export default async function PracticePage() {
     <div className="max-w-2xl space-y-8">
       <h1 className="text-2xl font-semibold">{t("practice.title")}</h1>
 
-      <ul className="divide-y divide-line border-y border-line">
+      <Group title={t("practice.groupWords")}>
         <Row href="/review" icon={<ReviewIcon />} title={t("practice.review")} hint={t("practice.reviewHint")} />
         <Row href="/quiz" icon={<WordsIcon />} title={t("practice.quiz")} hint={t("practice.quizHint")} />
-        <Row href="/talk" icon={<ChatIcon />} title={t("practice.talk")} hint={t("practice.talkHint")} />
-        <Row href="/translate" icon={<ChatIcon />} title={t("practice.translate")} hint={t("practice.translateHint")} />
-      </ul>
+      </Group>
 
-      <ul className="divide-y divide-line border-y border-line">
+      <Group title={t("practice.groupUnderstand")}>
+        <Row href="/read" icon={<WordsIcon />} title={t("practice.read")} hint={t("practice.readHint")} />
+        <Row href="/translate" icon={<ChatIcon />} title={t("practice.translate")} hint={t("practice.translateHint")} />
+      </Group>
+
+      <Group title={t("practice.groupGrammar")}>
+        <Row href="/grammar" icon={<WordsIcon />} title={t("practice.grammar")} hint={t("practice.grammarHint")} />
+        <Row href="/writing" icon={<ChatIcon />} title={t("practice.writing")} hint={t("practice.writingHint")} />
+        <Row href="/listening" icon={<ChatIcon />} title={t("practice.listening")} hint={t("practice.listeningHint")} />
+      </Group>
+
+      <Group title={t("practice.groupSpeak")}>
+        <Row href="/talk" icon={<ChatIcon />} title={t("practice.talk")} hint={t("practice.talkHint")} />
+      </Group>
+
+      <Group title={t("practice.groupLevel")}>
         <Row
           href="/level"
           icon={<XpIcon />}
@@ -31,8 +44,17 @@ export default async function PracticePage() {
           hint={level ? t("practice.levelDone", { n: level }) : t("practice.levelHint")}
         />
         <Row href="/suggest" icon={<WordsIcon />} title={t("practice.suggest")} hint={t("suggest.intro")} />
-      </ul>
+      </Group>
     </div>
+  );
+}
+
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section>
+      <h2 className="mb-2 text-sm font-semibold text-ink-faint">{title}</h2>
+      <ul className="divide-y divide-line border-y border-line">{children}</ul>
+    </section>
   );
 }
 

@@ -179,3 +179,12 @@ export function PracticeIcon(props: IconProps) {
     </Base>
   );
 }
+
+export function PathIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M6 20V4" />
+      <path d="M6 5h11l-2.5 3.5L17 12H6" fill="currentColor" fillOpacity={0.14} />
+    </Base>
+  );
+}

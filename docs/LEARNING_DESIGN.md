@@ -44,3 +44,28 @@ Moves to a side "My own words" area (for school homework words). The main path d
 
 ## Status
 3.1 is built: A1 content (300 words), the Today screen with the 15/30/45 minute choice, and the teach-then-test learn flow. The Understand step (3.2) is built too: a daily text around the newest words with three questions. A2 and B1 lists, translate and speak with today's words (3.3) are built too. The four skill meters, the path map and unit tests (3.4) are built too. Next: the A2 and B1 lists, then games and achievements. 4.5: B1 now 40 units, about 1030 words (body 3, animals 3, cities, ethics, everyday objects, communication 2). 4.4: B1 had 34 units, about 880 words (finance, digital culture, education 2, daily habits, two verb units). 4.3: B1 had 28 units, about 735 words (materials, work 2, home and tech 2, geography 2, cooking 3, adjectives 2, feelings 2). 4.2: B1 had 21 units, about 550 words (politics, history, mind, language, shopping, more verbs). 4.1: level placement: a reliable level test now sets the start unit (band 3-4 skips A1, band 5 skips A1 and A2); skipped units show greyed on the path and do not count against the words meter. 4.0: B1 now 15 units, about 400 words (added travel, environment, medicine, arts, sport, relationships, abstract ideas, linking words). 3.9: B1 started, 7 units (about 180 words: society, media and jobs, science, economy, law, advanced adjectives, advanced verbs). 3.8: A2 is complete, 41 units (about 990 words): feelings and ideas, school and exams, food 3, home and daily life. Before: 3.7 had 37 units (about 890 words): work and communication, shops and leisure, body and health, verbs, transport 2. Before: 3.6 had 32 units: added everyday verbs, thinking/speaking verbs, adjectives, place words, quantity, linking words and city/community.
+
+## 5.0: one clear structure (focus: third secondary)
+The app was feeling like many things at once. The structure is now fixed, with one job per place:
+
+- **النهارده (Today)**: the only thing on it is today's session. Four required steps in a fixed order: review, new words, read a text, translate. Speaking with Lexa is a bonus step and never blocks the end of the day. The step to do now is one big card with one button; the others are small rows.
+- **المنهج (Plan)**: where the student stands. The four skill bars, his level, and the units grouped by A1, A2 and B1. The level he is working in opens by itself and the current unit is the only big card.
+- **تدريب (Practice)**: free exercises outside the session, grouped by skill: your words, understand and translate, speak and write, your level.
+- **كلماتي (My words)**: the archive. Adding words from photos moved here, as a button.
+- **Lexa**: the chat, always one tap away.
+
+Every exercise that belongs to the session starts with the same strip: step n of 4, and one way back. The session logic is a plain function (`curriculum/today-plan.ts`) with tests.
+
+Not built yet for the third secondary exam: a grammar track (tenses, conditionals, passive, reported speech, relative clauses) with drills, and guided writing practice. Both need content written against the ministry book, so they wait for the teacher.
+
+## 5.1 Shared finished cards
+Meanings and chunks of every path word are hand-written; the rest of the card (examples, notes) is generated once by the admin and stored in `path_cards`. A student learning a word gets the finished card instantly. The teacher can export the cards as CSV and mark them reviewed.
+
+## 5.2 Book grammar
+One grammar unit per book unit: short Egyptian-Arabic lesson, examples, 13 drills (choose and type) with an instant check and a reason for every answer. Typed answers ignore case, spacing, final dot and curly quotes. Content is original; only the topics follow the ministry book.
+
+## 5.4 Book writing
+Plan, starters, then the student's own text. The server fixes the brief, so marks cannot be steered from the client, and a minimum word count stops empty submissions before they cost an AI call. Marks follow the exam rubric: content, organization, grammar, vocabulary.
+
+## 5.8 Badges instead of games
+Every badge is earned by something the student already does (words learned, days in a row, texts read, translations, talks, grammar, writing, listening). There is no separate game to open, so motivation never costs study time. Today shows only the badge that is closest, once it is at least halfway there, so the nudge is short and real.

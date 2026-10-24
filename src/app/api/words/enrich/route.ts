@@ -7,6 +7,7 @@ import { loadSettings } from "@/lib/settings-server";
 import { requestCards } from "@/features/ai/cards";
 import { assertWithinDailyLimit } from "@/features/ai/gemini";
 import { entryFor } from "@/features/curriculum";
+import { loadPathCards } from "@/features/curriculum/path-cards-db";
 import type { WordCard } from "@/features/ai/schemas";
 
 export const maxDuration = 60;
@@ -31,9 +32,23 @@ export async function POST(request: Request) {
     if (error) throw error;
     if (!rows || rows.length === 0) return NextResponse.json({ cards: {} });
 
+    // Words that already have a finished card in the shared set need no AI at all.
+    const finished = await loadPathCards(supabase, rows.map((row) => row.term));
+    const cards: Record<string, WordCard> = {};
+    await Promise.all(
+      rows.flatMap((row) => {
+        const card = finished.get(row.term);
+        if (!card) return [];
+        cards[row.id] = card;
+        return [supabase.from("words").update({ card, enriched: true }).eq("id", row.id)];
+      }),
+    );
+    const pending = rows.filter((row) => !cards[row.id]);
+    if (pending.length === 0) return NextResponse.json({ cards });
+
     await assertWithinDailyLimit(user.id, settings.aiDailyLimitPerStudent);
     const { data: profile } = await supabase.from("profiles").select("interests").eq("id", user.id).single();
-    const hints = Object.fromEntries(rows.flatMap((row) => {
+    const hints = Object.fromEntries(pending.flatMap((row) => {
       const entry = entryFor(row.term);
       return entry ? [[row.term, entry.ar]] : [];
     }));
@@ -42,14 +57,13 @@ export async function POST(request: Request) {
       user.id,
       settings.aiModel,
       settings.aiFallbackModel,
-      rows.map((row) => row.term),
+      pending.map((row) => row.term),
       interestsPromptLine(profile?.interests ?? []),
       hints,
     );
 
-    const cards: Record<string, WordCard> = {};
     await Promise.all(
-      rows.map(async (row) => {
+      pending.map(async (row) => {
         const card = result.cards.find((item) => item.term.toLowerCase() === row.term);
         if (!card) return;
         // The teacher-written meanings always come first; the AI's extra meanings only follow them.

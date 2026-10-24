@@ -7,6 +7,13 @@ export interface Topic {
 }
 
 export const TOPICS: Topic[] = [
+  // From the topics of the Year 3 book: role-plays, discussions and debates.
+  { id: "book-care", interest: null, prompt: "Imagine you are a nurse or a doctor. Describe your day and say what you have done so far today." },
+  { id: "book-machines", interest: null, prompt: "Your friend says machines will do every job one day. Do you agree? Give two reasons." },
+  { id: "book-nature", interest: null, prompt: "Persuade a friend to protect nature. What should you both have done earlier, and what can you do now?" },
+  { id: "book-sea", interest: null, prompt: "Talk about the advantages and disadvantages of tourism in the Red Sea." },
+  { id: "book-work", interest: null, prompt: "Debate: will AI help or hurt workers in the future? Say your opinion and give an example." },
+  { id: "book-invite", interest: null, prompt: "Invite a friend to an event. Say what, when and where, and answer if your friend says no." },
   { id: "yesterday", interest: null, prompt: "Tell Lexa about your day yesterday. What did you do, and what was the best part?" },
   { id: "friend", interest: null, prompt: "Describe your best friend. What is he or she like, and why do you like spending time together?" },
   { id: "future", interest: null, prompt: "What do you want to do after school? Explain why." },

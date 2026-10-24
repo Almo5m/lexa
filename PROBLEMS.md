@@ -153,3 +153,22 @@ The start unit comes only from the 5-band vocabulary test (3-4 skip A1, 5 skips 
 
 ## Teacher review of the word lists
 `npm run export:curriculum` writes `exports/curriculum-review.csv` with every word, its meaning, the example sentences and two empty columns (teacher_ok, teacher_correction). The teacher fills the file, and the corrections are applied to the unit files by hand. The script needs Node 22.13 or newer.
+
+## The app felt like many apps at once (fixed in 5.0)
+Home had about ten blocks (session, skill bars, goal rings, tiles, level bar, path link, two banners) and the bottom bar mixed the old photo flow with the new path. Fix: five fixed tabs, Today shows only the session, skill bars and level moved to the Plan page, practice is grouped by skill, and every session exercise shows "step n of 4". Lesson for later changes: a new feature gets a place in one of the five tabs, it does not get a new block on Today.
+
+## Third secondary content gap
+The exam also asks for grammar (structure) and writing. The app has no grammar or writing drills yet. The word path starts at A1 for students without a level test result, which is too basic for third secondary; the level test (placement) is the way around it, so the home screen asks for it first.
+
+## Build stops with a Next.js security notice
+On 2026-10-23 `npm run build` printed "Your version of Next.js is affected by a known security vulnerability" after the compile step finished (Next 16.4.0 installed, 16.4.2 is the latest). The advisory check changes with time, so update Next (`npm install next@latest`), run the tests, and rebuild before deploying.
+
+## Path cards: personalization and first run
+- When a shared card exists, the interest-based personalization of path words is skipped on purpose (speed and consistency win). It could return later as an optional background upgrade.
+- After running setup.sql the admin must open the "كروت المسار" tab once and generate until done. Until then the app works as before (cards made per student on demand).
+
+## Grammar scores are reported by the browser
+Grammar drills are checked in the client, so the saved score is what the client sends (clamped to the unit's real size). A student can only inflate his own bar; nothing is shared or ranked on it. If scores ever feed rewards or a leaderboard, move the checking to the server.
+
+## Listening depends on the device voice
+The listening texts are read by the browser's own voice, so quality and availability change from phone to phone. If many students report no sound, record the five scripts as audio files and play those instead.

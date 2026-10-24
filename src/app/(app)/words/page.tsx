@@ -72,7 +72,12 @@ export default async function WordsPage({
 
   return (
     <div className="max-w-3xl space-y-6">
-      <h1 className="text-2xl font-semibold">{t("words.title")}</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold">{t("words.title")}</h1>
+        <Link href="/add" className="tag-btn min-h-11 text-sm">
+          {t("words.add")}
+        </Link>
+      </div>
 
       <form action="/words" className="flex gap-3">
         {filter !== "all" && <input type="hidden" name="filter" value={filter} />}

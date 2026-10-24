@@ -15,7 +15,7 @@ describe("summarizeUsage", () => {
       failed: 0,
       successRate: null,
       averageLatencyMs: null,
-      byFeature: { extract: 0, cards: 0, tutor: 0, translate: 0, review: 0, demo: 0, talk: 0, reading: 0 },
+      byFeature: { extract: 0, cards: 0, tutor: 0, translate: 0, review: 0, demo: 0, talk: 0, reading: 0, writing: 0 },
     });
   });
   it("counts failures, features and average latency", () => {
@@ -29,7 +29,7 @@ describe("summarizeUsage", () => {
     expect(summary.failed).toBe(1);
     expect(summary.successRate).toBe(0.75);
     expect(summary.averageLatencyMs).toBe(1000);
-    expect(summary.byFeature).toEqual({ extract: 1, cards: 1, tutor: 2, translate: 0, review: 0, demo: 0, talk: 0, reading: 0 });
+    expect(summary.byFeature).toEqual({ extract: 1, cards: 1, tutor: 2, translate: 0, review: 0, demo: 0, talk: 0, reading: 0, writing: 0 });
   });
 });
 
@@ -61,7 +61,7 @@ describe("summarizeByFeature", () => {
       { feature: "tutor", ok: true, latency_ms: 1000, created_at: "2026-10-06T10:00:00Z" },
       { feature: "tutor", ok: false, latency_ms: 3000, created_at: "2026-10-06T11:00:00Z" },
     ]);
-    expect(result.map((item) => item.feature)).toEqual(["extract", "cards", "tutor", "translate", "review", "demo", "talk", "reading"]);
+    expect(result.map((item) => item.feature)).toEqual(["extract", "cards", "tutor", "translate", "review", "demo", "talk", "reading", "writing"]);
     expect(result[2]).toEqual({ feature: "tutor", total: 2, failed: 1, averageLatencyMs: 2000 });
     expect(result[0]).toEqual({ feature: "extract", total: 0, failed: 0, averageLatencyMs: null });
   });

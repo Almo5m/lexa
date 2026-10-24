@@ -132,7 +132,7 @@ create index if not exists ai_usage_user_day_idx on public.ai_usage (user_id, cr
 
 alter table public.ai_usage drop constraint if exists ai_usage_feature_check;
 alter table public.ai_usage add constraint ai_usage_feature_check
-  check (feature in ('extract', 'cards', 'tutor', 'translate', 'review', 'demo', 'talk', 'reading'));
+  check (feature in ('extract', 'cards', 'tutor', 'translate', 'review', 'demo', 'talk', 'reading', 'writing'));
 
 -- Reading: one short text a day with three questions. The passage holds the right answers,
 -- so students have no policy on this table; only the server reads and writes it.
@@ -146,6 +146,15 @@ create table if not exists public.reading_sessions (
   completed_at timestamptz,
   created_at timestamptz not null default now(),
   unique (user_id, day)
+);
+
+-- Path cards: one finished card per word of the curriculum, made once and shared by every student.
+-- Students can only read it; the server (service role) writes it from the admin panel.
+create table if not exists public.path_cards (
+  term text primary key,
+  card jsonb not null,
+  reviewed boolean not null default false,
+  created_at timestamptz not null default now()
 );
 
 -- Talk to Lexa: free writing, analyzed --------------------------------------
@@ -210,11 +219,29 @@ alter table public.profiles enable row level security;
 alter table public.word_groups enable row level security;
 alter table public.words enable row level security;
 alter table public.review_logs enable row level security;
+-- Book practice: the best score of each grammar unit and writing task. Students can only read their own rows;
+-- the server checks and writes them.
+create table if not exists public.book_scores (
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  item_id text not null,
+  kind text not null check (kind in ('grammar', 'writing')),
+  score integer not null check (score >= 0),
+  max_score integer not null check (max_score > 0 and score <= max_score),
+  attempts integer not null default 1,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, item_id)
+);
+
+alter table public.book_scores drop constraint if exists book_scores_kind_check;
+alter table public.book_scores add constraint book_scores_kind_check check (kind in ('grammar', 'writing', 'listening'));
+
 alter table public.daily_progress enable row level security;
 alter table public.ai_usage enable row level security;
 alter table public.app_settings enable row level security;
 alter table public.talk_sessions enable row level security;
 alter table public.reading_sessions enable row level security;
+alter table public.path_cards enable row level security;
+alter table public.book_scores enable row level security;
 alter table public.share_links enable row level security;
 alter table public.demo_usage enable row level security;
 -- demo_usage has no policies on purpose: only the server (service role) can touch it.
@@ -225,6 +252,14 @@ create policy "profiles read own or admin" on public.profiles
 drop policy if exists "profiles update own" on public.profiles;
 create policy "profiles update own" on public.profiles
   for update using (id = auth.uid()) with check (id = auth.uid() and role = (select role from public.profiles where id = auth.uid()));
+
+drop policy if exists "book scores read own" on public.book_scores;
+create policy "book scores read own" on public.book_scores for select to authenticated using (user_id = auth.uid());
+revoke all on public.book_scores from anon, authenticated;
+grant select on public.book_scores to authenticated;
+
+drop policy if exists "path cards read" on public.path_cards;
+create policy "path cards read" on public.path_cards for select to authenticated using (true);
 
 drop policy if exists "groups own" on public.word_groups;
 create policy "groups own" on public.word_groups for all
@@ -259,5 +294,7 @@ create policy "share own delete" on public.share_links for delete using (user_id
 
 -- Progress columns on profiles are written by trusted server code only.
 -- Students can edit just their name, interests and the "onboarded" flag, never XP, streak or role.
+revoke all on public.path_cards from anon, authenticated;
+grant select on public.path_cards to authenticated;
 revoke update on public.profiles from authenticated;
 grant update (display_name, interests, onboarded, daily_minutes) on public.profiles to authenticated;

@@ -1,4 +1,5 @@
 import { LevelBar, TalkSession } from "@/components/talk-session";
+import { StepBanner } from "@/components/step-banner";
 import { LexaMascot } from "@/components/lexa-mascot";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
@@ -7,7 +8,7 @@ import { topicsFor } from "@/features/talk/topics";
 import { SPEAK_WORDS, WORDS_TOPIC, recentWords, wordsTopicPrompt } from "@/features/curriculum/today";
 import type { DictKey } from "@/lib/i18n/dictionary";
 
-export const metadata = { title: "Talk to Lexa" };
+export const metadata = { title: "Talk" };
 
 export default async function TalkPage({ searchParams }: { searchParams: Promise<{ today?: string }> }) {
   const { today } = await searchParams;
@@ -34,6 +35,7 @@ export default async function TalkPage({ searchParams }: { searchParams: Promise
 
   return (
     <div className="max-w-2xl space-y-8">
+      {today === "1" && <StepBanner step="speak" />}
       <div className="flex items-end gap-3">
         <LexaMascot mood="neutral" size={84} />
         <div>

@@ -13,7 +13,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           <div className="flex items-center gap-3">
             <img src="/lexa/owl.webp" alt="" width={44} height={37} />
             <div className="leading-tight">
-              <p className="text-lg font-bold">Lexa</p>
+              <p className="text-lg font-bold">{t("brand.app")}</p>
               <p className="text-sm text-ink-soft">{t("admin.title")}</p>
             </div>
           </div>

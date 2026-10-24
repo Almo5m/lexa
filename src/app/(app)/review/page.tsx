@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StepBanner } from "@/components/step-banner";
 import { LexaMascot } from "@/components/lexa-mascot";
 import { ReviewSession, type SessionWord } from "@/components/review-session";
 import { requireUserPage } from "@/lib/auth";
@@ -14,8 +15,8 @@ import type { WordCard } from "@/features/ai/schemas";
 
 export const metadata = { title: "Review" };
 
-export default async function ReviewPage({ searchParams }: { searchParams: Promise<{ unit?: string }> }) {
-  const { unit: unitId } = await searchParams;
+export default async function ReviewPage({ searchParams }: { searchParams: Promise<{ unit?: string; from?: string }> }) {
+  const { unit: unitId, from } = await searchParams;
   const unit = unitId ? unitById(unitId) : undefined;
   const { supabase, user } = await requireUserPage();
   const { t } = await getT();
@@ -83,14 +84,15 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="max-w-2xl space-y-6">
+      {from === "today" && !unit && <StepBanner step="review" />}
       <h1 className="text-2xl font-semibold">{unit ? unit.titleAr : t("review.title")}</h1>
       {sessionWords.length === 0 ? (
         <div className="sheet flex flex-col items-center gap-3 p-8 text-center">
           <LexaMascot mood="neutral" size={140} />
           <p className="text-lg">{t("review.nothing")}</p>
           <p className="text-ink-soft">{t("review.nothingHint")}</p>
-          <Link href="/add" className="tag-btn">
-            {t("nav.add")}
+          <Link href="/" className="tag-btn">
+            {t("today.backToSession")}
           </Link>
         </div>
       ) : (

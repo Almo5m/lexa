@@ -17,9 +17,9 @@ interface Step {
 
 const STEPS: Step[] = [
   { text: "tour.welcome" },
-  { target: "add", text: "tour.add" },
-  { target: "words", text: "tour.words" },
+  { target: "path", text: "tour.path" },
   { target: "practice", text: "tour.practice" },
+  { target: "words", text: "tour.words" },
   { target: "lexa", text: "tour.lexa" },
   { target: "progress", text: "tour.progress" },
   { text: "tour.review" },

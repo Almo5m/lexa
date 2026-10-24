@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminAiPanel } from "@/components/admin-ai-panel";
+import { AdminPathCards } from "@/components/admin-path-cards";
 import { AdminSettingsForm } from "@/components/admin-settings-form";
 import { getT } from "@/lib/i18n/server";
 import { loadSettings } from "@/lib/settings-server";
@@ -13,12 +14,13 @@ import {
   type UsageRow,
 } from "@/features/admin/stats";
 import { toDateKey } from "@/features/gamification/streak";
+import { PATH_SIZE } from "@/features/curriculum";
 import type { DictKey } from "@/lib/i18n/dictionary";
 
 export const metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-const TABS = ["overview", "ai", "settings"] as const;
+const TABS = ["overview", "ai", "cards", "settings"] as const;
 type Tab = (typeof TABS)[number];
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
@@ -46,6 +48,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
       {tab === "overview" && <Overview />}
       {tab === "ai" && <AdminAiPanel settings={settings} keySet={Boolean(process.env.GEMINI_API_KEY)} />}
+      {tab === "cards" && <PathCardsTab />}
       {tab === "settings" && <AdminSettingsForm initial={settings} />}
     </div>
   );
@@ -223,5 +226,16 @@ function Legend({ color, label }: { color: string; label: string }) {
       <span className={`h-3 w-3 rounded-sm ${color}`} />
       {label}
     </span>
+  );
+}
+
+async function PathCardsTab() {
+  const { data } = await createSupabaseAdminClient().from("path_cards").select("reviewed");
+  const rows = data ?? [];
+  return (
+    <AdminPathCards
+      initial={{ total: PATH_SIZE, ready: rows.length, reviewed: rows.filter((row) => row.reviewed).length }}
+      keySet={Boolean(process.env.GEMINI_API_KEY)}
+    />
   );
 }

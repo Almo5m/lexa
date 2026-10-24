@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/brand";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { LangProvider } from "@/lib/i18n/provider";
@@ -5,7 +6,7 @@ import { getLang } from "@/lib/i18n/server";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Lexa", template: "%s | Lexa" },
+  title: { default: BRAND.app.ar, template: `%s | ${BRAND.app.ar}` },
   description: "Learn, remember and use English vocabulary.",
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },

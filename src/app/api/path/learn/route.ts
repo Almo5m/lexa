@@ -6,6 +6,7 @@ import { loadSettings } from "@/lib/settings-server";
 import { toDateKey } from "@/features/gamification/streak";
 import { entryFor, nextPathWords, pathIndex, startUnitIndex, unitById } from "@/features/curriculum";
 import { basicCard } from "@/features/curriculum/basic-card";
+import { loadPathCards } from "@/features/curriculum/path-cards-db";
 import { isDailyMinutes, newWordsQuota } from "@/features/curriculum/session-plan";
 import type { WordCard } from "@/features/ai/schemas";
 
@@ -44,15 +45,17 @@ export async function POST(request: Request) {
 
     const fresh = nextPathWords(new Set(ownedRows.map((row) => row.term)), room, startUnitIndex(profile?.level_band));
     if (fresh.length > 0) {
+      // A word with a finished card gets it at once; the hand-written basic card is only the fallback.
+      const finished = await loadPathCards(supabase, fresh.map((entry) => entry.en));
       const { error } = await supabase.from("words").upsert(
         fresh.map((entry) => ({
           user_id: user.id,
           term: entry.en,
-          card: basicCard(entry),
+          card: finished.get(entry.en) ?? basicCard(entry),
           card_status: "ready",
           source: "path",
           unit_id: entry.unitId,
-          enriched: false,
+          enriched: finished.has(entry.en),
         })),
         { onConflict: "user_id,term", ignoreDuplicates: true },
       );
@@ -66,6 +69,19 @@ export async function POST(request: Request) {
       .is("last_reviewed_at", null)
       .eq("card_status", "ready");
     if (error) throw error;
+
+    // Words handed out earlier with only the basic card get the finished one as soon as it exists.
+    const basic = (rows ?? []).filter((row) => !row.enriched);
+    const upgrades = await loadPathCards(supabase, basic.map((row) => row.term));
+    await Promise.all(
+      basic.flatMap((row) => {
+        const card = upgrades.get(row.term);
+        if (!card) return [];
+        row.card = card;
+        row.enriched = true;
+        return [supabase.from("words").update({ card, enriched: true }).eq("id", row.id)];
+      }),
+    );
 
     const limit = more ? EXTRA_WORDS + waiting : quota;
     const words: LearnWord[] = (rows ?? [])
