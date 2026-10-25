@@ -12,7 +12,7 @@ export const maxDuration = 30;
 
 const bodySchema = z.object({ word: z.string().trim().regex(DEMO_WORD) });
 
-/** Public: a visitor types one word and gets a real Lexa card. Guarded by per-visitor and daily limits. */
+/** Public: a visitor types one word and gets a real Bo card. Guarded by per-visitor and daily limits. */
 export async function POST(request: Request) {
   try {
     const body = bodySchema.parse(await request.json());

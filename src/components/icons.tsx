@@ -23,7 +23,7 @@ function Base({ title, children, ...props }: IconProps) {
   );
 }
 
-/* Signature icons: rounded, with a soft violet tint inside the lines. */
+/* Signature icons: rounded, with a soft blue tint inside the lines. */
 
 export function SpeakerIcon({ playing = false, ...props }: IconProps & { playing?: boolean }) {
   return (
@@ -67,13 +67,12 @@ export function FlameIcon({ active = false, ...props }: IconProps & { active?: b
   );
 }
 
-/* XP uses the X from the Lexa logo. */
+/* XP is a lightning bolt: energy earned from studying. */
 export function XpIcon(props: IconProps) {
   return (
-    <Base className="icon-x" {...props} strokeWidth={4.2}>
+    <Base className="icon-x" {...props} strokeWidth={2}>
       <g className="x-body">
-        <path d="M6.5 6.5l11 11" stroke="#3d90fb" />
-        <path d="M17.5 6.5l-11 11" stroke="#785bfa" strokeOpacity={0.85} />
+        <path d="M13.5 2.5L5 13.2h6l-1 8.3 8.5-10.7h-6z" fill="#ffc94a" stroke="#c98a00" />
       </g>
     </Base>
   );
@@ -161,12 +160,16 @@ export function DashboardIcon(props: IconProps) {
   );
 }
 
-export function LexaIcon(props: IconProps) {
+export function BoIcon(props: IconProps) {
   return (
     <Base {...props}>
-      <path d="M4 6h16v11H11l-4.5 3.5V17H4z" fill="currentColor" fillOpacity={0.14} />
-      <circle cx="9.5" cy="11.2" r="1.1" fill="currentColor" stroke="none" />
-      <circle cx="14.5" cy="11.2" r="1.1" fill="currentColor" stroke="none" />
+      <path d="M12 3.2v2.4" />
+      <circle cx="12" cy="2.9" r="1" fill="currentColor" stroke="none" />
+      <rect x="4.5" y="6.5" width="15" height="12" rx="4.5" fill="currentColor" fillOpacity={0.14} />
+      <path d="M2.8 11v3M21.2 11v3" />
+      <circle cx="9.2" cy="12" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="14.8" cy="12" r="1.1" fill="currentColor" stroke="none" />
+      <path d="M10 15.4c1.2.9 2.8.9 4 0" strokeWidth={1.8} />
     </Base>
   );
 }
@@ -185,6 +188,81 @@ export function PathIcon(props: IconProps) {
     <Base {...props}>
       <path d="M6 20V4" />
       <path d="M6 5h11l-2.5 3.5L17 12H6" fill="currentColor" fillOpacity={0.14} />
+    </Base>
+  );
+}
+
+/* Practice tiles: one icon per exercise, same line style as the rest. */
+
+export function QuizIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M9.6 9.6a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.6" />
+      <path d="M12 16.6h.01" />
+    </Base>
+  );
+}
+
+export function ReadIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5z" />
+      <path d="M12 6.5v13" />
+    </Base>
+  );
+}
+
+export function TranslateIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4 6h9M8.5 4v2M6 6c.5 3 2.5 5.5 5 6.5M11 6c-.5 3-2.5 5.5-5.5 7" />
+      <path d="M12.5 20l4-9 4 9M13.9 17h5.2" />
+    </Base>
+  );
+}
+
+export function GrammarIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4 18l4.5-12L13 18M5.8 14h5.4" />
+      <path d="M15 12.5l2.2 2.2L21 10" />
+    </Base>
+  );
+}
+
+export function WritingIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M15.5 5.5l3 3L9 18l-4 1 1-4z" />
+      <path d="M13.5 7.5l3 3" />
+    </Base>
+  );
+}
+
+export function ListenIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M4.5 14v-2a7.5 7.5 0 0 1 15 0v2" />
+      <rect x="3.5" y="13.5" width="4" height="6" rx="1.6" />
+      <rect x="16.5" y="13.5" width="4" height="6" rx="1.6" />
+    </Base>
+  );
+}
+
+export function MicIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="9" y="3.5" width="6" height="11" rx="3" />
+      <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5" />
+    </Base>
+  );
+}
+
+export function SparkIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M12 4l1.8 5.2L19 11l-5.2 1.8L12 18l-1.8-5.2L5 11l5.2-1.8z" />
     </Base>
   );
 }

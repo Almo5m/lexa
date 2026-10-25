@@ -1,5 +1,5 @@
 /**
- * Tiny, safe parser for the light formatting Lexa's replies use.
+ * Tiny, safe parser for the light formatting Bo's replies use.
  * It never produces HTML: it returns plain data that React renders as text.
  */
 export type Inline = { kind: "text" | "bold" | "italic"; text: string };

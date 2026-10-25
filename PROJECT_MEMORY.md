@@ -237,3 +237,55 @@ Log of decisions and events, newest at the bottom.
 - Arabic texts rewritten in the masculine for Bo (the robot), English texts use he/him. AI system prompts say Bo, a friendly little robot, speaking masculine Arabic.
 - Layout titles, manifest, README and PRIVACY updated. Code identifiers still named Lexa (LexaMascot, LexaLoader, LexaIcon, lexa-* files, /public/lexa) stay until the new robot and design system replace them (phases 6.1 and 6.2).
 - Tests: 186 passing, tsc clean.
+
+## Phase 6.2 — Bo as a real 3D robot (2026-10-25)
+- User agreed to start with a robot built in code and swap it later for a stronger Blender model.
+- three.js added (dynamic import). `src/features/bo/scene.ts` builds Bo: glossy white shell, glass face with glowing eyes and mouth, ears, antenna bulb, arms, soft floor shadow, studio reflections, and moods happy/neutral/sad/thinking (eyes, mouth, antenna, waving arm, bulb color), blinking, floating, head following the pointer.
+- `BoRobot` component: loads only when needed, pauses off screen or when the tab is hidden, still frame for reduced motion, flat CSS face when WebGL is missing. `LexaMascot` now renders Bo (old name kept until the screens are redesigned).
+- If `public/bo/bo.glb` exists it replaces the built-in robot (see docs/BO_MODEL.md).
+- Checked in headless Chromium (software WebGL): four moods render correctly. Not yet checked on a real phone.
+- Known limit: the old owl images and the owl loader are still used for loading screens and the logo until 6.1 and 6.4.
+
+## Phase 6.1 — game-style design system (2026-10-25)
+- New tokens in globals.css built from Bo's colors: sky paper #eef6ff, navy ink #10224f, electric blue #3250f0, cyan #25bfff, sun yellow #ffc94a, leaf #12a168, red #ec4558. Token names kept, so no component changed.
+- Chunky buttons (16px radius, solid lip, press down 5px), outlined quiet buttons, tile cards (2px border, 5px bottom lip, press effect on links), hero card with dot pattern and blue-to-cyan gradient, thicker progress with a gloss stripe, cyan focus ring, yellow highlighter, `pop-in` for good news (used on grammar feedback).
+- The owl wrapper animations were removed, because Bo moves by himself in 3D.
+- Checked on a 420px-wide mock of the Today screen in Chromium. The real screens are redone one by one in 6.3; icons and the logo in 6.4.
+- Theme color and manifest colors updated.
+
+## Phase 6.3 — first screens in the new look (2026-10-25)
+- Built the app and checked the real screens on a phone and a desktop viewport with the mock server (software WebGL): Today and Plan.
+- `BoMark`: Bo's face as a flat SVG, used in the headers (app, admin, welcome). Today shows the real 3D Bo (neutral, happy when the session is done).
+- Plan page: units are now a path with round nodes joined by a line: green check = learned, yellow = in progress, grey = not yet, big blue node with a cyan ring = the current unit.
+- Bottom/side navigation: the active tab is a soft blue pill. Header brand on one line.
+- Still to redo in the same style: Practice, My words, the review/quiz/translate sessions, and the welcome page. Loading screens still show the old owl until 6.4.
+- Build note: `npm run build` stops once with the Next.js security notice; running it again completes. Upgrade Next before going live.
+
+## Phase 6.4 — loader, icons, app icon, practice tiles (2026-10-25)
+- Code renamed from Lexa to Bo: BoLoader, BoMascot, BoChatLauncher, BoIcon, bo-* CSS. Old owl images (`public/lexa`) deleted.
+- BoLoader: Bo's face bobbing over three bouncing dots. Auth pages show BoMark and the site name instead of the old logo image.
+- Icons: XP is a lightning bolt, the Bo tab is a robot head. App icons (192, 512, apple-touch) are Bo's face on the blue gradient, rendered from the same SVG as BoMark.
+- Practice page: each activity is a tile with an icon square. Several tiles still share the same few icons; a distinct icon per activity is a small later job.
+- `/bo/` is excluded from the auth redirect so `public/bo/bo.glb` loads on public pages too.
+- Remaining screens still in the earlier look: My words detail, the session screens (review, quiz, translate, learn, read), welcome page sections. Colors already follow the new tokens everywhere.
+- Tests: 186 passing, tsc clean. Built and checked on phone and desktop with the mock server.
+
+## Phase 6.5 — Session screens polish (2026-10-25)
+- New `SessionProgress` component (chunky progress bar + "n of m") used in quiz, review, translate, grammar and level test.
+- New `.choice` answer tiles (lip border, press effect, picked / right / wrong states, shake on wrong) used in quiz, grammar and listening. Colors use color-mix so dark mode works. Reduced motion respected.
+- Styled the native file button in /add.
+- tsc clean, 186 tests passing, build OK, phone and desktop screenshots checked.
+
+## Phase 6.6 — Welcome page polish (2026-10-25)
+- Brand name and "have account" link no longer wrap on phones; hero buttons are full width on small screens.
+- Reason cards got numbered gradient badges.
+- tsc clean, tests passing, screenshots checked.
+
+## Phase 6.7 — Practice tile icons (2026-10-25)
+- Eight new line icons (quiz, read, translate, grammar, writing, listen, mic, spark); every practice tile now has its own icon.
+
+## Phase 7.0 — AI speed and reliability (2026-10-25)
+- Time limits per attempt and per call, instant switch to the backup model on timeout, stream stall cutoff.
+- Shared concurrency limiter (6 at once, 8s queue), new "timeout" error kind in admin.
+- Browser helper `fetchAi` (40s wait, one automatic retry on busy), used by every AI screen.
+- Tests added: limiter, timeouts, fetchAi. See PROBLEMS.md.

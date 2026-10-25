@@ -174,7 +174,7 @@ async function Overview() {
           <ul className="divide-y divide-line">
             {(errors.data ?? []).map((item, index) => {
               const parsed = parseStoredError(item.error);
-              const known = ["busy", "quota", "model", "auth", "other"].includes(parsed.kind) ? parsed.kind : "other";
+              const known = ["busy", "timeout", "quota", "model", "auth", "other"].includes(parsed.kind) ? parsed.kind : "other";
               const serious = known === "model" || known === "auth";
               return (
                 <li key={index} className="space-y-1 py-3">

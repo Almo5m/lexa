@@ -1,8 +1,9 @@
+import { BoMark } from "@/components/bo-mark";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { AlmoSignature } from "@/components/almo-signature";
 import { LandingDemo } from "@/components/landing-demo";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoMascot } from "@/components/bo-mascot";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
@@ -30,8 +31,8 @@ export default async function WelcomePage() {
     <div className="mx-auto flex min-h-dvh max-w-5xl flex-col px-5">
       <header className="flex items-center justify-between gap-3 py-4">
         <Link href="/welcome" className="flex min-h-11 items-center gap-2">
-          <img src="/lexa/owl.webp" alt="" width={44} height={37} />
-          <span className="text-2xl font-bold tracking-tight">{t("brand.app")}</span>
+          <BoMark size={44} />
+          <span className="whitespace-nowrap text-2xl font-bold tracking-tight">{t("brand.app")}</span>
         </Link>
         <nav aria-label="Welcome" className="flex items-center gap-1 text-sm sm:gap-3">
           <form action={setLanguage.bind(null, lang === "ar" ? "en" : "ar")}>
@@ -39,7 +40,7 @@ export default async function WelcomePage() {
               {t("nav.language")}
             </button>
           </form>
-          <Link href="/login" className="flex min-h-11 items-center px-2 font-semibold text-indigo">
+          <Link href="/login" className="flex min-h-11 items-center whitespace-nowrap px-2 font-semibold text-indigo">
             {t("land.haveAccount")}
           </Link>
         </nav>
@@ -53,7 +54,7 @@ export default async function WelcomePage() {
             </p>
             <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-5xl">{t("land.heroTitle")}</h1>
             <p className="max-w-xl text-lg leading-8 text-ink-soft">{t("land.heroText")}</p>
-            <div className="flex flex-wrap gap-3 pt-2">
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:flex-wrap">
               {settings.demoEnabled && (
                 <a href="#try" className="tag-btn tag-btn-grad">
                   {t("land.tryNow")}
@@ -65,7 +66,7 @@ export default async function WelcomePage() {
             </div>
           </div>
           <div className="flex justify-center">
-            <LexaMascot mood="happy" size={260} />
+            <BoMascot mood="happy" size={260} />
           </div>
         </section>
 
@@ -84,9 +85,12 @@ export default async function WelcomePage() {
           </h2>
           <ul className="grid gap-4 sm:grid-cols-2">
             {REASONS.map((n) => (
-              <li key={n} className="sheet p-6">
+              <li key={n} className="sheet flex items-start gap-4 p-6">
+                <span aria-hidden className="grad-fill grid size-10 shrink-0 place-items-center rounded-2xl text-lg font-bold text-white">{n}</span>
+                <div>
                 <h3 className="text-lg font-bold text-indigo">{t(`land.why${n}.title` as const)}</h3>
                 <p className="mt-2 leading-7 text-ink-soft">{t(`land.why${n}.text` as const)}</p>
+                </div>
               </li>
             ))}
           </ul>

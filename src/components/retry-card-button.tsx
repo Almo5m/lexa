@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchAi } from "@/lib/fetch-ai";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TagButton } from "@/components/tag-button";
@@ -18,7 +20,7 @@ export function RetryCardButton({ wordId }: { wordId: string }) {
     try {
       const supabase = createSupabaseBrowserClient();
       await supabase.from("words").update({ card_status: "pending" }).eq("id", wordId);
-      const response = await fetch("/api/words/generate", { method: "POST" });
+      const response = await fetchAi("/api/words/generate", { method: "POST" });
       if (!response.ok) throw new Error("generate_failed");
       router.refresh();
     } catch {

@@ -1,9 +1,10 @@
 "use client";
 
+import { SessionProgress } from "@/components/session-progress";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { SpeakButton } from "@/components/speak-button";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoMascot } from "@/components/bo-mascot";
 import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
@@ -60,7 +61,7 @@ export function QuizSession({ questions }: { questions: QuizQuestion[] }) {
     const { xp, correct, levelUp, goal } = totals.current;
     return (
       <section className="sheet flex max-w-xl flex-col items-center gap-4 p-8 text-center" aria-live="polite">
-        <LexaMascot mood={correct >= questions.length / 2 ? "happy" : "neutral"} size={130} />
+        <BoMascot mood={correct >= questions.length / 2 ? "happy" : "neutral"} size={130} />
         <h2 className="text-2xl font-semibold">{t("review.summaryTitle")}</h2>
         <p className="marker px-1 text-xl">{t("review.summaryXp", { n: xp })}</p>
         <p>{t("review.summaryCorrect", { a: correct, b: questions.length })}</p>
@@ -82,9 +83,7 @@ export function QuizSession({ questions }: { questions: QuizQuestion[] }) {
 
   return (
     <section className="max-w-xl space-y-6">
-      <p className="text-sm text-ink-faint" aria-live="polite">
-        {t("review.progress", { a: index + 1, b: questions.length })}
-      </p>
+      <SessionProgress label={t("review.progress", { a: index + 1, b: questions.length })} value={index + (answered ? 1 : 0)} max={questions.length} />
 
       <div className="sheet space-y-4 p-6">
         <p className="text-ink-soft">{t(`quiz.q.${question.type}` as DictKey)}</p>
@@ -112,11 +111,7 @@ export function QuizSession({ questions }: { questions: QuizQuestion[] }) {
                 type="button"
                 onClick={() => choose(option.id)}
                 disabled={answered !== null || busy}
-                className={`flex min-h-14 w-full items-center rounded-md px-4 text-start text-lg shadow-[inset_0_0_0_2px_var(--color-line)] hover:bg-paper-deep disabled:cursor-default ${
-                  answersWithEnglish ? "ltr-text" : ""
-                } ${isRight ? "marker !bg-[length:100%_100%] font-semibold" : ""} ${
-                  isWrongPick ? "pen-error text-pen-red" : ""
-                }`}
+                className={`choice ${answersWithEnglish ? "ltr-text" : ""} ${isRight ? "choice-right" : ""} ${isWrongPick ? "choice-wrong" : ""}`}
               >
                 {option.label}
               </button>
@@ -126,7 +121,7 @@ export function QuizSession({ questions }: { questions: QuizQuestion[] }) {
       </ul>
 
       <div aria-live="polite" className="flex min-h-8 items-center gap-3">
-        {answered && <LexaMascot mood={answered.correct ? "happy" : "sad"} size={76} />}
+        {answered && <BoMascot mood={answered.correct ? "happy" : "sad"} size={76} />}
         {answered &&
           (answered.correct ? (
             <p className="font-semibold text-leaf">{t("quiz.correct")}</p>

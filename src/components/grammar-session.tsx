@@ -1,5 +1,6 @@
 "use client";
 
+import { SessionProgress } from "@/components/session-progress";
 import Link from "next/link";
 import { useState } from "react";
 import { TagButton } from "@/components/tag-button";
@@ -104,13 +105,7 @@ export function GrammarSession({ unit }: { unit: GrammarUnit }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3 text-sm">
-        <span className="font-semibold">{t("grammar.question", { a: index + 1, b: total })}</span>
-        <span className="text-ink-soft" dir="ltr">{unit.rule}</span>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-paper-deep" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={index + (checked ? 1 : 0)} aria-label={t("grammar.lesson")}>
-        <div className="grad-fill h-2 rounded-full" style={{ width: `${((index + (checked ? 1 : 0)) / total) * 100}%` }} />
-      </div>
+      <SessionProgress label={t("grammar.question", { a: index + 1, b: total })} value={index + (checked ? 1 : 0)} max={total} />
 
       <section className="sheet space-y-4 p-5">
         <p dir="ltr" className="text-left text-lg font-medium">{exercise.q}</p>
@@ -127,9 +122,7 @@ export function GrammarSession({ unit }: { unit: GrammarUnit }) {
                     disabled={checked}
                     onClick={() => setPicked(i)}
                     aria-pressed={picked === i}
-                    className={`min-h-12 w-full rounded-2xl border px-4 py-2 text-left ${
-                      isRight ? "border-leaf bg-leaf/15" : isWrong ? "border-pen-red bg-pen-red/10" : picked === i ? "border-indigo bg-indigo/10" : "border-line"
-                    }`}
+                    className={`choice ${isRight ? "choice-right" : ""} ${isWrong ? "choice-wrong" : ""} ${picked === i && !checked ? "choice-picked" : ""}`}
                   >
                     {option}
                   </button>
@@ -153,7 +146,7 @@ export function GrammarSession({ unit }: { unit: GrammarUnit }) {
         )}
 
         {checked && (
-          <div role="status" className={`rounded-2xl p-4 ${correct ? "bg-leaf/15" : "bg-pen-red/10"}`}>
+          <div role="status" className={`pop-in rounded-2xl p-4 ${correct ? "bg-leaf/15" : "bg-pen-red/10"}`}>
             <p className="font-bold">{correct ? t("grammar.correct") : t("grammar.wrong")}</p>
             {!correct && exercise.kind === "type" && (
               <p dir="ltr" className="text-left text-sm font-medium">{t("grammar.answerIs")} {exercise.answers[0]}</p>

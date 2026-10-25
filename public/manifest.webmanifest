@@ -4,8 +4,8 @@
   "description": "Don't just learn words. Know them.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f5f4ff",
-  "theme_color": "#2f2d9f",
+  "background_color": "#eef6ff",
+  "theme_color": "#3250f0",
   "lang": "ar",
   "dir": "rtl",
   "icons": [

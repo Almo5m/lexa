@@ -1,9 +1,10 @@
 "use client";
 
+import { SessionProgress } from "@/components/session-progress";
 import Link from "next/link";
 import { useState } from "react";
-import { LexaLoader } from "@/components/lexa-loader";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoLoader } from "@/components/bo-loader";
+import { BoMascot } from "@/components/bo-mascot";
 import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
@@ -61,7 +62,7 @@ export function LevelTest({ words }: { words: string[] }) {
   if (stage === "saving") {
     return (
       <div className="sheet flex max-w-xl flex-col items-center gap-3 p-8 text-center" aria-live="polite">
-        <LexaLoader size={150} label={t("common.loading")} />
+        <BoLoader size={150} label={t("common.loading")} />
       </div>
     );
   }
@@ -71,7 +72,7 @@ export function LevelTest({ words }: { words: string[] }) {
       <div className="sheet max-w-xl space-y-5 p-6" aria-live="polite">
         {result.reliable ? (
           <>
-            <LexaMascot mood="happy" size={140} />
+            <BoMascot mood="happy" size={140} />
             <h2 className="marker px-1 text-2xl font-semibold">{t("level.resultTitle", { n: result.level })}</h2>
             <p className="text-lg">{t(`level.name.${result.level}` as DictKey)}</p>
             <Link href="/suggest" className="tag-btn">
@@ -80,7 +81,7 @@ export function LevelTest({ words }: { words: string[] }) {
           </>
         ) : (
           <>
-            <LexaMascot mood="neutral" size={140} />
+            <BoMascot mood="neutral" size={140} />
             <p className="pen-error text-pen-red">{t("level.unreliable")}</p>
             <TagButton onClick={restart}>{t("level.retake")}</TagButton>
           </>
@@ -91,7 +92,7 @@ export function LevelTest({ words }: { words: string[] }) {
 
   return (
     <section className="sheet max-w-xl space-y-8 p-6" aria-live="polite">
-      <p className="text-sm text-ink-faint">{t("level.progress", { a: index + 1, b: words.length })}</p>
+      <SessionProgress label={t("level.progress", { a: index + 1, b: words.length })} value={index} max={words.length} />
       <p className="ltr-text text-5xl font-semibold tracking-tight">{words[index]}</p>
       <div className="flex flex-wrap gap-3">
         <TagButton onClick={() => answer(true)}>{t("level.know")}</TagButton>

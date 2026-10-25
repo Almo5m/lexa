@@ -1,10 +1,12 @@
 "use client";
 
+import { fetchAi } from "@/lib/fetch-ai";
+
 import Link from "next/link";
 import { useState } from "react";
 import { CameraIcon, CloseIcon } from "@/components/icons";
-import { LexaLoader } from "@/components/lexa-loader";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoLoader } from "@/components/bo-loader";
+import { BoMascot } from "@/components/bo-mascot";
 import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
@@ -55,7 +57,7 @@ export function AddFlow({ maxImages, maxImageMb }: Props) {
     try {
       const body = new FormData();
       for (const file of files) body.append("images", file);
-      const response = await fetch("/api/extract", { method: "POST", body });
+      const response = await fetchAi("/api/extract", { method: "POST", body });
       const data = await response.json();
       if (!response.ok) return setError(safeError(data.error));
       if (data.words.length === 0 && data.alreadyKnown.length === 0) {
@@ -112,7 +114,7 @@ export function AddFlow({ maxImages, maxImageMb }: Props) {
   if (stage === "saving") {
     return (
       <div className="sheet flex flex-col items-center gap-3 p-8 text-center" aria-live="polite">
-        <LexaLoader size={150} label={t("common.loading")} />
+        <BoLoader size={150} label={t("common.loading")} />
         <p className="text-lg">
           {progress.total === 0 ? t("add.saving") : t("add.generating", { a: progress.done, b: progress.total })}
         </p>
@@ -123,7 +125,7 @@ export function AddFlow({ maxImages, maxImageMb }: Props) {
   if (stage === "done") {
     return (
       <div className="sheet flex flex-col items-center gap-4 p-8 text-center">
-        <LexaMascot mood="happy" size={150} />
+        <BoMascot mood="happy" size={150} />
         <p className="marker px-1 text-xl">{t("add.done", { n: progress.done })}</p>
         <div>
           <Link href="/words" className="tag-btn">
@@ -159,7 +161,7 @@ export function AddFlow({ maxImages, maxImageMb }: Props) {
           </TagButton>
           {busy && (
             <div className="flex flex-col items-center gap-2 pt-4 text-center" aria-live="polite">
-              <LexaLoader size={130} label={t("add.extracting")} />
+              <BoLoader size={130} label={t("add.extracting")} />
               <p className="text-ink-soft">{t("add.extracting")}</p>
             </div>
           )}

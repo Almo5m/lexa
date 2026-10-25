@@ -1,3 +1,4 @@
+import { BoMark } from "@/components/bo-mark";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppNav } from "@/components/app-nav";
@@ -24,7 +25,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <aside className="md:sticky md:top-0 md:flex md:h-dvh md:w-64 md:shrink-0 md:flex-col md:justify-between md:py-6">
         <div>
           <Link href="/" className="hidden items-center gap-3 px-6 pb-4 md:flex">
-            <img src="/lexa/owl.webp" alt="" width={46} height={39} />
+            <BoMark size={46} />
             <span className="text-2xl font-bold tracking-tight">{t("brand.app")}</span>
           </Link>
           <AppNav isAdmin={profile?.role === "admin"} />
@@ -50,8 +51,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col pb-24 md:pb-0">
         <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-5 pt-4 md:justify-end md:px-8 md:pt-6">
           <Link href="/" className="flex min-h-11 items-center gap-2 md:hidden">
-            <img src="/lexa/owl.webp" alt="" width={40} height={34} />
-            <span className="text-xl font-bold tracking-tight">{t("brand.app")}</span>
+            <BoMark size={36} />
+            <span className="whitespace-nowrap text-lg font-bold tracking-tight">{t("brand.app")}</span>
           </Link>
           <div className="flex items-center gap-2">
             <span data-tour="progress" className="flex items-center gap-2">

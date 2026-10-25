@@ -1,6 +1,8 @@
-export type AiErrorKind = "busy" | "quota" | "model" | "auth" | "other";
+export type AiErrorKind = "busy" | "timeout" | "quota" | "model" | "auth" | "other";
 
-const BUSY = /\b(500|502|503|504)\b|UNAVAILABLE|overloaded|high demand|fetch failed|ECONNRESET|ETIMEDOUT|deadline/i;
+/** No answer in time. Waiting on the same model again rarely helps, so the next model is tried at once. */
+const TIMEOUT = /TimeoutError|AbortError|aborted|timed? ?out|deadline/i;
+const BUSY = /\b(500|502|503|504)\b|UNAVAILABLE|overloaded|high demand|fetch failed|ECONNRESET/i;
 const QUOTA = /\b429\b|RESOURCE_EXHAUSTED|quota|rate limit/i;
 const MODEL = /\b404\b|NOT_FOUND|no longer available|is not found|not supported for/i;
 const AUTH = /\b(401|403)\b|API key not valid|API_KEY_INVALID|PERMISSION_DENIED|UNAUTHENTICATED|API key expired/i;
@@ -15,11 +17,13 @@ export function classifyAiError(error: unknown): AiErrorKind {
   if (status === 404) return "model";
   if (status === 401 || status === 403) return "auth";
   if (typeof status === "number" && [500, 502, 503, 504].includes(status)) return "busy";
+  if ((error as { name?: string } | null)?.name === "TimeoutError" || (error as { name?: string } | null)?.name === "AbortError") return "timeout";
 
   const text = messageOf(error);
   if (AUTH.test(text)) return "auth";
   if (MODEL.test(text)) return "model";
   if (QUOTA.test(text)) return "quota";
+  if (TIMEOUT.test(text)) return "timeout";
   if (BUSY.test(text)) return "busy";
   return "other";
 }

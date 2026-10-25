@@ -4,6 +4,7 @@ import type { z } from "zod";
 import { serverEnv } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { classifyAiError, readableAiMessage } from "./errors";
+import { geminiLimiter } from "./limiter";
 import { runWithFallback } from "./retry";
 
 export type AiFeature = "extract" | "cards" | "tutor" | "translate" | "review" | "demo" | "talk" | "reading" | "writing";
@@ -97,13 +98,35 @@ interface CallOptions {
   maxOutputTokens?: number;
 }
 
+/** How long one attempt may take before it is cut off and the next model is tried. */
+const ATTEMPT_MS = 12_000;
+const ATTEMPT_WITH_IMAGES_MS = 30_000;
+/** The most a whole call may take, retries and backup model included. Routes allow 30 to 60 seconds. */
+const BUDGET_MS = 24_000;
+const BUDGET_WITH_IMAGES_MS = 50_000;
+/** While streaming: the first piece and every gap between pieces must arrive within this time. */
+const STREAM_STALL_MS = 9_000;
+
+function timeoutError(): Error {
+  return Object.assign(new Error("deadline: no answer in time"), { name: "TimeoutError" });
+}
+
+/** The time one attempt may use, or a timeout error when the overall budget is nearly gone. */
+function attemptTimeout(options: CallOptions, deadline: number): number {
+  const remaining = deadline - Date.now();
+  if (remaining < 2_000) throw timeoutError();
+  const perAttempt = options.images?.length ? ATTEMPT_WITH_IMAGES_MS : ATTEMPT_MS;
+  return Math.min(perAttempt, remaining);
+}
+
 /**
  * Answers for students are short, so long "thinking" before them only costs seconds.
  * 2.5 models take a token budget (0 = off). Gemini 3 models take a level. A model that does not
  * understand the setting is retried once without it (see withoutThinkingIfRejected).
  */
-function generationConfig(model: string, options: CallOptions, thinking: boolean) {
+function generationConfig(model: string, options: CallOptions, thinking: boolean, signal?: AbortSignal) {
   return {
+    ...(signal ? { abortSignal: signal } : {}),
     systemInstruction: options.system,
     temperature: options.temperature ?? 0.7,
     ...(options.maxOutputTokens ? { maxOutputTokens: options.maxOutputTokens } : {}),
@@ -117,18 +140,19 @@ async function withoutThinkingIfRejected<T>(
   model: string,
   options: CallOptions,
   run: (config: ReturnType<typeof generationConfig>) => Promise<T>,
+  signal?: () => AbortSignal,
 ): Promise<T> {
   try {
-    return await run(generationConfig(model, options, true));
+    return await run(generationConfig(model, options, true, signal?.()));
   } catch (error) {
-    if (/thinking/i.test(readableAiMessage(error))) return run(generationConfig(model, options, false));
+    if (/thinking/i.test(readableAiMessage(error))) return run(generationConfig(model, options, false, signal?.()));
     throw error;
   }
 }
 
 function toPublicError(error: unknown): unknown {
   const kind = classifyAiError(error);
-  if (kind === "busy" || kind === "quota") return new AiBusyError();
+  if (kind === "busy" || kind === "timeout" || kind === "quota") return new AiBusyError();
   if (kind === "model" || kind === "auth") return new AiUnavailableError();
   return error;
 }
@@ -146,30 +170,49 @@ export async function* streamGemini(options: CallOptions): AsyncGenerator<string
   for (const model of models) {
     for (let attempt = 0; attempt <= 1; attempt++) {
       let started = false;
+      // One timer watches the stream: it is re-armed on every piece, so a stalled answer is cut off.
+      const controller = new AbortController();
+      let stall: ReturnType<typeof setTimeout> | undefined;
+      const arm = () => {
+        clearTimeout(stall);
+        stall = setTimeout(() => controller.abort(timeoutError()), STREAM_STALL_MS);
+      };
       try {
-        const stream = await withoutThinkingIfRejected(model, options, (config) =>
-          getClient().models.generateContentStream({
+        arm();
+        const stream = await geminiLimiter.run(() =>
+          withoutThinkingIfRejected(
             model,
-            contents: [{ role: "user", parts: [{ text: options.prompt }] }],
-            config,
-          }),
+            options,
+            (config) =>
+              getClient().models.generateContentStream({
+                model,
+                contents: [{ role: "user", parts: [{ text: options.prompt }] }],
+                config,
+              }),
+            () => controller.signal,
+          ),
         );
         for await (const chunk of stream) {
+          arm();
           const text = chunk.text ?? "";
           if (!text) continue;
           started = true;
           yield text;
         }
+        clearTimeout(stall);
         if (!started) throw new Error("empty_response");
         logUsage(options.userId, options.feature, true, startedAt);
         return;
       } catch (error) {
-        lastError = error;
+        clearTimeout(stall);
+        lastError = controller.signal.aborted ? timeoutError() : error;
+        error = lastError;
         const kind = classifyAiError(error);
         if (started || kind === "auth" || kind === "other") {
           logUsage(options.userId, options.feature, false, startedAt, `[${kind}] ${readableAiMessage(error)}`);
           throw toPublicError(error);
         }
+        if (kind === "timeout") break; // the next model, not the same one again
         if (kind === "busy" && attempt === 0) {
           await new Promise((resolve) => setTimeout(resolve, 500));
           continue;
@@ -192,11 +235,19 @@ export async function callGemini(options: CallOptions): Promise<string> {
       })),
       { text: options.prompt },
     ];
+    const deadline = startedAt + (options.images?.length ? BUDGET_WITH_IMAGES_MS : BUDGET_MS);
     const { value: response } = await runWithFallback(
       [options.model, options.fallbackModel ?? ""],
-      (model) => withoutThinkingIfRejected(model, options, (config) =>
-        getClient().models.generateContent({ model, contents: [{ role: "user", parts }], config }),
-      ),
+      (model) =>
+        geminiLimiter.run(() => {
+          const ms = attemptTimeout(options, deadline);
+          return withoutThinkingIfRejected(
+            model,
+            options,
+            (config) => getClient().models.generateContent({ model, contents: [{ role: "user", parts }], config }),
+            () => AbortSignal.timeout(ms),
+          );
+        }),
       { retriesPerModel: 1, baseDelayMs: 500 },
     );
     const text = response.text ?? "";
@@ -215,7 +266,10 @@ export async function callGeminiJson<T extends z.ZodType>(
   schema: T,
 ): Promise<z.infer<T>> {
   let lastError: unknown;
+  const startedAt = Date.now();
   for (let attempt = 0; attempt < 2; attempt++) {
+    // A second try after a bad answer is worth it only when there is still time for it.
+    if (attempt > 0 && Date.now() - startedAt > 12_000) break;
     try {
       const text = await callGemini({ ...options, json: true });
       const cleaned = text.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();

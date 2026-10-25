@@ -16,7 +16,7 @@ const bodySchema = z.object({
   sentence: z.string().trim().min(2).max(200),
 });
 
-/** Public: the visitor writes a sentence with the word and Lexa checks it, the same way the real review does. */
+/** Public: the visitor writes a sentence with the word and Bo checks it, the same way the real review does. */
 export async function POST(request: Request) {
   try {
     const body = bodySchema.parse(await request.json());

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { LexaLoader } from "@/components/lexa-loader";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoLoader } from "@/components/bo-loader";
+import { BoMascot } from "@/components/bo-mascot";
 import { TagButton } from "@/components/tag-button";
 import { generatePendingCards } from "@/lib/generate-client";
 import { useT } from "@/lib/i18n/provider";
@@ -50,7 +50,7 @@ export function SuggestList({ words }: { words: string[] }) {
   if (stage === "saving") {
     return (
       <div className="sheet flex max-w-xl flex-col items-center gap-3 p-8 text-center" aria-live="polite">
-        <LexaLoader size={150} label={t("common.loading")} />
+        <BoLoader size={150} label={t("common.loading")} />
         <p className="text-lg">
           {progress.total === 0 ? t("add.saving") : t("add.generating", { a: progress.done, b: progress.total })}
         </p>
@@ -61,7 +61,7 @@ export function SuggestList({ words }: { words: string[] }) {
   if (stage === "done") {
     return (
       <div className="sheet flex max-w-xl flex-col items-center gap-4 p-8 text-center">
-        <LexaMascot mood="happy" size={150} />
+        <BoMascot mood="happy" size={150} />
         <p className="marker px-1 text-xl">{t("add.done", { n: progress.done })}</p>
         <div>
           <Link href="/words" className="tag-btn">

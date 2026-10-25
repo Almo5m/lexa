@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchAi } from "@/lib/fetch-ai";
+
 import Link from "next/link";
 import { useState } from "react";
 import { RichText } from "@/components/rich-text";
@@ -12,7 +14,7 @@ type Result = WritingGrade & { total: number; words: number };
 
 const MARKS = ["content", "organization", "grammar", "vocabulary"] as const;
 
-/** Plan first, then write, then Lexa marks the text on four skills and shows the mistakes and a polished version. */
+/** Plan first, then write, then Bo marks the text on four skills and shows the mistakes and a polished version. */
 export function WritingSession({ task }: { task: WritingTask }) {
   const { t } = useT();
   const [text, setText] = useState("");
@@ -27,7 +29,7 @@ export function WritingSession({ task }: { task: WritingTask }) {
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch("/api/writing/grade", {
+      const response = await fetchAi("/api/writing/grade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ taskId: task.id, text }),

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoMascot } from "@/components/bo-mascot";
 import { MinutesPicker } from "@/components/minutes-picker";
 import { XpIcon } from "@/components/icons";
 import { requireUserPage } from "@/lib/auth";
@@ -84,12 +84,8 @@ export default async function HomePage() {
   return (
     <div className="max-w-2xl space-y-5">
       <section className="flex items-end gap-3" aria-label={t("brand.ai")}>
-        {allDone ? (
-          <LexaMascot mood="happy" size={80} className="shrink-0" />
-        ) : (
-          <img src="/lexa/owl.webp" alt="" width={80} height={68} className="h-auto w-20 shrink-0" />
-        )}
-        <div className="mb-1 rounded-[22px_22px_22px_6px] bg-sheet px-4 py-3 shadow-[var(--shadow-1)]">
+        <BoMascot mood={allDone ? "happy" : "neutral"} size={92} className="shrink-0" />
+        <div className="mb-1 rounded-[22px] rounded-es-[6px] bg-sheet px-4 py-3 shadow-[var(--shadow-1)]">
           <p className="font-semibold">{t("home.greeting", { name: profile?.display_name ?? "" })}</p>
           <p className="text-sm text-ink-soft">{allDone ? t("today.allDone") : t("today.hint")}</p>
         </div>

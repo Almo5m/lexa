@@ -1,6 +1,6 @@
 import { LevelBar, TalkSession } from "@/components/talk-session";
 import { StepBanner } from "@/components/step-banner";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoMascot } from "@/components/bo-mascot";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
 import { recentAverage, topMistakeTypes, type StoredSession } from "@/features/talk/analyze";
@@ -37,7 +37,7 @@ export default async function TalkPage({ searchParams }: { searchParams: Promise
     <div className="max-w-2xl space-y-8">
       {today === "1" && <StepBanner step="speak" />}
       <div className="flex items-end gap-3">
-        <LexaMascot mood="neutral" size={84} />
+        <BoMascot mood="neutral" size={84} />
         <div>
           <h1 className="text-2xl font-semibold">{t("talk.title")}</h1>
           <p className="text-ink-soft">{t("talk.intro")}</p>

@@ -1,3 +1,4 @@
+import { BoMark } from "@/components/bo-mark";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { requireAdminPage } from "@/lib/auth";
@@ -11,7 +12,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <header className="border-b border-line">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4">
           <div className="flex items-center gap-3">
-            <img src="/lexa/owl.webp" alt="" width={44} height={37} />
+            <BoMark size={44} />
             <div className="leading-tight">
               <p className="text-lg font-bold">{t("brand.app")}</p>
               <p className="text-sm text-ink-soft">{t("admin.title")}</p>

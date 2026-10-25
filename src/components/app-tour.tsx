@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoMascot } from "@/components/bo-mascot";
 import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
@@ -121,7 +121,7 @@ export function AppTour() {
         }`}
       >
         <div className="flex items-start gap-4">
-          <LexaMascot mood="happy" size={64} />
+          <BoMascot mood="happy" size={64} />
           <div className="flex-1">
             <p className="text-xs font-semibold text-ink-faint">
               {t("tour.step", { a: step + 1, b: STEPS.length })}

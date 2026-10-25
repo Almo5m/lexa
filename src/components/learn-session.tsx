@@ -1,9 +1,11 @@
 "use client";
 
+import { fetchAi } from "@/lib/fetch-ai";
+
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { LexaLoader } from "@/components/lexa-loader";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoLoader } from "@/components/bo-loader";
+import { BoMascot } from "@/components/bo-mascot";
 import { ReviewSession, type SessionWord } from "@/components/review-session";
 import { SpeakButton } from "@/components/speak-button";
 import { TagButton } from "@/components/tag-button";
@@ -34,7 +36,7 @@ export function LearnSession({ more }: { more: boolean }) {
       while (next < groups.length) {
         const group = groups[next++];
         try {
-          const response = await fetch("/api/words/enrich", {
+          const response = await fetchAi("/api/words/enrich", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ids: group.map((word) => word.id) }),
@@ -78,7 +80,7 @@ export function LearnSession({ more }: { more: boolean }) {
   if (phase.name === "loading") {
     return (
       <div className="flex flex-col items-center gap-3 py-16">
-        <LexaLoader size={140} label={t("learn.loading")} />
+        <BoLoader size={140} label={t("learn.loading")} />
         <p className="text-ink-soft">{t("learn.loading")}</p>
       </div>
     );
@@ -96,7 +98,7 @@ export function LearnSession({ more }: { more: boolean }) {
   if (phase.name === "empty" || phase.name === "done") {
     return (
       <section className="sheet flex flex-col items-center gap-4 p-8 text-center" aria-live="polite">
-        <LexaMascot mood="happy" size={130} />
+        <BoMascot mood="happy" size={130} />
         <h2 className="text-2xl font-semibold">{phase.name === "done" ? t("learn.doneTitle", { n: words.length }) : t("learn.noneTitle")}</h2>
         <p className="text-ink-soft">{phase.name === "done" ? t("learn.doneHint") : t("learn.noneHint")}</p>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">

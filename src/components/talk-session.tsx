@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchAi } from "@/lib/fetch-ai";
+
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import { RichText } from "@/components/rich-text";
@@ -80,7 +82,7 @@ export function TalkSession({ topics }: Props) {
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch("/api/talk", {
+      const response = await fetchAi("/api/talk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: topic.id, text: text.trim() }),

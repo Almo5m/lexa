@@ -29,7 +29,7 @@ export async function GET(request: Request) {
         return card ? [{ term: row.term, card, reviewed: row.reviewed }] : [];
       });
       return new NextResponse(cardsToCsv(rows), {
-        headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="lexa-path-cards.csv"' },
+        headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="path-cards.csv"' },
       });
     }
     return NextResponse.json({ total: PATH_SIZE, ready: stored.length, reviewed: stored.filter((row) => row.reviewed).length });

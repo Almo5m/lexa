@@ -84,61 +84,78 @@ export default async function PathPage() {
                   ⌄
                 </span>
               </summary>
-              <ol className="mt-3 space-y-2">
-                {indexes.map((index) => {
+              <ol className="mt-4">
+                {indexes.map((index, position) => {
                   const unit = UNITS[index];
                   const item = progress[index];
                   const isCurrent = current?.unitId === unit.id;
                   const skipped = index < startUnit && item.learned === 0;
                   const stateLabel = skipped ? t("path.skipped") : t(`path.state.${item.state}` as DictKey);
-
-                  if (!isCurrent) {
-                    return (
-                      <li key={unit.id} className={`rounded-2xl bg-paper px-4 py-2 ring-1 ring-line ${skipped ? "opacity-60" : ""}`}>
-                        <div className="flex min-h-10 items-center justify-between gap-3">
-                          <p className="min-w-0 truncate font-semibold">
-                            <span className="text-ink-faint">{index + 1}.</span> {unit.titleAr}
-                          </p>
-                          <span className="shrink-0 rounded-full bg-paper-deep px-3 py-1 text-xs font-semibold">{stateLabel}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-xs text-ink-soft">{t("path.counts", { a: item.learned, b: item.total, c: item.mastered })}</p>
-                          {item.learned > 0 && (
-                            <Link href={`/review?unit=${unit.id}`} className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-indigo">
-                              {t("path.test")}
-                            </Link>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  }
+                  const done = item.state === "learned" || item.state === "mastered";
+                  const last = position === indexes.length - 1;
 
                   return (
-                    <li key={unit.id} className="space-y-3 rounded-2xl bg-paper p-4 ring-2 ring-violet">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs font-semibold text-ink-faint">{t("path.unit", { n: index + 1 })}</p>
-                          <h3 className="text-lg font-bold">{unit.titleAr}</h3>
-                          <p className="ltr-text text-sm text-ink-soft">{unit.titleEn}</p>
+                    <li key={unit.id} className={`flex gap-3 ${skipped ? "opacity-60" : ""}`}>
+                      <div className="flex w-12 shrink-0 flex-col items-center" aria-hidden="true">
+                        <span
+                          className={`flex shrink-0 items-center justify-center rounded-full border-b-4 font-bold ${
+                            isCurrent
+                              ? "h-12 w-12 border-[#1f35b8] bg-indigo text-lg text-white ring-4 ring-cyan/40"
+                              : done
+                                ? "h-10 w-10 border-[#0b7a4d] bg-leaf text-white"
+                                : item.state === "learning"
+                                  ? "h-10 w-10 border-[#c99a1f] bg-xp text-ink"
+                                  : "h-10 w-10 border-line bg-paper-deep text-ink-faint"
+                          }`}
+                        >
+                          {done && !isCurrent ? "✓" : index + 1}
+                        </span>
+                        {!last && <span className={`my-1 w-1.5 flex-1 rounded-full ${done ? "bg-leaf/60" : "bg-line"}`} />}
+                      </div>
+
+                      {isCurrent ? (
+                        <div className="mb-3 min-w-0 flex-1 space-y-3 rounded-2xl border-2 border-b-4 border-cyan/60 bg-paper p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-xs font-semibold text-ink-faint">{t("path.unit", { n: index + 1 })}</p>
+                              <h3 className="text-lg font-bold">{unit.titleAr}</h3>
+                              <p className="ltr-text text-sm text-ink-soft">{unit.titleEn}</p>
+                            </div>
+                            <span className="shrink-0 rounded-full bg-paper-deep px-3 py-1 text-xs font-semibold">{stateLabel}</span>
+                          </div>
+                          <div className="h-3 overflow-hidden rounded-full bg-paper-deep" role="progressbar" aria-label={unit.titleAr} aria-valuemin={0} aria-valuemax={item.total} aria-valuenow={item.learned}>
+                            <div className="grad-fill h-3 rounded-full" style={{ width: `${item.learned === 0 ? 0 : Math.max(4, Math.round((item.learned / item.total) * 100))}%` }} />
+                          </div>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-sm text-ink-soft">{t("path.counts", { a: item.learned, b: item.total, c: item.mastered })}</p>
+                            <div className="flex gap-2">
+                              {item.learned > 0 && (
+                                <Link href={`/review?unit=${unit.id}`} className="tag-btn tag-btn-quiet min-h-11 text-sm">
+                                  {t("path.test")}
+                                </Link>
+                              )}
+                              <Link href="/learn" className="tag-btn min-h-11 text-sm">
+                                {t("path.continue")}
+                              </Link>
+                            </div>
+                          </div>
                         </div>
-                        <span className="shrink-0 rounded-full bg-paper-deep px-3 py-1 text-xs font-semibold">{stateLabel}</span>
-                      </div>
-                      <div className="h-2.5 overflow-hidden rounded-full bg-paper-deep" role="progressbar" aria-label={unit.titleAr} aria-valuemin={0} aria-valuemax={item.total} aria-valuenow={item.learned}>
-                        <div className="grad-fill h-2.5 rounded-full" style={{ width: `${item.learned === 0 ? 0 : Math.max(4, Math.round((item.learned / item.total) * 100))}%` }} />
-                      </div>
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-sm text-ink-soft">{t("path.counts", { a: item.learned, b: item.total, c: item.mastered })}</p>
-                        <div className="flex gap-2">
-                          {item.learned > 0 && (
-                            <Link href={`/review?unit=${unit.id}`} className="tag-btn tag-btn-quiet min-h-11 text-sm">
-                              {t("path.test")}
-                            </Link>
-                          )}
-                          <Link href="/learn" className="tag-btn min-h-11 text-sm">
-                            {t("path.continue")}
-                          </Link>
+                      ) : (
+                        <div className="mb-3 min-w-0 flex-1 py-1">
+                          <div className="flex min-h-10 items-center justify-between gap-3">
+                            <p className="min-w-0 truncate font-semibold">{unit.titleAr}</p>
+                            <span className="shrink-0 rounded-full bg-paper-deep px-3 py-1 text-xs font-semibold">{stateLabel}</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-xs text-ink-soft">{t("path.counts", { a: item.learned, b: item.total, c: item.mastered })}</p>
+                            {item.learned > 0 && (
+                              <Link href={`/review?unit=${unit.id}`} className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-indigo">
+                                {t("path.test")}
+                              </Link>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </li>
                   );
                 })}

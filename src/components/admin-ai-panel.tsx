@@ -16,7 +16,7 @@ interface TestResult {
   message?: string;
 }
 
-const KINDS = ["busy", "quota", "model", "auth", "other"];
+const KINDS = ["busy", "timeout", "quota", "model", "auth", "other"];
 
 interface SystemCheck {
   id: "gemini" | "service" | "settings" | "usage";

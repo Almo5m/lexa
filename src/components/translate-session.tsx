@@ -1,9 +1,12 @@
 "use client";
 
+import { fetchAi } from "@/lib/fetch-ai";
+
+import { SessionProgress } from "@/components/session-progress";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { LexaLoader } from "@/components/lexa-loader";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoLoader } from "@/components/bo-loader";
+import { BoMascot } from "@/components/bo-mascot";
 import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
@@ -49,7 +52,7 @@ export function TranslateSession({ today = false }: { today?: boolean }) {
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch("/api/translate/generate", {
+      const response = await fetchAi("/api/translate/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ today }),
@@ -73,7 +76,7 @@ export function TranslateSession({ today = false }: { today?: boolean }) {
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch("/api/translate/grade", {
+      const response = await fetchAi("/api/translate/grade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -123,7 +126,7 @@ export function TranslateSession({ today = false }: { today?: boolean }) {
         </TagButton>
         {busy && (
           <div className="flex flex-col items-center gap-2 pt-2 text-center" aria-live="polite">
-            <LexaLoader size={130} label={t("translate.generating")} />
+            <BoLoader size={130} label={t("translate.generating")} />
             <p className="text-ink-soft">{t("translate.generating")}</p>
           </div>
         )}
@@ -134,7 +137,7 @@ export function TranslateSession({ today = false }: { today?: boolean }) {
   if (index >= exercises.length) {
     return (
       <section className="sheet flex max-w-xl flex-col items-center gap-4 p-8 text-center" aria-live="polite">
-        <LexaMascot mood={totals.current.good >= exercises.length / 2 ? "happy" : "neutral"} size={130} />
+        <BoMascot mood={totals.current.good >= exercises.length / 2 ? "happy" : "neutral"} size={130} />
         <h2 className="text-2xl font-semibold">{t("review.summaryTitle")}</h2>
         <p className="marker px-1 text-xl">{t("review.summaryXp", { n: totals.current.xp })}</p>
         <p>{t("review.summaryCorrect", { a: totals.current.good, b: exercises.length })}</p>
@@ -160,9 +163,7 @@ export function TranslateSession({ today = false }: { today?: boolean }) {
 
   return (
     <section className="max-w-xl space-y-5">
-      <p className="text-sm text-ink-faint" aria-live="polite">
-        {t("review.progress", { a: index + 1, b: exercises.length })}
-      </p>
+      <SessionProgress label={t("review.progress", { a: index + 1, b: exercises.length })} value={index} max={exercises.length} />
 
       <div className="sheet space-y-4 p-6">
         <p className="font-semibold">{t(toEnglish ? "translate.ar2en" : "translate.en2ar")}</p>
@@ -226,7 +227,7 @@ export function TranslateSession({ today = false }: { today?: boolean }) {
 
       {feedback && (
         <div className="sheet space-y-4 p-6" aria-live="polite">
-          <LexaMascot
+          <BoMascot
             mood={feedback.verdict === "correct" ? "happy" : feedback.verdict === "almost" ? "neutral" : "sad"}
             size={88}
           />

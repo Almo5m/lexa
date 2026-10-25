@@ -1,10 +1,13 @@
 "use client";
 
+import { fetchAi } from "@/lib/fetch-ai";
+
+import { SessionProgress } from "@/components/session-progress";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { RichText } from "@/components/rich-text";
 import { SpeakButton, speak } from "@/components/speak-button";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoMascot } from "@/components/bo-mascot";
 import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { WordCard } from "@/features/ai/schemas";
@@ -56,7 +59,7 @@ export function ReviewSession({ words, onDone }: { words: SessionWord[]; onDone?
     setBusy(true);
     setError(false);
     try {
-      const response = await fetch("/api/review", {
+      const response = await fetchAi("/api/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -97,7 +100,7 @@ export function ReviewSession({ words, onDone }: { words: SessionWord[]; onDone?
     const { xp, correct, answered, levelUp, goal } = totals.current;
     return (
       <section className="sheet flex flex-col items-center gap-4 p-8 text-center" aria-live="polite">
-        <LexaMascot mood={answered === 0 || correct >= answered / 2 ? "happy" : "neutral"} size={130} />
+        <BoMascot mood={answered === 0 || correct >= answered / 2 ? "happy" : "neutral"} size={130} />
         <h2 className="text-2xl font-semibold">{t("review.summaryTitle")}</h2>
         <p className="marker px-1 text-xl">{t("review.summaryXp", { n: xp })}</p>
         <p>{t("review.summaryCorrect", { a: correct, b: answered })}</p>
@@ -120,9 +123,7 @@ export function ReviewSession({ words, onDone }: { words: SessionWord[]; onDone?
 
   return (
     <section className="space-y-5">
-      <p className="text-sm text-ink-faint" aria-live="polite">
-        {t("review.progress", { a: Math.min(index + 1, queue.length), b: queue.length })}
-      </p>
+      <SessionProgress label={t("review.progress", { a: Math.min(index + 1, queue.length), b: queue.length })} value={Math.min(index, queue.length)} max={queue.length} />
 
       {(
         <TypedExercise
@@ -229,7 +230,7 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
         {result ? (result.correct ? t("review.correct") : isSentence ? "" : t("review.wrong", { word: result.answer })) : ""}
       </p>
       <div className="flex flex-wrap items-center gap-3 empty:hidden">
-        {result && <LexaMascot mood={result.correct ? "happy" : "sad"} size={76} />}
+        {result && <BoMascot mood={result.correct ? "happy" : "sad"} size={76} />}
         {result &&
           (result.correct ? (
             <p className="marker px-1 font-semibold">{t("review.correct")}</p>

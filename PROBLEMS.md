@@ -172,3 +172,19 @@ Grammar drills are checked in the client, so the saved score is what the client 
 
 ## Listening depends on the device voice
 The listening texts are read by the browser's own voice, so quality and availability change from phone to phone. If many students report no sound, record the five scripts as audio files and play those instead.
+
+## AI slow and often failing (2026-10-25)
+**What was wrong (found by reading the code, not yet by a live Gemini test):**
+- No time limit on any Gemini call. A call that hung kept the student waiting until the server cut it, and the retries stacked on top.
+- A slow answer was retried on the same model before the backup model was tried.
+- Parallel calls (card groups, Today session) fired at Google in bursts, which is what triggers 429 and 503 on one key.
+- The JSON helper repeated the whole call after a bad answer, even when most of the time was already used.
+
+**What changed:**
+- Every attempt has its own time limit (12s text, 30s with images) and the whole call has a budget (24s, 50s with images). A timeout moves to the backup model at once.
+- Streaming answers are cut if no piece arrives for 9 seconds.
+- `src/features/ai/limiter.ts`: at most 6 Gemini calls at once per server instance, short queue, fails fast instead of hanging.
+- `src/lib/fetch-ai.ts`: the browser waits at most 40s for the answer to start and tries once more by itself when the AI is busy.
+- The admin error log has a new kind, "Slow answer".
+
+**Still true:** the free Gemini tier allows only a few requests per minute. If the admin error log is mostly "Usage limit", no code can fix that. The options are a paid key or a lower daily limit per student. Check the AI tab (model test) and the error list first.

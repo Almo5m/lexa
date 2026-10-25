@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoMascot } from "@/components/bo-mascot";
 import { QuizSession } from "@/components/quiz-session";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
@@ -47,7 +47,7 @@ export default async function QuizPage() {
       <h1 className="text-2xl font-semibold">{t("quiz.title")}</h1>
       {questions.length === 0 ? (
         <div className="sheet flex flex-col items-center gap-3 p-8 text-center">
-          <LexaMascot mood="neutral" size={140} />
+          <BoMascot mood="neutral" size={140} />
           <p>{t("quiz.need", { n: MIN_WORDS_FOR_QUIZ })}</p>
           <Link href="/add" className="tag-btn">
             {t("nav.add")}

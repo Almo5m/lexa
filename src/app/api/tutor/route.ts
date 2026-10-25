@@ -7,7 +7,7 @@ import { AiDisabledError, assertWithinDailyLimit, streamGemini } from "@/feature
 
 export const maxDuration = 30;
 
-/** Older turns add time and cost, and Lexa only needs the recent ones. */
+/** Older turns add time and cost, and Bo only needs the recent ones. */
 const HISTORY_TURNS = 8;
 
 const bodySchema = z.object({

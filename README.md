@@ -24,7 +24,7 @@ Not built yet: the second term of the book, a teacher pass over the word lists, 
 
 The product has two names, both in one file (`src/lib/brand.ts`): **Talib Ilm** (طالب علم) is the site, **Bo** (بو) is the robot companion who explains, corrects and talks with the student. Texts use the placeholders `{app}` and `{ai}`, so a rename is one edit.
 
-The visual identity is being rebuilt as a game-style app with a 3D robot. Until then the old colors and mascot images are still in place. The history of the change is in `PROJECT_MEMORY.md`.
+The look is a game-style app built around Bo's palette: sky paper, deep navy text, electric blue as the main color, cyan for the glow and sun yellow for rewards. Buttons are chunky with a solid lip that presses down, cards are flat tiles with a thicker bottom border, and good news pops in. The colors and radii are tokens at the top of `src/app/globals.css`, so a change there reaches every screen. Bo himself is a real 3D robot (see `docs/BO_MODEL.md`).
 
 ## Setup
 

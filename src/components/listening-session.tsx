@@ -81,9 +81,7 @@ export function ListeningSession({ task }: { task: ListeningTask }) {
                       disabled={done}
                       aria-pressed={picked[qi] === oi}
                       onClick={() => setPicked((previous) => previous.map((value, i) => (i === qi ? oi : value)))}
-                      className={`min-h-12 w-full rounded-2xl border px-4 py-2 text-left ${
-                        isRight ? "border-leaf bg-leaf/15" : isWrong ? "border-pen-red bg-pen-red/10" : picked[qi] === oi ? "border-indigo bg-indigo/10" : "border-line"
-                      }`}
+                      className={`choice ${isRight ? "choice-right" : ""} ${isWrong ? "choice-wrong" : ""} ${picked[qi] === oi && !done ? "choice-picked" : ""}`}
                     >
                       {option}
                     </button>

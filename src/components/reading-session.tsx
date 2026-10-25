@@ -1,9 +1,11 @@
 "use client";
 
+import { fetchAi } from "@/lib/fetch-ai";
+
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { LexaLoader } from "@/components/lexa-loader";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoLoader } from "@/components/bo-loader";
+import { BoMascot } from "@/components/bo-mascot";
 import { RichText } from "@/components/rich-text";
 import { SpeakButton } from "@/components/speak-button";
 import { TagButton } from "@/components/tag-button";
@@ -28,7 +30,7 @@ export function ReadingSession() {
     started.current = true;
     (async () => {
       try {
-        const response = await fetch("/api/reading", { method: "POST" });
+        const response = await fetchAi("/api/reading", { method: "POST" });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) return setLoad({ name: "error", reason: data.error ?? "server_error" });
         const loaded = data as ReadingView;
@@ -65,7 +67,7 @@ export function ReadingSession() {
   if (load.name === "loading") {
     return (
       <div className="flex flex-col items-center gap-3 py-16">
-        <LexaLoader size={140} label={t("read.loading")} />
+        <BoLoader size={140} label={t("read.loading")} />
         <p className="text-ink-soft">{t("read.loading")}</p>
       </div>
     );
@@ -145,7 +147,7 @@ export function ReadingSession() {
 
       {view.completed && answered && lastShown && (
         <section className="sheet flex flex-col items-center gap-3 p-6 text-center">
-          <LexaMascot mood={view.score >= 2 ? "happy" : "neutral"} size={110} />
+          <BoMascot mood={view.score >= 2 ? "happy" : "neutral"} size={110} />
           <h2 className="text-xl font-semibold">{t("read.score", { a: view.score, b: view.questions.length })}</h2>
           {xp > 0 && <p className="marker px-1 font-semibold">{t("review.summaryXp", { n: xp })}</p>}
           {view.textAr && (

@@ -1,9 +1,11 @@
 "use client";
 
+import { fetchAi } from "@/lib/fetch-ai";
+
 import { useRef, useState, type FormEvent } from "react";
 import { ChatIcon } from "@/components/icons";
 import { RichText } from "@/components/rich-text";
-import { LexaLoader } from "@/components/lexa-loader";
+import { BoLoader } from "@/components/bo-loader";
 import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
@@ -30,7 +32,7 @@ export function TutorChat({ wordId }: { wordId?: string }) {
     setError(null);
     setBusy(true);
     try {
-      const response = await fetch("/api/tutor", {
+      const response = await fetchAi("/api/tutor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ wordId, messages: next.slice(-12) }),
@@ -103,7 +105,7 @@ export function TutorChat({ wordId }: { wordId?: string }) {
         ))}
         {busy && messages[messages.length - 1]?.role !== "tutor" && (
           <div className="flex items-center gap-3 text-ink-faint">
-            <LexaLoader size={56} label={t("tutor.thinking")} />
+            <BoLoader size={56} label={t("tutor.thinking")} />
             <span aria-hidden="true">{t("tutor.thinking")}</span>
           </div>
         )}

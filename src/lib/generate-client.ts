@@ -1,3 +1,4 @@
+import { fetchAi } from "@/lib/fetch-ai";
 export type GenerateResult = { ok: true; generated: number } | { ok: false; error: string };
 
 const GROUP_SIZE = 4;
@@ -28,7 +29,7 @@ export async function generatePendingCards(
     while (failure === null && next < groups.length) {
       const group = groups[next++];
       try {
-        const response = await fetch("/api/words/generate", {
+        const response = await fetchAi("/api/words/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ids: group }),

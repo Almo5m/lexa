@@ -2,7 +2,7 @@ import { AccountForm } from "@/components/account-form";
 import { ShareManager } from "@/components/share-manager";
 import { isActive } from "@/features/share/token";
 import { InterestsForm } from "@/components/interests-form";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoMascot } from "@/components/bo-mascot";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
 
@@ -20,7 +20,7 @@ export default async function MePage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div className="flex items-end gap-3">
-        <LexaMascot mood="happy" size={88} />
+        <BoMascot mood="happy" size={88} />
         <div>
           <h1 className="text-2xl font-semibold">{t("me.title")}</h1>
           <p className="text-ink-soft">{t("me.why")}</p>

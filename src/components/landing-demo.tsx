@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchAi } from "@/lib/fetch-ai";
+
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { RichText } from "@/components/rich-text";
@@ -38,7 +40,7 @@ export function LandingDemo() {
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch(url, {
+      const response = await fetchAi(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

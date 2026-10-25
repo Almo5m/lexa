@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AlmoSignature } from "@/components/almo-signature";
-import { LexaMascot } from "@/components/lexa-mascot";
+import { BoMascot } from "@/components/bo-mascot";
 import { LevelBar } from "@/components/talk-session";
 import { getT } from "@/lib/i18n/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
@@ -31,7 +31,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
   if (!report) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-5 text-center">
-        <LexaMascot mood="neutral" size={120} />
+        <BoMascot mood="neutral" size={120} />
         <p className="text-lg">{t("share.invalid")}</p>
       </div>
     );
@@ -42,7 +42,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 px-5 py-8">
       <header className="flex items-center gap-4">
-        <LexaMascot mood="happy" size={80} />
+        <BoMascot mood="happy" size={80} />
         <h1 className="text-2xl font-bold">
           {report.firstName ? t("share.reportTitle", { name: report.firstName }) : t("share.reportTitleAnon")}
         </h1>
