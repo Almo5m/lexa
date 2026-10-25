@@ -46,3 +46,17 @@ describe("fetchAi", () => {
     await expect(fetchAi("/api/x", undefined, { waitMs: 20, retries: 0 })).rejects.toThrow();
   });
 });
+
+describe("fetchAi with a stop button", () => {
+  it("does not retry after the caller cancelled", async () => {
+    const stop = new AbortController();
+    const fetchMock = vi.fn().mockImplementation((_url: string, init: RequestInit) =>
+      new Promise((_resolve, reject) => init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")))),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const pending = fetchAi("/api/x", { signal: stop.signal }, { waitMs: 5000 });
+    stop.abort();
+    await expect(pending).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});

@@ -2,6 +2,7 @@
 
 import { BoRobot } from "@/components/bo-robot";
 import { useBoVariant } from "@/components/use-bo-variant";
+import { useBoCompanion } from "@/components/bo-companion-context";
 import { BO_VARIANTS, saveBoVariant, type BoVariant } from "@/features/bo/variant";
 import { useT } from "@/lib/i18n/provider";
 
@@ -9,6 +10,7 @@ import { useT } from "@/lib/i18n/provider";
 export function BoPicker() {
   const { t } = useT();
   const chosen = useBoVariant();
+  const { hidden, setHidden } = useBoCompanion();
 
   return (
     <div className="space-y-3">
@@ -32,6 +34,10 @@ export function BoPicker() {
           );
         })}
       </div>
+      <label className="flex min-h-12 items-center gap-3 font-semibold">
+        <input type="checkbox" checked={!hidden} onChange={(event) => setHidden(!event.target.checked)} className="size-5 accent-indigo" />
+        {t("boPicker.visible")}
+      </label>
     </div>
   );
 }

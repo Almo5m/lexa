@@ -80,6 +80,10 @@ Server and client code are separate. All Gemini calls happen on the server.
 - Admin pages and APIs check the admin role on the server.
 - Images are validated by type and size and are never stored.
 
+## Bo on every screen
+
+Bo floats above every screen (except Today and Account, which already show a big Bo). Tap him for a small menu: talk to him, let him roam (then drag him anywhere and he stays there), keep him in his corner, replay the guide, or hide him (it can be turned back on in Account). On a new account Bo guides the student himself: he flies to each part of the app and says what it is for. The chat shows what Bo is doing while he answers (reading the question, thinking, writing), has a stop button, copy, retry and quick starter questions. The code is in `src/components/bo-companion.tsx`, `bo-guide.tsx` and `bo-chat.tsx`, and the position maths in `src/features/bo/placement.ts`.
+
 ## Credits
 
 The flying Bo model is by Shayan (CC BY 4.0). Details in `CREDITS.md`.

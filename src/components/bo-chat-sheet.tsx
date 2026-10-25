@@ -1,66 +1,59 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import { CloseIcon, BoIcon } from "@/components/icons";
-import { TutorChat } from "@/components/tutor-chat";
+import { BoIcon } from "@/components/icons";
+import { BoChat } from "@/components/bo-chat";
+import { useBoCompanion } from "@/components/bo-companion-context";
 import { useT } from "@/lib/i18n/provider";
-import { BoMascot } from "@/components/bo-mascot";
 
-/** The navigation entry that opens Bo from any page. */
-export function BoChatLauncher({
-  children,
-  className,
-  tour,
-}: {
-  children?: ReactNode;
-  className?: string;
-  tour?: string;
-}) {
+/** The navigation entry that opens Bo's chat from any page. */
+export function BoChatLauncher({ children, className, tour }: { children?: ReactNode; className?: string; tour?: string }) {
   const { t } = useT();
+  const { openChat } = useBoCompanion();
+  return (
+    <button type="button" className={className} data-tour={tour} onClick={openChat}>
+      {children ?? (
+        <>
+          <BoIcon />
+          {t("nav.lexa")}
+        </>
+      )}
+    </button>
+  );
+}
+
+/** The chat sheet itself. One copy lives in the app, and any button or Bo's menu opens it. */
+export function BoChatHost() {
+  const { t } = useT();
+  const { chatOpen, closeChat } = useBoCompanion();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    const closeOnBackdrop = (event: MouseEvent) => {
-      if (event.target === dialog) dialog.close();
+    if (chatOpen && !dialog.open) dialog.showModal();
+    if (!chatOpen && dialog.open) dialog.close();
+  }, [chatOpen]);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const onBackdrop = (event: MouseEvent) => {
+      if (event.target === dialog) closeChat();
     };
-    dialog.addEventListener("click", closeOnBackdrop);
-    return () => dialog.removeEventListener("click", closeOnBackdrop);
-  }, []);
+    dialog.addEventListener("click", onBackdrop);
+    dialog.addEventListener("close", closeChat);
+    return () => {
+      dialog.removeEventListener("click", onBackdrop);
+      dialog.removeEventListener("close", closeChat);
+    };
+  }, [closeChat]);
 
   return (
-    <>
-      <button type="button" className={className} data-tour={tour} onClick={() => dialogRef.current?.showModal()}>
-        {children ?? (
-          <>
-            <BoIcon />
-            {t("nav.lexa")}
-          </>
-        )}
-      </button>
-
-      <dialog ref={dialogRef} className="bo-sheet" aria-label={t("brand.ai")}>
-        <div className="flex max-h-[92dvh] flex-col">
-          <div className="flex items-center justify-between gap-3 px-5 pt-5">
-            <div className="flex items-center gap-3">
-              <BoMascot mood="neutral" size={48} />
-              <h2 className="text-xl font-semibold">{t("brand.ai")}</h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => dialogRef.current?.close()}
-              aria-label={t("common.close")}
-              className="flex h-12 w-12 items-center justify-center rounded-full hover:bg-paper-deep"
-            >
-              <CloseIcon />
-            </button>
-          </div>
-          <div className="overflow-y-auto px-5 pb-6 pt-4">
-            <TutorChat />
-          </div>
-        </div>
-      </dialog>
-    </>
+    <dialog ref={dialogRef} className="bo-sheet" aria-label={t("brand.ai")}>
+      <div className="flex h-[88dvh] max-h-[760px] flex-col">
+        <BoChat layout="sheet" onClose={closeChat} />
+      </div>
+    </dialog>
   );
 }

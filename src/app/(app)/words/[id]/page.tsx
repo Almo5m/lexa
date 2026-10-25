@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { WordCardView } from "@/components/word-card-view";
-import { TutorChat } from "@/components/tutor-chat";
+import { BoChat } from "@/components/bo-chat";
 import { RetryCardButton } from "@/components/retry-card-button";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
@@ -38,7 +38,7 @@ export default async function WordPage({ params }: { params: Promise<{ id: strin
         </div>
       )}
 
-      <TutorChat wordId={word.id} />
+      <BoChat wordId={word.id} />
     </div>
   );
 }

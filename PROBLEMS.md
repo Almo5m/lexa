@@ -188,3 +188,8 @@ The listening texts are read by the browser's own voice, so quality and availabi
 - The admin error log has a new kind, "Slow answer".
 
 **Still true:** the free Gemini tier allows only a few requests per minute. If the admin error log is mostly "Usage limit", no code can fix that. The options are a paid key or a lower daily limit per student. Check the AI tab (model test) and the error list first.
+
+## Build failed on Vercel: "LexaIcon is not exported" (2026-10-26)
+**What happened:** the repo still had `src/components/lexa-chat-sheet.tsx` from before the rename to Bo. Unzipping a new version over the old project never deletes files that were removed or renamed, so the old file stayed and imported an icon that no longer exists.
+**Fix:** delete the leftover files (`lexa-chat-sheet.tsx`, `lexa-loader.tsx`, `lexa-mascot.tsx`, `public/lexa/`, `app-tour.tsx`, `tutor-chat.tsx`).
+**Rule from now on:** before unzipping a new version, empty the project folder except `.git`, `node_modules` and `.env.local`.

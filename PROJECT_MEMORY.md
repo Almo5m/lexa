@@ -297,3 +297,11 @@ Log of decisions and events, newest at the bottom.
 - Fixed a latent bug in classic Bo: the sad head lean made the visor reflect the ceiling and turn white. Removed the lean and lowered the visor reflection.
 - Credits: CREDITS.md, public/bo/CREDITS.txt, README, welcome footer line.
 - Tested: isolated renders of all moods for both Bos, live switching, missing file, reduced motion. Known: the flying model's face is small by design.
+
+## Phase 7.2 — Bo everywhere, new chat, Bo guides new students (2026-10-26)
+- Floating Bo on every app screen (hidden only on Today and Account, which show a big Bo). Tap = menu (chat, free move / dock, replay guide, hide). Free mode: drag anywhere, position kept as fractions of the screen in localStorage. Keyboard: Enter opens the menu, arrows move him in free mode. Page bottom padding on phones keeps content scrollable above him.
+- Guide: replaced the old tour. Bo flies to each part of the app with a highlight ring and a speech card. Starts by itself once per account (key per user id) and from the menu. Ends with Bo going home.
+- Chat rebuilt (`bo-chat.tsx`): status line and a skeleton with a spinning orb while he reads, thinks, writes; the student's message gets a read sweep and a "read" tick; streamed text with a caret; stop button, copy, retry, new chat, starter questions, Enter to send, growing input. Bo's face and the floating Bo change mood with the chat. Server prompt widened to grammar, writing and translation.
+- `fetchAi` now accepts a stop signal. New tests: placement and stored preferences, stop signal.
+- Tested with a fake Gemini server through the real route (streaming), plus guide, menu, drag, persistence, hide/restore, stop, retry, phone and desktop.
+- Vercel build error found: stale files from the Lexa era in the user's repo. See PROBLEMS.md.

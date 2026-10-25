@@ -14,9 +14,15 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 async function once(url: string, init: RequestInit | undefined, waitMs: number): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), waitMs);
+  // A stop button in the screen can cancel the request too. Reading the answer afterwards is still cancelled by the caller.
+  const outer = init?.signal;
+  const onOuterAbort = () => controller.abort();
+  outer?.addEventListener("abort", onOuterAbort, { once: true });
+  if (outer?.aborted) controller.abort();
   try {
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
+    // The time limit covers only the wait for the first bytes. The listener stays, so a stop button still cuts a streaming answer.
     clearTimeout(timer);
   }
 }
@@ -35,7 +41,7 @@ export async function fetchAi(url: string, init?: RequestInit, options: { waitMs
       if (reason && !RETRYABLE_ERRORS.has(reason)) return response;
     } catch (error) {
       lastError = error;
-      if (attempt === retries) throw error;
+      if (attempt === retries || init?.signal?.aborted) throw error;
     }
     await sleep(RETRY_AFTER_MS);
   }

@@ -3,7 +3,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppNav } from "@/components/app-nav";
 import { AlmoSignature } from "@/components/almo-signature";
-import { AppTour, TourReplayButton } from "@/components/app-tour";
+import { BoCompanionProvider } from "@/components/bo-companion";
+import { TourReplayButton } from "@/components/bo-guide";
 import { FlameIcon, XpIcon } from "@/components/icons";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
@@ -14,13 +15,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const { lang, t } = await getT();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, total_xp, streak_current")
+    .select("role, total_xp, streak_current, display_name")
     .eq("id", user.id)
     .single();
 
   const streak = profile?.streak_current ?? 0;
 
   return (
+    <BoCompanionProvider userId={user.id} name={profile?.display_name ?? ""}>
     <div className="mx-auto flex min-h-dvh max-w-6xl flex-col md:flex-row">
       <aside className="md:sticky md:top-0 md:flex md:h-dvh md:w-64 md:shrink-0 md:flex-col md:justify-between md:py-6">
         <div>
@@ -48,7 +50,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col pb-24 md:pb-0">
+      <div className="flex min-w-0 flex-1 flex-col pb-40 md:pb-0">
         <header className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-5 pt-4 md:justify-end md:px-8 md:pt-6">
           <Link href="/" className="flex min-h-11 items-center gap-2 md:hidden">
             <BoMark size={36} />
@@ -100,7 +102,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <AlmoSignature />
         </div>
       </div>
-      <AppTour />
     </div>
+    </BoCompanionProvider>
   );
 }
