@@ -289,3 +289,11 @@ Log of decisions and events, newest at the bottom.
 - Shared concurrency limiter (6 at once, 8s queue), new "timeout" error kind in admin.
 - Browser helper `fetchAi` (40s wait, one automatic retry on busy), used by every AI screen.
 - Tests added: limiter, timeouts, fetchAi. See PROBLEMS.md.
+
+## Phase 7.1 — Flying Bo model and the Bo switch (2026-10-25)
+- Added the user's model `public/bo/bo.glb` (Shayan, CC BY 4.0, 5,774 triangles, 290 KB). Inspected first: no textures, 16 animation channels, 3 materials.
+- Scene: plays its flight animation, recolored to Bo's palette (pearl shell, navy screen, cyan glow). Moods = glow color, speed, lean, thruster rings. Face glow drawn over the screen because the eyes sit inside it.
+- Two Bos: "flyer" (default) and "classic". Student picks in Account (/me), kept in localStorage, every Bo on screen updates live. Missing or broken GLB falls back to classic.
+- Fixed a latent bug in classic Bo: the sad head lean made the visor reflect the ceiling and turn white. Removed the lean and lowered the visor reflection.
+- Credits: CREDITS.md, public/bo/CREDITS.txt, README, welcome footer line.
+- Tested: isolated renders of all moods for both Bos, live switching, missing file, reduced motion. Known: the flying model's face is small by design.

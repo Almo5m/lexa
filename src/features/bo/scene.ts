@@ -21,15 +21,18 @@ import {
   MathUtils,
   Box3,
   Vector3,
+  AnimationMixer,
   type Object3D,
 } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+import type { BoVariant } from "@/features/bo/variant";
+
 export type BoMood = "happy" | "neutral" | "sad" | "thinking";
 
-/** Put a model exported from Blender here and it replaces the robot built in code. */
+/** The flying robot model (see public/bo/CREDITS.txt). Delete the file and the built-in robot is used instead. */
 export const BO_MODEL_URL = "/bo/bo.glb";
 
 interface MoodPose {
@@ -51,6 +54,22 @@ const POSES: Record<BoMood, MoodPose> = {
   thinking: { eyeScaleY: 0.8, eyeTilt: -0.12, eyeY: 0.03, eyeLookUp: 0.09, mouthRotation: Math.PI, mouthScaleY: 0.1, antennaTilt: -0.15, bulb: "#7aa6ff", wave: 0 },
 };
 
+/** How the flying model shows each mood: glow color, animation speed, lean, and whether the sound waves show. */
+interface FlyerMood {
+  glow: string;
+  speed: number;
+  leanX: number;
+  leanZ: number;
+  waves: boolean;
+}
+
+const FLYER_MOODS: Record<BoMood, FlyerMood> = {
+  happy: { glow: "#25bfff", speed: 1.3, leanX: -0.04, leanZ: 0, waves: true },
+  neutral: { glow: "#25bfff", speed: 1, leanX: 0, leanZ: 0, waves: true },
+  sad: { glow: "#8aa0c8", speed: 0.45, leanX: 0.2, leanZ: 0, waves: false },
+  thinking: { glow: "#7aa6ff", speed: 0.7, leanX: 0.04, leanZ: 0.12, waves: false },
+};
+
 export interface BoScene {
   setMood(mood: BoMood): void;
   resize(width: number, height: number): void;
@@ -61,8 +80,8 @@ export interface BoScene {
 
 interface Options {
   reducedMotion: boolean;
-  /** Try the Blender model first. Off in tests. */
-  tryModel?: boolean;
+  /** classic = built in code, flyer = the animated model. The flyer falls back to classic if the file cannot load. */
+  variant?: BoVariant;
 }
 
 function glowTexture(): CanvasTexture {
@@ -94,7 +113,8 @@ interface Rig {
 function buildRobot(): Rig {
   const shell = new MeshPhysicalMaterial({ color: "#f4f6ff", roughness: 0.28, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.12 });
   const trim = new MeshStandardMaterial({ color: "#3d5bff", roughness: 0.3, metalness: 0.7 });
-  const glass = new MeshPhysicalMaterial({ color: "#0a1030", roughness: 0.08, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.05 });
+  // Low reflection strength keeps the visor dark when the head leans (a bright ceiling reflection turned it white).
+  const glass = new MeshPhysicalMaterial({ color: "#0a1030", roughness: 0.08, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 0.3 });
   const glow = new MeshBasicMaterial({ color: "#2fc4ff", toneMapped: false });
   const bulbMaterial = new MeshBasicMaterial({ color: "#ffc94a", toneMapped: false });
 
@@ -175,6 +195,68 @@ function buildRobot(): Rig {
   return { root, head, eyes, mouth, antenna, bulb, bulbMaterial, armRight: makeArm(1), armLeft: makeArm(-1) };
 }
 
+interface Flyer {
+  mixer: AnimationMixer;
+  glow: MeshBasicMaterial[];
+  /** The sound-wave rings around the face: shown when Bo is cheerful, hidden when he is sad or thinking. */
+  showWaves(visible: boolean): void;
+}
+
+/** Loads the flying robot, paints it in Bo's colors and starts its flight loop. Returns null when the file is missing. */
+async function loadFlyer(stage: Group, reducedMotion: boolean): Promise<Flyer | null> {
+  try {
+    const gltf = await new GLTFLoader().loadAsync(BO_MODEL_URL);
+    const model = gltf.scene;
+
+    // Bo's palette: pearl shell, deep navy glass, one cyan glow shared by eyes, mouth and waves.
+    const glow = new MeshBasicMaterial({ color: FLYER_MOODS.neutral.glow, toneMapped: false });
+    // The eyes and mouth sit inside the dark screen in the model, so they are drawn on top of it.
+    const faceGlow = new MeshBasicMaterial({ color: FLYER_MOODS.neutral.glow, toneMapped: false, depthTest: false });
+    const waveMeshes: Mesh[] = [];
+    model.traverse((object) => {
+      const mesh = object as Mesh;
+      if (!mesh.isMesh) return;
+      const material = mesh.material as MeshPhysicalMaterial;
+      if (material.name === "Blue_Light") {
+        if (/eyes|mouth/i.test(mesh.name)) {
+          mesh.material = faceGlow;
+          mesh.renderOrder = 10;
+        } else {
+          mesh.material = glow;
+          if (/wave/i.test(mesh.name)) waveMeshes.push(mesh);
+        }
+      } else if (material.name === "White_Glossy") {
+        material.color.set("#f4f6ff");
+        material.roughness = 0.3;
+      } else if (material.name === "Black_Matt") {
+        material.color.set("#0a1030");
+        material.roughness = 0.25;
+        material.metalness = 0.2;
+        // A bright reflection across the screen hides the glowing eyes, so the screen reflects less.
+        material.clearcoat = 0;
+        material.envMapIntensity = 0.35;
+      }
+    });
+    const mixer = new AnimationMixer(model);
+    const clip = gltf.animations[0];
+    if (clip) mixer.clipAction(clip).play();
+    mixer.setTime(reducedMotion ? 1 : 0);
+
+    // Fit at the first frame of the flight, with room left for the wave rings and the bob.
+    model.updateMatrixWorld(true);
+    const box = new Box3().setFromObject(model);
+    const size = box.getSize(new Vector3());
+    const scale = 2.3 / Math.max(size.y, 0.001);
+    model.scale.multiplyScalar(scale);
+    const center = box.getCenter(new Vector3());
+    model.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+    stage.add(model);
+    return { mixer, glow: [glow, faceGlow], showWaves: (visible) => waveMeshes.forEach((mesh) => (mesh.visible = visible)) };
+  } catch {
+    return null;
+  }
+}
+
 export async function createBoScene(canvas: HTMLCanvasElement, options: Options): Promise<BoScene> {
   const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "low-power" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -209,27 +291,10 @@ export async function createBoScene(canvas: HTMLCanvasElement, options: Options)
   floor.position.y = -1.55;
   scene.add(floor);
 
-  let model: Object3D | null = null;
-  if (options.tryModel !== false) {
-    try {
-      const head = await fetch(BO_MODEL_URL, { method: "HEAD" });
-      // A missing file comes back as an HTML page, so anything that is not HTML is taken as the model.
-      if (head.ok && !(head.headers.get("content-type") ?? "").includes("text/html")) {
-        const gltf = await new GLTFLoader().loadAsync(BO_MODEL_URL);
-        model = gltf.scene;
-        const box = new Box3().setFromObject(model);
-        const size = box.getSize(new Vector3());
-        const scale = 2.9 / Math.max(size.y, 0.001);
-        model.scale.setScalar(scale);
-        const center = box.getCenter(new Vector3());
-        model.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
-        stage.add(model);
-        rig.root.visible = false;
-      }
-    } catch {
-      model = null;
-    }
-  }
+  const flyer = options.variant === "classic" ? null : await loadFlyer(stage, options.reducedMotion);
+  if (flyer) rig.root.visible = false;
+  let flyerMood = FLYER_MOODS.neutral;
+  const flyerGlow = new Color(flyerMood.glow);
 
   let target: MoodPose = POSES.neutral;
   const current: MoodPose = { ...POSES.neutral };
@@ -262,8 +327,17 @@ export async function createBoScene(canvas: HTMLCanvasElement, options: Options)
     bulbColor.lerp(new Color(target.bulb), ease);
 
     const motion = options.reducedMotion ? 0 : 1;
-    stage.position.y = Math.sin(time * 1.7) * 0.07 * motion;
+    // The flying model already floats by itself, so only the built-in robot gets the extra bob.
+    stage.position.y = flyer ? 0 : Math.sin(time * 1.7) * 0.07 * motion;
     stage.rotation.y = MathUtils.lerp(stage.rotation.y, pointerX * 0.4 * motion, ease);
+    if (flyer) {
+      flyerGlow.lerp(new Color(flyerMood.glow), ease);
+      flyer.glow.forEach((material) => material.color.copy(flyerGlow));
+      flyer.showWaves(flyerMood.waves);
+      stage.rotation.x = MathUtils.lerp(stage.rotation.x, (flyerMood.leanX + pointerY * 0.12) * motion, ease);
+      stage.rotation.z = MathUtils.lerp(stage.rotation.z, flyerMood.leanZ * motion, ease);
+      if (motion) flyer.mixer.update(dt * flyerMood.speed);
+    }
 
     const blinking = time > blinkAt && time < blinkUntil;
     if (time >= blinkUntil && time > blinkAt) {
@@ -281,7 +355,7 @@ export async function createBoScene(canvas: HTMLCanvasElement, options: Options)
     rig.mouth.scale.set(1, current.mouthScaleY, 1);
     rig.mouth.position.y = current.mouthRotation === Math.PI ? -0.18 : -0.2;
 
-    rig.head.rotation.x = MathUtils.lerp(rig.head.rotation.x, (pointerY * 0.18 + (target === POSES.sad ? 0.12 : 0)) * motion, ease);
+    rig.head.rotation.x = MathUtils.lerp(rig.head.rotation.x, pointerY * 0.18 * motion, ease);
     rig.head.rotation.z = Math.sin(time * 1.1) * 0.035 * motion;
     rig.antenna.rotation.z = current.antennaTilt + Math.sin(time * 2.2) * 0.06 * motion;
     rig.bulbMaterial.color.copy(bulbColor).multiplyScalar(0.85 + Math.sin(time * 3.2) * 0.15 * motion);
@@ -299,6 +373,11 @@ export async function createBoScene(canvas: HTMLCanvasElement, options: Options)
   return {
     setMood(mood) {
       target = POSES[mood];
+      flyerMood = FLYER_MOODS[mood];
+      if (flyer && (!running || options.reducedMotion)) {
+        flyerGlow.set(flyerMood.glow);
+        stage.rotation.set(flyerMood.leanX, stage.rotation.y, flyerMood.leanZ);
+      }
       if (!running || options.reducedMotion) {
         // Nothing is animating, so jump straight to the pose instead of easing toward it.
         Object.assign(current, target);
