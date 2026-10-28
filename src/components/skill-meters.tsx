@@ -13,9 +13,9 @@ export function SkillMeters({ meters, title, emptyText }: { meters: SkillMeter[]
       <h2 id="skills-title" className="mb-3 text-lg font-bold">
         {title}
       </h2>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {meters.map((meter, position) => (
-          <div key={meter.key} className={`sheet px-4 py-3 ${meters.length % 2 === 1 && position === meters.length - 1 ? "col-span-2" : ""}`}>
+          <div key={meter.key} className={`sheet px-4 py-3 ${meters.length % 2 === 1 && position === meters.length - 1 ? "col-span-2 lg:col-span-1" : ""}`}>
             <div className="flex items-baseline justify-between gap-2">
               <span className="font-semibold">{meter.label}</span>
               <span className="ltr-text text-sm font-semibold text-indigo">{meter.value}</span>

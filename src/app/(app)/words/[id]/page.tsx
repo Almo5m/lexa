@@ -22,7 +22,7 @@ export default async function WordPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="max-w-2xl space-y-6">
-      <Link href="/words" className="inline-flex min-h-11 items-center text-ink-soft underline underline-offset-4">
+      <Link href="/words" className="inline-flex min-h-11 items-center text-ink-soft transition-colors hover:text-indigo">
         {t("card.back")}
       </Link>
 

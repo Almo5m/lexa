@@ -75,10 +75,10 @@ export function SuggestList({ words }: { words: string[] }) {
   return (
     <div className="max-w-xl space-y-6">
       <div className="flex gap-4 text-sm">
-        <button type="button" className="min-h-11 underline underline-offset-4" onClick={() => setSelected(new Set(words))}>
+        <button type="button" className="min-h-11 transition-colors hover:text-indigo" onClick={() => setSelected(new Set(words))}>
           {t("suggest.selectAll")}
         </button>
-        <button type="button" className="min-h-11 underline underline-offset-4" onClick={() => setSelected(new Set())}>
+        <button type="button" className="min-h-11 transition-colors hover:text-indigo" onClick={() => setSelected(new Set())}>
           {t("suggest.clear")}
         </button>
       </div>

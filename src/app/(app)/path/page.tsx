@@ -29,7 +29,7 @@ export default async function PathPage() {
   const level = levelProgress(profile?.total_xp ?? 0);
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-2xl space-y-6 lg:max-w-5xl">
       <div>
         <h1 className="text-2xl font-semibold">{t("path.title")}</h1>
         <p className="text-ink-soft">{t("path.hint")}</p>
@@ -134,7 +134,7 @@ export default async function PathPage() {
                                   {t("path.test")}
                                 </Link>
                               )}
-                              <Link href="/learn" className="tag-btn min-h-11 text-sm">
+                              <Link href="/learn?track=path" className="tag-btn min-h-11 text-sm">
                                 {t("path.continue")}
                               </Link>
                             </div>

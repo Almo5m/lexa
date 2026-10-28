@@ -64,7 +64,7 @@ export function BoCompanionProvider({ children, userId, name }: { children: Reac
     bubbleTimer.current = setTimeout(() => setBubble(null), ms);
   }, []);
 
-  const size = viewport.width < 768 ? 76 : 96;
+  const size = viewport.width < 1024 ? 76 : 96;
 
   const api = useMemo<CompanionApi>(
     () => ({
@@ -117,7 +117,7 @@ function FloatingBo({
   const press = useRef<{ id: number; startX: number; startY: number; origin: Point; moved: boolean } | null>(null);
 
   const rtl = typeof document !== "undefined" && document.documentElement.dir === "rtl";
-  const phone = viewport.width < 768;
+  const phone = viewport.width < 1024;
   const reserve = { top: 0, bottom: phone ? PHONE_BAR : 0 };
   const free = prefs.mode === "free";
 

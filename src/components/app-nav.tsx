@@ -36,7 +36,7 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
   const words: NavLink = { href: "/words", label: "nav.words", icon: <WordsIcon />, also: WORDS_PATHS, tour: "words" };
 
   const tabClass = (active: boolean) =>
-    `flex min-h-14 flex-col items-center justify-center gap-0.5 px-2 text-xs md:min-h-12 md:flex-row md:justify-start md:gap-3 md:rounded-full md:px-4 md:text-base ${
+    `flex min-h-14 flex-col items-center justify-center gap-0.5 px-2 text-xs lg:min-h-12 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-full lg:px-4 lg:text-base ${
       active ? "font-bold text-indigo rounded-2xl bg-indigo/10" : "rounded-2xl text-ink-faint hover:text-ink"
     }`;
 
@@ -56,7 +56,7 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 items-end border-t border-line bg-sheet px-2 pb-[env(safe-area-inset-bottom)] md:static md:inset-auto md:flex md:w-60 md:flex-col md:gap-1 md:border-t-0 md:bg-transparent md:p-4"
+      className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 items-end border-t border-line bg-sheet px-2 pb-[env(safe-area-inset-bottom)] lg:static lg:inset-auto lg:flex lg:w-60 lg:flex-col lg:gap-1 lg:border-t-0 lg:bg-transparent lg:p-4"
     >
       {plain(home)}
       {plain(path)}
@@ -71,7 +71,7 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
       {isAdmin && (
         <Link
           href="/admin"
-          className="hidden min-h-12 items-center gap-3 rounded-full px-4 text-ink-faint hover:text-ink md:flex"
+          className="hidden min-h-12 items-center gap-3 rounded-full px-4 text-ink-faint hover:text-ink lg:flex"
         >
           <DashboardIcon />
           {t("nav.admin")}

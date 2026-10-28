@@ -13,7 +13,7 @@ export default async function PracticePage() {
   const level = profile?.level_band ?? null;
 
   return (
-    <div className="max-w-2xl space-y-8">
+    <div className="max-w-2xl space-y-8 lg:max-w-5xl">
       <h1 className="text-2xl font-semibold">{t("practice.title")}</h1>
 
       <Group title={t("practice.groupWords")}>
@@ -53,7 +53,7 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
       <h2 className="mb-2 text-sm font-semibold text-ink-faint">{title}</h2>
-      <ul className="space-y-3">{children}</ul>
+      <ul className="grid gap-3 lg:grid-cols-2">{children}</ul>
     </section>
   );
 }

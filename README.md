@@ -1,4 +1,4 @@
-# Talib Ilm (طالب علم)
+# Booo (بو)
 
 Vocabulary learning app for Egyptian secondary-school students. The student uploads photos of English words, and the app turns them into cards, reviews, exercises and a personal AI tutor. It is not a dictionary and not a plain flashcard app.
 
@@ -6,7 +6,7 @@ Stack: Next.js (App Router), TypeScript, Tailwind CSS, Supabase (auth + database
 
 ## What it does
 
-Talib Ilm is built around one daily session for third-secondary students (15, 30 or 45 minutes, the student picks). Today shows four steps: review old words, learn new ones, read a short text, translate. Speaking with Bo is a bonus step.
+Booo is built around one daily session for third-secondary students (15, 30 or 45 minutes, the student picks). Today shows four steps: review old words, learn new ones, read a short text, translate. Speaking with Bo is a bonus step.
 
 - **Plan:** a path of about 2300 words from A1 to B1 in 93 units. A level test decides where each student starts. Every word has a finished card (meaning, example, note), made once and stored, so learning a word is instant.
 - **Skills:** five bars (words, understanding, translation, speaking, book) computed from what the student really did.
@@ -22,7 +22,7 @@ Not built yet: the second term of the book, a teacher pass over the word lists, 
 
 ## Look and feel
 
-The product has two names, both in one file (`src/lib/brand.ts`): **Talib Ilm** (طالب علم) is the site, **Bo** (بو) is the robot companion who explains, corrects and talks with the student. Texts use the placeholders `{app}` and `{ai}`, so a rename is one edit.
+The product has two names, both in one file (`src/lib/brand.ts`): **Booo** (بو) is the site, and **Bo** (بو) is the robot companion who explains, corrects and talks with the student. Texts use the placeholders `{app}` and `{ai}`, so a rename is one edit.
 
 The look is a game-style app built around Bo's palette: sky paper, deep navy text, electric blue as the main color, cyan for the glow and sun yellow for rewards. Buttons are chunky with a solid lip that presses down, cards are flat tiles with a thicker bottom border, and good news pops in. The colors and radii are tokens at the top of `src/app/globals.css`, so a change there reaches every screen. Bo himself is a real 3D robot, and the student can switch between a flying Bo and a classic Bo from the Account page (see `docs/BO_MODEL.md`).
 
@@ -84,6 +84,14 @@ Server and client code are separate. All Gemini calls happen on the server.
 
 Bo floats above every screen (except Today and Account, which already show a big Bo). Tap him for a small menu: talk to him, let him roam (then drag him anywhere and he stays there), keep him in his corner, replay the guide, or hide him (it can be turned back on in Account). On a new account Bo guides the student himself: he flies to each part of the app and says what it is for. The chat shows what Bo is doing while he answers (reading the question, thinking, writing), has a stop button, copy, retry and quick starter questions. The code is in `src/components/bo-companion.tsx`, `bo-guide.tsx` and `bo-chat.tsx`, and the position maths in `src/features/bo/placement.ts`.
 
+## School curriculum (phase 8.0)
+
+The real words of the student's school book are the base of the site. They are uploaded from the admin dashboard (tab "School book"): add a unit, then paste its words or upload a CSV, one word per line: `word | part of speech | Arabic meaning | example | example translation`. Only the word and the meaning are required. Every student sees the units in **Words > School book**, with progress per unit, a button to study a unit and a button to test himself on it.
+
+Today's session takes its new words from the school curriculum, unit by unit. Our own path moved to the **Boost** tab and is optional: a student can follow it to raise his level, but nothing depends on it. If the admin has not uploaded any school words yet, Today falls back to our path, so the site is never empty.
+
+Code: `src/features/school/` (parsing, picking, progress, cards), `src/app/api/admin/school/route.ts` (admin writes), `src/components/admin-school.tsx`. Run `supabase/setup.sql` again for the two new tables.
+
 ## Credits
 
 The flying Bo model is by Shayan (CC BY 4.0). Details in `CREDITS.md`.
@@ -95,7 +103,7 @@ This project is proprietary. Copying, modification or distribution without writt
 
 ## Landing page and the visitor demo
 
-`/welcome` is the first page a visitor sees. Anyone can type a word, get a real Talib Ilm card, write a sentence and get it checked, without an account. Because there's no login, the demo is limited: each visitor (by a salted hash of the IP, the raw IP is never saved) gets a few tries a day, and the whole demo closes for the day after a total ceiling. Both numbers, and an on/off switch, are in the dashboard settings under "Visitor demo". Run `004_demo.sql` before using it.
+`/welcome` is the first page a visitor sees. Anyone can type a word, get a real Booo card, write a sentence and get it checked, without an account. Because there's no login, the demo is limited: each visitor (by a salted hash of the IP, the raw IP is never saved) gets a few tries a day, and the whole demo closes for the day after a total ceiling. Both numbers, and an on/off switch, are in the dashboard settings under "Visitor demo". Run `004_demo.sql` before using it.
 
 New students also get a short tour on their first visit. It can be replayed from the menu.
 

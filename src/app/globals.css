@@ -267,9 +267,17 @@ a.sheet:active {
   background-position: left;
 }
 
+/* Error text: no underline. A message in its own paragraph gets a soft red box, inline text just turns red. */
 .pen-error {
-  text-decoration: underline wavy var(--color-pen-red);
-  text-underline-offset: 6px;
+  color: var(--color-pen-red);
+  font-weight: 600;
+}
+
+p.pen-error {
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--color-pen-red) 12%, var(--color-sheet));
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-pen-red) 35%, transparent);
 }
 
 .grad-fill {

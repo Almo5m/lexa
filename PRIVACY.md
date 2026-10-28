@@ -1,7 +1,7 @@
 # Privacy and ownership
 
 ## Ownership
-Talib Ilm (طالب علم) is owned by Moaz (AlMo). All Rights Reserved. See `LICENSE`.
+Booo (بو) is owned by Moaz (AlMo). All Rights Reserved. See `LICENSE`.
 
 ## What the app stores
 - Account: email, display name, and the progress numbers (XP, streak).

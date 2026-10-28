@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminAiPanel } from "@/components/admin-ai-panel";
 import { AdminPathCards } from "@/components/admin-path-cards";
+import { AdminSchool } from "@/components/admin-school";
 import { AdminSettingsForm } from "@/components/admin-settings-form";
 import { getT } from "@/lib/i18n/server";
 import { loadSettings } from "@/lib/settings-server";
@@ -14,13 +15,14 @@ import {
   type UsageRow,
 } from "@/features/admin/stats";
 import { toDateKey } from "@/features/gamification/streak";
+import { loadSchoolUnits } from "@/features/school/load";
 import { PATH_SIZE } from "@/features/curriculum";
 import type { DictKey } from "@/lib/i18n/dictionary";
 
 export const metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-const TABS = ["overview", "ai", "cards", "settings"] as const;
+const TABS = ["overview", "school", "ai", "cards", "settings"] as const;
 type Tab = (typeof TABS)[number];
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
@@ -47,6 +49,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </nav>
 
       {tab === "overview" && <Overview />}
+      {tab === "school" && <SchoolTab />}
       {tab === "ai" && <AdminAiPanel settings={settings} keySet={Boolean(process.env.GEMINI_API_KEY)} />}
       {tab === "cards" && <PathCardsTab />}
       {tab === "settings" && <AdminSettingsForm initial={settings} />}
@@ -236,6 +239,20 @@ async function PathCardsTab() {
     <AdminPathCards
       initial={{ total: PATH_SIZE, ready: rows.length, reviewed: rows.filter((row) => row.reviewed).length }}
       keySet={Boolean(process.env.GEMINI_API_KEY)}
+    />
+  );
+}
+
+async function SchoolTab() {
+  const units = await loadSchoolUnits(createSupabaseAdminClient());
+  return (
+    <AdminSchool
+      units={units.map((unit) => ({
+        id: unit.id,
+        titleAr: unit.titleAr,
+        titleEn: unit.titleEn,
+        words: unit.words.map((word) => ({ id: word.id, term: word.term, meaningAr: word.meaningAr })),
+      }))}
     />
   );
 }

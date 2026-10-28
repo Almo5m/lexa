@@ -3,7 +3,7 @@
  * `app` is the name of the site, `ai` is the name of the robot companion.
  */
 export const BRAND = {
-  app: { ar: "طالب علم", en: "Talib Ilm" },
+  app: { ar: "بو", en: "Booo" },
   ai: { ar: "بو", en: "Bo" },
 } as const;
 

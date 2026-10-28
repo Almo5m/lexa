@@ -19,7 +19,7 @@ export default async function MePage() {
   const activeUntil = link && isActive(link.expires_at) ? link.expires_at : null;
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-2xl space-y-6 lg:max-w-5xl">
       <div className="flex items-end gap-3">
         <BoMascot mood="happy" size={88} />
         <div>
@@ -27,30 +27,32 @@ export default async function MePage() {
           <p className="text-ink-soft">{t("me.why")}</p>
         </div>
       </div>
-      <section aria-labelledby="bo-title" className="sheet space-y-3 p-6">
-        <h2 id="bo-title" className="text-xl font-bold">
-          {t("boPicker.title")}
-        </h2>
-        <BoPicker />
-      </section>
+      <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
+        <section aria-labelledby="bo-title" className="sheet space-y-3 p-6">
+          <h2 id="bo-title" className="text-xl font-bold">
+            {t("boPicker.title")}
+          </h2>
+          <BoPicker />
+        </section>
 
-      <section className="sheet p-6">
-        <InterestsForm initial={profile?.interests ?? []} />
-      </section>
+        <section className="sheet p-6">
+          <InterestsForm initial={profile?.interests ?? []} />
+        </section>
 
-      <section aria-labelledby="share-title" className="sheet space-y-3 p-6">
-        <h2 id="share-title" className="text-xl font-bold">
-          {t("share.title")}
-        </h2>
-        <ShareManager activeUntil={activeUntil} />
-      </section>
+        <section aria-labelledby="share-title" className="sheet space-y-3 p-6">
+          <h2 id="share-title" className="text-xl font-bold">
+            {t("share.title")}
+          </h2>
+          <ShareManager activeUntil={activeUntil} />
+        </section>
 
-      <section aria-labelledby="account-title" className="sheet p-6">
-        <h2 id="account-title" className="mb-4 text-xl font-bold">
-          {t("account.title")}
-        </h2>
-        <AccountForm initialName={profile?.display_name ?? ""} />
-      </section>
+        <section aria-labelledby="account-title" className="sheet p-6">
+          <h2 id="account-title" className="mb-4 text-xl font-bold">
+            {t("account.title")}
+          </h2>
+          <AccountForm initialName={profile?.display_name ?? ""} />
+        </section>
+      </div>
     </div>
   );
 }

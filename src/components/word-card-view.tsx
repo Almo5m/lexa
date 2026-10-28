@@ -45,7 +45,7 @@ export function WordCardView({ card, startRevealed = false, onRevealChange }: Pr
           onRevealChange?.(next);
         }}
         aria-expanded={revealed}
-        className="inline-flex min-h-12 items-center gap-2 rounded-md px-1 font-medium text-ink underline underline-offset-4"
+        className="inline-flex min-h-12 items-center gap-2 rounded-md px-1 font-medium text-ink transition-colors hover:text-indigo"
       >
         <RevealIcon open={revealed} />
         {revealed ? t("card.hide") : t("card.reveal")}

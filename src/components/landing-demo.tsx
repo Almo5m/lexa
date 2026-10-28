@@ -168,7 +168,7 @@ export function LandingDemo() {
           {(error === "land.err.visitor" || error === "land.err.closed") && (
             <>
               {" "}
-              <Link href="/signup" className="font-semibold underline underline-offset-4">
+              <Link href="/signup" className="font-semibold text-indigo hover:opacity-80">
                 {t("land.start")}
               </Link>
             </>

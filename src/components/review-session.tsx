@@ -235,7 +235,7 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
           (result.correct ? (
             <p className="marker px-1 font-semibold">{t("review.correct")}</p>
           ) : isSentence ? null : (
-            <p className="pen-error ltr-text font-semibold text-pen-red">
+            <p className="ltr-text font-semibold text-pen-red">
               {t("review.wrong", { word: result.answer })}
             </p>
           ))}
@@ -260,7 +260,7 @@ function TypedExercise({ word, answer, setAnswer, hint, setHint, result, busy, o
         <button
           type="button"
           onClick={() => speak(word.card.sentence)}
-          className="ltr-text min-h-11 text-start text-ink-soft underline underline-offset-4"
+          className="ltr-text min-h-11 text-start text-ink-soft transition-colors hover:text-indigo"
         >
           {word.card.sentence}
         </button>

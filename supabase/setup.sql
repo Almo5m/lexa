@@ -89,7 +89,7 @@ alter table public.words add column if not exists source text not null default '
 alter table public.words add column if not exists unit_id text;
 alter table public.words add column if not exists enriched boolean not null default true;
 alter table public.words drop constraint if exists words_source_check;
-alter table public.words add constraint words_source_check check (source in ('own', 'path'));
+alter table public.words add constraint words_source_check check (source in ('own', 'path', 'school'));
 
 -- Review log ---------------------------------------------------------------
 create table if not exists public.review_logs (
@@ -156,6 +156,31 @@ create table if not exists public.path_cards (
   reviewed boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+-- School curriculum: the real words of the student's school book, uploaded by the admin and shown to every student.
+-- Students can only read these tables; the server (service role) writes them from the admin panel.
+create table if not exists public.school_units (
+  id uuid primary key default gen_random_uuid(),
+  sort integer not null default 0,
+  title_ar text not null check (char_length(title_ar) between 1 and 80),
+  title_en text not null default '' check (char_length(title_en) <= 80),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.school_words (
+  id uuid primary key default gen_random_uuid(),
+  unit_id uuid not null references public.school_units (id) on delete cascade,
+  sort integer not null default 0,
+  term text not null check (char_length(term) between 2 and 40),
+  pos text not null default '' check (char_length(pos) <= 20),
+  meaning_ar text not null check (char_length(meaning_ar) between 1 and 120),
+  example_en text not null default '' check (char_length(example_en) <= 200),
+  example_ar text not null default '' check (char_length(example_ar) <= 200),
+  created_at timestamptz not null default now(),
+  unique (unit_id, term)
+);
+create index if not exists school_words_unit_idx on public.school_words (unit_id, sort);
+create index if not exists school_words_term_idx on public.school_words (term);
 
 -- Talk to Lexa: free writing, analyzed --------------------------------------
 create table if not exists public.talk_sessions (
@@ -241,6 +266,8 @@ alter table public.app_settings enable row level security;
 alter table public.talk_sessions enable row level security;
 alter table public.reading_sessions enable row level security;
 alter table public.path_cards enable row level security;
+alter table public.school_units enable row level security;
+alter table public.school_words enable row level security;
 alter table public.book_scores enable row level security;
 alter table public.share_links enable row level security;
 alter table public.demo_usage enable row level security;
@@ -257,6 +284,11 @@ drop policy if exists "book scores read own" on public.book_scores;
 create policy "book scores read own" on public.book_scores for select to authenticated using (user_id = auth.uid());
 revoke all on public.book_scores from anon, authenticated;
 grant select on public.book_scores to authenticated;
+
+drop policy if exists "school units read" on public.school_units;
+create policy "school units read" on public.school_units for select to authenticated using (true);
+drop policy if exists "school words read" on public.school_words;
+create policy "school words read" on public.school_words for select to authenticated using (true);
 
 drop policy if exists "path cards read" on public.path_cards;
 create policy "path cards read" on public.path_cards for select to authenticated using (true);
@@ -296,5 +328,7 @@ create policy "share own delete" on public.share_links for delete using (user_id
 -- Students can edit just their name, interests and the "onboarded" flag, never XP, streak or role.
 revoke all on public.path_cards from anon, authenticated;
 grant select on public.path_cards to authenticated;
+revoke all on public.school_units, public.school_words from anon, authenticated;
+grant select on public.school_units, public.school_words to authenticated;
 revoke update on public.profiles from authenticated;
 grant update (display_name, interests, onboarded, daily_minutes) on public.profiles to authenticated;

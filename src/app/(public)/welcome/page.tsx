@@ -36,7 +36,7 @@ export default async function WelcomePage() {
         </Link>
         <nav aria-label="Welcome" className="flex items-center gap-1 text-sm sm:gap-3">
           <form action={setLanguage.bind(null, lang === "ar" ? "en" : "ar")}>
-            <button type="submit" className="min-h-11 px-2 text-ink-soft underline underline-offset-4">
+            <button type="submit" className="min-h-11 px-2 text-ink-soft transition-colors hover:text-indigo">
               {t("nav.language")}
             </button>
           </form>
@@ -121,7 +121,7 @@ export default async function WelcomePage() {
           href="https://sketchfab.com/3d-models/futuristic-flying-animated-robot-low-poly-c5b92c281dc444448e64c0607719c7a2"
           target="_blank"
           rel="noopener noreferrer"
-          className="underline underline-offset-4"
+          className="transition-colors hover:text-indigo"
         >
           {t("credits.bo")}
         </a>

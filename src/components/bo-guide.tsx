@@ -161,7 +161,7 @@ export function BoGuide({ userId, name }: { userId: string; name: string }) {
           {text}
         </p>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <button type="button" onClick={close} className="min-h-11 px-2 text-sm text-ink-soft underline underline-offset-4">
+          <button type="button" onClick={close} className="min-h-11 px-2 text-sm text-ink-soft transition-colors hover:text-indigo">
             {t("tour.skip")}
           </button>
           <div className="flex gap-2">

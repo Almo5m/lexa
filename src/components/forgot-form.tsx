@@ -43,7 +43,7 @@ export function ForgotForm() {
         {t("auth.forgotSend")}
       </TagButton>
       <p className="text-center text-sm">
-        <Link href="/login" className="inline-flex min-h-11 items-center text-ink-soft underline underline-offset-4">
+        <Link href="/login" className="inline-flex min-h-11 items-center text-ink-soft transition-colors hover:text-indigo">
           {t("auth.toLogin")}
         </Link>
       </p>

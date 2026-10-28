@@ -26,14 +26,15 @@ export async function POST(request: Request) {
 
     const { data: rows, error } = await supabase
       .from("words")
-      .select("id, term")
+      .select("id, term, source")
       .in("id", ids)
       .eq("enriched", false);
     if (error) throw error;
     if (!rows || rows.length === 0) return NextResponse.json({ cards: {} });
 
     // Words that already have a finished card in the shared set need no AI at all.
-    const finished = await loadPathCards(supabase, rows.map((row) => row.term));
+    // School words keep the admin's own meanings and example, so they never take the shared path card.
+    const finished = await loadPathCards(supabase, rows.filter((row) => row.source !== "school").map((row) => row.term));
     const cards: Record<string, WordCard> = {};
     await Promise.all(
       rows.flatMap((row) => {
@@ -48,9 +49,15 @@ export async function POST(request: Request) {
 
     await assertWithinDailyLimit(user.id, settings.aiDailyLimitPerStudent);
     const { data: profile } = await supabase.from("profiles").select("interests").eq("id", user.id).single();
+    const { data: schoolRows } = await supabase
+      .from("school_words")
+      .select("term, meaning_ar, example_en, example_ar")
+      .in("term", pending.filter((row) => row.source === "school").map((row) => row.term));
+    const schoolByTerm = new Map((schoolRows ?? []).map((row) => [row.term as string, row]));
+    const meaningOf = (term: string): string => schoolByTerm.get(term)?.meaning_ar ?? entryFor(term)?.ar ?? "";
     const hints = Object.fromEntries(pending.flatMap((row) => {
-      const entry = entryFor(row.term);
-      return entry ? [[row.term, entry.ar]] : [];
+      const meaning = meaningOf(row.term);
+      return meaning ? [[row.term, meaning]] : [];
     }));
 
     const result = await requestCards(
@@ -67,9 +74,14 @@ export async function POST(request: Request) {
         const card = result.cards.find((item) => item.term.toLowerCase() === row.term);
         if (!card) return;
         // The teacher-written meanings always come first; the AI's extra meanings only follow them.
-        const curated = entryFor(row.term)?.ar.split(/[،,]/).map((part) => part.trim()).filter(Boolean) ?? [];
+        const curated = meaningOf(row.term).split(/[،,]/).map((part) => part.trim()).filter(Boolean);
         const meaningsAr = [...new Set([...curated, ...card.meaningsAr])].slice(0, 3);
-        const merged = { ...card, meaningsAr };
+        const own = schoolByTerm.get(row.term);
+        // The admin's example stays the main one; the AI's example moves to the extra examples.
+        const merged =
+          own && own.example_en
+            ? { ...card, meaningsAr, sentence: own.example_en, sentenceAr: own.example_ar, extraExamples: [{ en: card.sentence, ar: card.sentenceAr }, ...card.extraExamples].slice(0, 3) }
+            : { ...card, meaningsAr };
         cards[row.id] = merged;
         await supabase.from("words").update({ card: merged, enriched: true }).eq("id", row.id);
       }),

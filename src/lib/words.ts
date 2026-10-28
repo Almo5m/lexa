@@ -17,7 +17,7 @@ export interface WordRow {
   due_at: string;
   last_reviewed_at: string | null;
   group_id: string | null;
-  source?: "own" | "path";
+  source?: "own" | "path" | "school";
 }
 
 export function rowToState(row: WordRow): SrsState {

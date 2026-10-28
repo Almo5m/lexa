@@ -10,6 +10,7 @@ import { buildReviewQueue, classifyWord } from "@/features/srs/scheduler";
 import { pickMode } from "@/features/srs/session";
 import { rowToState, type WordRow } from "@/lib/words";
 import { unitById } from "@/features/curriculum";
+import { loadSchoolUnit } from "@/features/school/load";
 import { isDailyMinutes, newWordsQuota, reviewRoundSize } from "@/features/curriculum/session-plan";
 import type { WordCard } from "@/features/ai/schemas";
 
@@ -17,8 +18,11 @@ export const metadata = { title: "Review" };
 
 export default async function ReviewPage({ searchParams }: { searchParams: Promise<{ unit?: string; from?: string }> }) {
   const { unit: unitId, from } = await searchParams;
-  const unit = unitId ? unitById(unitId) : undefined;
   const { supabase, user } = await requireUserPage();
+  // A unit test is either one of our path units or one of the school units (its id is a uuid).
+  const pathUnit = unitId ? unitById(unitId) : undefined;
+  const schoolUnit = unitId && !pathUnit && /^[0-9a-f-]{36}$/i.test(unitId) ? await loadSchoolUnit(supabase, unitId) : null;
+  const unit = pathUnit ? { titleAr: pathUnit.titleAr, terms: pathUnit.words.map((word) => word.en) } : schoolUnit ? { titleAr: schoolUnit.titleAr, terms: schoolUnit.words.map((word) => word.term) } : undefined;
   const { t } = await getT();
   const settings = await loadSettings();
   const now = new Date();
@@ -54,12 +58,12 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
     Math.min(roundSize - dueIds.length, newWordsQuota(settings.dailyGoalNewWords, minutes) - (day?.new_words ?? 0)),
   );
   const newIds = rows
-    .filter((row) => row.last_reviewed_at === null && row.source !== "path")
+    .filter((row) => row.last_reviewed_at === null && (row.source ?? "own") === "own")
     .slice(0, newSlots)
     .map((row) => row.id);
 
   // A unit test practices the words of one unit, weakest first, whether or not they are due.
-  const unitTerms = new Set(unit?.words.map((word) => word.en) ?? []);
+  const unitTerms = new Set(unit?.terms ?? []);
   const unitIds = unit
     ? rows
         .filter((row) => unitTerms.has(row.term) && row.last_reviewed_at !== null)

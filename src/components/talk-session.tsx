@@ -126,7 +126,7 @@ export function TalkSession({ topics }: Props) {
         <button
           type="button"
           onClick={() => setTopicIndex((index) => index + 1)}
-          className="min-h-11 text-sm text-ink-soft underline underline-offset-4"
+          className="min-h-11 text-sm text-ink-soft transition-colors hover:text-indigo"
         >
           {t("talk.another")}
         </button>

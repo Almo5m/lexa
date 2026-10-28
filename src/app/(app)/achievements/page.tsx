@@ -14,13 +14,13 @@ export default async function AchievementsPage() {
   const count = earnedCount(stats);
 
   return (
-    <div className="max-w-2xl space-y-5">
+    <div className="max-w-2xl space-y-5 lg:max-w-5xl">
       <div>
         <h1 className="text-2xl font-semibold">{t("badges.title")}</h1>
         <p className="text-ink-soft">{t("badges.summary", { a: count.earned, b: count.total })}</p>
       </div>
 
-      <ul className="space-y-3">
+      <ul className="grid gap-3 lg:grid-cols-2 lg:items-start">
         {METRICS.map((metric) => {
           const progress = progressOf(metric, stats);
           const targets = METRIC_TARGETS[metric];

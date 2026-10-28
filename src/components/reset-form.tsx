@@ -54,7 +54,7 @@ export function ResetForm() {
       {ready === "no" ? (
         <>
           <p className="text-pen-red">{t("auth.resetNoSession")}</p>
-          <Link href="/forgot" className="inline-flex min-h-11 items-center underline underline-offset-4">
+          <Link href="/forgot" className="inline-flex min-h-11 items-center transition-colors hover:text-indigo">
             {t("auth.forgotTitle")}
           </Link>
         </>

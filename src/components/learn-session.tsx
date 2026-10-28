@@ -19,7 +19,7 @@ type Phase = { name: "loading" } | { name: "error" } | { name: "empty" } | { nam
 const ENRICH_GROUP = 4;
 const ENRICH_PARALLEL = 3;
 
-export function LearnSession({ more }: { more: boolean }) {
+export function LearnSession({ more, unit, track }: { more: boolean; unit?: string; track?: "path" }) {
   const { t } = useT();
   const [words, setWords] = useState<LearnWord[]>([]);
   const [cards, setCards] = useState<Record<string, WordCard>>({});
@@ -60,7 +60,7 @@ export function LearnSession({ more }: { more: boolean }) {
         const response = await fetch("/api/path/learn", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ more }),
+          body: JSON.stringify({ more, unit, track }),
         });
         if (!response.ok) throw new Error("learn_failed");
         const data: { words: LearnWord[] } = await response.json();
@@ -71,7 +71,7 @@ export function LearnSession({ more }: { more: boolean }) {
         setPhase({ name: "error" });
       }
     })();
-  }, [more, enrich]);
+  }, [more, unit, track, enrich]);
 
   const rounds = Math.ceil(words.length / TEACH_ROUND);
   const roundWords = (round: number) => words.slice(round * TEACH_ROUND, (round + 1) * TEACH_ROUND);
@@ -103,7 +103,7 @@ export function LearnSession({ more }: { more: boolean }) {
         <p className="text-ink-soft">{phase.name === "done" ? t("learn.doneHint") : t("learn.noneHint")}</p>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           <Link href="/" className="tag-btn justify-center">{t("learn.backToday")}</Link>
-          <Link href="/learn?more=1" className="tag-btn tag-btn-quiet justify-center">
+          <Link href={`/learn?more=1${track === "path" ? "&track=path" : ""}${unit ? `&unit=${unit}` : ""}`} className="tag-btn tag-btn-quiet justify-center">
             {t("learn.more")}
           </Link>
         </div>

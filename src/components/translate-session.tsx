@@ -180,7 +180,7 @@ export function TranslateSession({ today = false }: { today?: boolean }) {
             <button
               type="button"
               onClick={() => setShowHint(true)}
-              className="min-h-11 text-sm text-ink-soft underline underline-offset-4"
+              className="min-h-11 text-sm text-ink-soft transition-colors hover:text-indigo"
             >
               {t("translate.hintButton")}
             </button>
@@ -234,7 +234,7 @@ export function TranslateSession({ today = false }: { today?: boolean }) {
           <p
             className={
               feedback.verdict === "wrong"
-                ? "pen-error font-semibold text-pen-red"
+                ? "font-semibold text-pen-red"
                 : feedback.verdict === "correct"
                   ? "marker px-1 font-semibold"
                   : "font-semibold text-amber"

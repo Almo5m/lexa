@@ -305,3 +305,26 @@ Log of decisions and events, newest at the bottom.
 - `fetchAi` now accepts a stop signal. New tests: placement and stored preferences, stop signal.
 - Tested with a fake Gemini server through the real route (streaming), plus guide, menu, drag, persistence, hide/restore, stop, retry, phone and desktop.
 - Vercel build error found: stale files from the Lexa era in the user's repo. See PROBLEMS.md.
+
+## Phase 7.3 — Tablet and desktop layout (2026-10-27)
+- Problem: tablets got the narrow side menu (about a third of the screen), pages used different widths, and desktop pages were one thin column with empty sides.
+- Tablets (below 1024px) now use the bottom tab bar like phones, with the content centered. The side menu starts at 1024px.
+- Desktop: wider content (up to 5xl). Today is two columns from 1280px (session card + side cards). Practice tiles, skill meters, badges, the word list and the account page use two or three columns from 1024px. Exercise screens stay narrow and centered for focus.
+- Header chips and content now share the same width. Floating Bo thresholds moved to 1024px.
+- Checked 768, 820, 1024, 1366 and 1920 widths for horizontal overflow.
+
+## Phase 7.4 — Site renamed (2026-10-27)
+- Site name changed from "طالب علم / Talib Ilm" to "بو / Booo" in `src/lib/brand.ts` (single source). The robot keeps "بو / Bo".
+- Updated: manifest name, landing "why the name" text, README, PRIVACY.md.
+
+## Phase 7.5 — No more underlined text (2026-10-27)
+- `.pen-error` no longer draws a wavy red underline. Error messages in their own paragraph now sit in a soft red box; inline verdicts (review answer, translate verdict, weak status) are plain red text.
+- All text links and footer buttons lost `underline`; they change color on hover instead (`transition-colors hover:text-indigo`). The AL-MO footer link too.
+
+## Phase 8.0 — School curriculum separated from our path (2026-10-27)
+- New tables `school_units` and `school_words` (setup.sql, read-only for students, written by the admin API only). `words.source` now allows 'school'.
+- Admin tab "School book": add/rename/move/delete units, import words from pasted text or CSV (`src/features/school/parse.ts`, up to 600 words per import, per-line problems reported).
+- Words page has two tabs: School book (progress hero + unit cards) and All my words. New page `/words/unit/[id]` with per-word state, "study this unit" and "test me".
+- `/api/path/learn` takes `unit` and `track`. School words lead; path words only with `track=path` or when no school words exist. Enrich keeps the admin's meanings and example for school words.
+- Today uses school words for the learn step. Path tab renamed "Boost" and marked optional. Review unit test works for school units.
+- Not done: skill meter "words" still counts our path only; admin cannot yet edit one word, only delete and re-import.
