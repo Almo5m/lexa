@@ -182,6 +182,28 @@ create table if not exists public.school_words (
 create index if not exists school_words_unit_idx on public.school_words (unit_id, sort);
 create index if not exists school_words_term_idx on public.school_words (term);
 
+-- Grammar lesson images: the admin uploads the explanation of each book unit as pictures.
+-- The files live in a private storage bucket; students get short-lived signed links from the server.
+create table if not exists public.grammar_lessons (
+  id uuid primary key default gen_random_uuid(),
+  unit_id text not null check (unit_id ~ '^g[0-9]{1,2}$'),
+  sort integer not null default 0,
+  path text not null unique,
+  created_at timestamptz not null default now()
+);
+create index if not exists grammar_lessons_unit_idx on public.grammar_lessons (unit_id, sort);
+
+do $$
+begin
+  if to_regclass('storage.buckets') is not null then
+    insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+    values ('grammar-lessons', 'grammar-lessons', false, 4000000, array['image/jpeg', 'image/png', 'image/webp'])
+    on conflict (id) do update
+      set public = false, file_size_limit = 4000000, allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp'];
+  end if;
+end
+$$;
+
 -- Talk to Lexa: free writing, analyzed --------------------------------------
 create table if not exists public.talk_sessions (
   id uuid primary key default gen_random_uuid(),
@@ -266,6 +288,7 @@ alter table public.app_settings enable row level security;
 alter table public.talk_sessions enable row level security;
 alter table public.reading_sessions enable row level security;
 alter table public.path_cards enable row level security;
+alter table public.grammar_lessons enable row level security;
 alter table public.school_units enable row level security;
 alter table public.school_words enable row level security;
 alter table public.book_scores enable row level security;
@@ -285,6 +308,8 @@ create policy "book scores read own" on public.book_scores for select to authent
 revoke all on public.book_scores from anon, authenticated;
 grant select on public.book_scores to authenticated;
 
+drop policy if exists "grammar lessons read" on public.grammar_lessons;
+create policy "grammar lessons read" on public.grammar_lessons for select to authenticated using (true);
 drop policy if exists "school units read" on public.school_units;
 create policy "school units read" on public.school_units for select to authenticated using (true);
 drop policy if exists "school words read" on public.school_words;
@@ -328,6 +353,8 @@ create policy "share own delete" on public.share_links for delete using (user_id
 -- Students can edit just their name, interests and the "onboarded" flag, never XP, streak or role.
 revoke all on public.path_cards from anon, authenticated;
 grant select on public.path_cards to authenticated;
+revoke all on public.grammar_lessons from anon, authenticated;
+grant select on public.grammar_lessons to authenticated;
 revoke all on public.school_units, public.school_words from anon, authenticated;
 grant select on public.school_units, public.school_words to authenticated;
 revoke update on public.profiles from authenticated;

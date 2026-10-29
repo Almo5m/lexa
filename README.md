@@ -92,6 +92,12 @@ Today's session takes its new words from the school curriculum, unit by unit. Ou
 
 Code: `src/features/school/` (parsing, picking, progress, cards), `src/app/api/admin/school/route.ts` (admin writes), `src/components/admin-school.tsx`. Run `supabase/setup.sql` again for the two new tables.
 
+## Grammar explanation as pictures (phase 8.2)
+
+The teacher's own explanation of each book unit can be uploaded as pictures from the admin dashboard (tab "Grammar explanation"): pick a unit, upload one or many images, reorder or delete them. Students see those pictures in the lesson step instead of the written explanation, and the exercises stay the same. A unit with no pictures keeps the built-in written explanation.
+
+Pictures are shrunk in the browser before upload (`src/lib/shrink-image.ts`), checked on the server by their real bytes (JPEG, PNG or WebP only), and stored in a private bucket. Students get links that expire after an hour. Code: `src/features/grammar/lesson-images.ts`, `src/app/api/admin/grammar/route.ts`, `src/components/admin-grammar.tsx`. Run `supabase/setup.sql` again for the new table and bucket.
+
 ## License notice
 
 Copyright (c) 2026 Moaz (AlMo). All Rights Reserved.

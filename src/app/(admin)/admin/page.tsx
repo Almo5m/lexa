@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminAiPanel } from "@/components/admin-ai-panel";
 import { AdminPathCards } from "@/components/admin-path-cards";
+import { AdminGrammar } from "@/components/admin-grammar";
 import { AdminSchool } from "@/components/admin-school";
 import { AdminSettingsForm } from "@/components/admin-settings-form";
 import { getT } from "@/lib/i18n/server";
@@ -15,6 +16,8 @@ import {
   type UsageRow,
 } from "@/features/admin/stats";
 import { toDateKey } from "@/features/gamification/streak";
+import { GRAMMAR_UNITS } from "@/features/grammar";
+import { loadLessonImages } from "@/features/grammar/lesson-images";
 import { loadSchoolUnits } from "@/features/school/load";
 import { PATH_SIZE } from "@/features/curriculum";
 import type { DictKey } from "@/lib/i18n/dictionary";
@@ -22,7 +25,7 @@ import type { DictKey } from "@/lib/i18n/dictionary";
 export const metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-const TABS = ["overview", "school", "ai", "cards", "settings"] as const;
+const TABS = ["overview", "school", "grammar", "ai", "cards", "settings"] as const;
 type Tab = (typeof TABS)[number];
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
@@ -50,6 +53,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
       {tab === "overview" && <Overview />}
       {tab === "school" && <SchoolTab />}
+      {tab === "grammar" && <GrammarTab />}
       {tab === "ai" && <AdminAiPanel settings={settings} keySet={Boolean(process.env.GEMINI_API_KEY)} />}
       {tab === "cards" && <PathCardsTab />}
       {tab === "settings" && <AdminSettingsForm initial={settings} />}
@@ -255,4 +259,18 @@ async function SchoolTab() {
       }))}
     />
   );
+}
+
+async function GrammarTab() {
+  const db = createSupabaseAdminClient();
+  const units = await Promise.all(
+    GRAMMAR_UNITS.map(async (unit) => ({
+      id: unit.id,
+      number: unit.number,
+      topic: unit.topic,
+      rule: unit.rule,
+      images: (await loadLessonImages(db, unit.id)).map((image) => ({ id: image.id, url: image.url })),
+    })),
+  );
+  return <AdminGrammar units={units} />;
 }

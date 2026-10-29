@@ -335,3 +335,8 @@ Log of decisions and events, newest at the bottom.
 ## Phase 8.1 — Flying Bo removed (2026-10-29)
 - Only the classic Bo (built in code) is left. Removed: `public/bo/bo.glb`, its credits files (`CREDITS.md`, `public/bo/CREDITS.txt`), the GLB loader and flyer code in `scene.ts`, `variant.ts`, `use-bo-variant.ts`, `bo-picker.tsx`, `tests/bo-variant.test.ts`, the footer credit on the welcome page, and the related texts.
 - The Account page keeps a simple "show Bo on every screen" switch (`bo-visibility.tsx`). The old saved choice (`bo-variant-v1` in localStorage) is just ignored.
+
+## Phase 8.2 — Grammar explanation as uploaded pictures (2026-10-29)
+- The written grammar explanation was not organized enough, and the teacher already has the explanation as formatted pictures. Admin tab "Grammar explanation" uploads them per book unit (up to 20, ordered, deletable).
+- Storage: private bucket `grammar-lessons` + table `grammar_lessons` (setup.sql). Students get signed links (1 hour) made server-side. Upload is one file per request (serverless body limit), shrunk in the browser to 1800px JPEG, type checked by magic bytes, max 3.5 MB.
+- Lesson step shows the pictures when they exist, otherwise the built-in text. Exercises unchanged.
