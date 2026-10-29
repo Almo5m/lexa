@@ -47,3 +47,14 @@ describe("schoolCard", () => {
     expect(card.meaningsAr).toEqual(["قوة", "طاقة"]);
   });
 });
+
+import { isMissingTable } from "@/features/school/load";
+
+describe("isMissingTable", () => {
+  it("recognises a database without the school tables", () => {
+    expect(isMissingTable({ code: "PGRST205", message: "Could not find the table 'public.school_units'" })).toBe(true);
+    expect(isMissingTable({ code: "42P01" })).toBe(true);
+    expect(isMissingTable({ code: "42501", message: "permission denied" })).toBe(false);
+    expect(isMissingTable(null)).toBe(false);
+  });
+});

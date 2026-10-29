@@ -328,3 +328,10 @@ Log of decisions and events, newest at the bottom.
 - `/api/path/learn` takes `unit` and `track`. School words lead; path words only with `track=path` or when no school words exist. Enrich keeps the admin's meanings and example for school words.
 - Today uses school words for the learn step. Path tab renamed "Boost" and marked optional. Review unit test works for school units.
 - Not done: skill meter "words" still counts our path only; admin cannot yet edit one word, only delete and re-import.
+
+## Phase 8.0.1 — Missing school tables no longer break pages (2026-10-29)
+- Production showed "This page couldn't load" because setup.sql had not been run for the school tables. Loaders now return empty when the tables are missing. See PROBLEMS.md.
+
+## Phase 8.1 — Flying Bo removed (2026-10-29)
+- Only the classic Bo (built in code) is left. Removed: `public/bo/bo.glb`, its credits files (`CREDITS.md`, `public/bo/CREDITS.txt`), the GLB loader and flyer code in `scene.ts`, `variant.ts`, `use-bo-variant.ts`, `bo-picker.tsx`, `tests/bo-variant.test.ts`, the footer credit on the welcome page, and the related texts.
+- The Account page keeps a simple "show Bo on every screen" switch (`bo-visibility.tsx`). The old saved choice (`bo-variant-v1` in localStorage) is just ignored.

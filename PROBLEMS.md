@@ -193,3 +193,8 @@ The listening texts are read by the browser's own voice, so quality and availabi
 **What happened:** the repo still had `src/components/lexa-chat-sheet.tsx` from before the rename to Bo. Unzipping a new version over the old project never deletes files that were removed or renamed, so the old file stayed and imported an icon that no longer exists.
 **Fix:** delete the leftover files (`lexa-chat-sheet.tsx`, `lexa-loader.tsx`, `lexa-mascot.tsx`, `public/lexa/`, `app-tour.tsx`, `tutor-chat.tsx`).
 **Rule from now on:** before unzipping a new version, empty the project folder except `.git`, `node_modules` and `.env.local`.
+
+## Server error after phase 8.0 (2026-10-29)
+- **Symptom:** every page showed "This page couldn't load" on Vercel right after deploying 8.0.
+- **Cause:** Today, Words and Learn read `school_units` / `school_words`, and the deploy went live before `supabase/setup.sql` was run, so the tables did not exist and the query threw.
+- **Fix:** `loadSchoolUnits` / `loadSchoolUnit` treat a missing table (`42P01`, `PGRST205`) as "no school words", so the site falls back to our path until the SQL is run. Rule for the future: run setup.sql first, then deploy; and code that reads a new table must survive its absence.

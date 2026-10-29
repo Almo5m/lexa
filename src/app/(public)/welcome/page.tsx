@@ -116,16 +116,6 @@ export default async function WelcomePage() {
         </section>
       </main>
 
-      <p className="pb-2 text-center text-xs text-ink-faint">
-        <a
-          href="https://sketchfab.com/3d-models/futuristic-flying-animated-robot-low-poly-c5b92c281dc444448e64c0607719c7a2"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="transition-colors hover:text-indigo"
-        >
-          {t("credits.bo")}
-        </a>
-      </p>
       <AlmoSignature />
     </div>
   );

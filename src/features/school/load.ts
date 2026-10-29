@@ -1,6 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SchoolUnit, SchoolWord } from "./types";
 
+/**
+ * True when the school tables are not in the database yet (setup.sql was not run after this update).
+ * The site then simply behaves as if no school words exist, instead of failing on every page.
+ */
+export function isMissingTable(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  return error.code === "42P01" || error.code === "PGRST205" || /school_(units|words)/.test(error.message ?? "");
+}
+
 interface UnitRow {
   id: string;
   title_ar: string;
@@ -22,6 +31,7 @@ export async function loadSchoolUnit(supabase: SupabaseClient, id: string): Prom
     supabase.from("school_units").select("id, title_ar, title_en").eq("id", id).maybeSingle(),
     supabase.from("school_words").select("id, unit_id, term, pos, meaning_ar, example_en, example_ar").eq("unit_id", id).order("sort").order("created_at").limit(2000),
   ]);
+  if (isMissingTable(unit.error) || isMissingTable(words.error)) return null;
   if (unit.error) throw unit.error;
   if (words.error) throw words.error;
   if (!unit.data) return null;
@@ -39,6 +49,7 @@ export async function loadSchoolUnits(supabase: SupabaseClient): Promise<SchoolU
     supabase.from("school_units").select("id, title_ar, title_en").order("sort").order("created_at"),
     supabase.from("school_words").select("id, unit_id, term, pos, meaning_ar, example_en, example_ar").order("sort").order("created_at").limit(10000),
   ]);
+  if (isMissingTable(units.error) || isMissingTable(words.error)) return [];
   if (units.error) throw units.error;
   if (words.error) throw words.error;
 

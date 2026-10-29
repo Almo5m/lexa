@@ -2,7 +2,7 @@ import { AccountForm } from "@/components/account-form";
 import { ShareManager } from "@/components/share-manager";
 import { isActive } from "@/features/share/token";
 import { InterestsForm } from "@/components/interests-form";
-import { BoPicker } from "@/components/bo-picker";
+import { BoVisibility } from "@/components/bo-visibility";
 import { BoMascot } from "@/components/bo-mascot";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
@@ -32,7 +32,7 @@ export default async function MePage() {
           <h2 id="bo-title" className="text-xl font-bold">
             {t("boPicker.title")}
           </h2>
-          <BoPicker />
+          <BoVisibility />
         </section>
 
         <section className="sheet p-6">

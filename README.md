@@ -92,10 +92,6 @@ Today's session takes its new words from the school curriculum, unit by unit. Ou
 
 Code: `src/features/school/` (parsing, picking, progress, cards), `src/app/api/admin/school/route.ts` (admin writes), `src/components/admin-school.tsx`. Run `supabase/setup.sql` again for the two new tables.
 
-## Credits
-
-The flying Bo model is by Shayan (CC BY 4.0). Details in `CREDITS.md`.
-
 ## License notice
 
 Copyright (c) 2026 Moaz (AlMo). All Rights Reserved.

@@ -2,15 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { BoMood, BoScene } from "@/features/bo/scene";
-import type { BoVariant } from "@/features/bo/variant";
-import { useBoVariant } from "@/components/use-bo-variant";
 
 interface BoRobotProps {
   mood?: BoMood;
   size?: number;
   className?: string;
-  /** Force one Bo (used by the picker). Without it the student's own choice is used. */
-  variant?: BoVariant;
 }
 
 /**
@@ -18,9 +14,7 @@ interface BoRobotProps {
  * It pauses when it is off screen or the tab is hidden, stays still for people who asked for less motion,
  * and falls back to a simple flat face when WebGL is not available.
  */
-export function BoRobot({ mood = "neutral", size = 120, className = "", variant }: BoRobotProps) {
-  const chosen = useBoVariant();
-  const shown = variant ?? chosen;
+export function BoRobot({ mood = "neutral", size = 120, className = "" }: BoRobotProps) {
   const holder = useRef<HTMLSpanElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const scene = useRef<BoScene | null>(null);
@@ -48,7 +42,7 @@ export function BoRobot({ mood = "neutral", size = 120, className = "", variant 
 
     import("@/features/bo/scene")
       .then(async ({ createBoScene }) => {
-        const created = await createBoScene(element, { reducedMotion: reduced, variant: shown });
+        const created = await createBoScene(element, { reducedMotion: reduced });
         if (cancelled) {
           created.dispose();
           return;
@@ -74,7 +68,7 @@ export function BoRobot({ mood = "neutral", size = 120, className = "", variant 
       scene.current?.dispose();
       scene.current = null;
     };
-  }, [size, shown]);
+  }, [size]);
 
   return (
     <span ref={holder} className={`mascot ${className}`} data-mood={mood} style={{ width: size, height: size }} aria-hidden="true">
@@ -84,7 +78,7 @@ export function BoRobot({ mood = "neutral", size = 120, className = "", variant 
           <span />
         </span>
       ) : (
-        <canvas key={shown} ref={canvas} width={size} height={size} style={{ width: size, height: size }} />
+        <canvas ref={canvas} width={size} height={size} style={{ width: size, height: size }} />
       )}
     </span>
   );
