@@ -4,6 +4,8 @@ import { MinutesPicker } from "@/components/minutes-picker";
 import { XpIcon } from "@/components/icons";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
+import { dailyMessage, fillName } from "@/features/bo/messages";
+import { loadBoMessages } from "@/features/bo/messages-load";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { loadSettings } from "@/lib/settings-server";
 import { toDateKey } from "@/features/gamification/streak";
@@ -21,7 +23,7 @@ import type { DictKey } from "@/lib/i18n/dictionary";
  */
 export default async function HomePage() {
   const { supabase, user } = await requireUserPage();
-  const { t } = await getT();
+  const { t, lang } = await getT();
   const settings = await loadSettings();
   const today = toDateKey(new Date());
   const dayStart = `${today}T00:00:00Z`;
@@ -40,6 +42,7 @@ export default async function HomePage() {
       createSupabaseAdminClient().from("reading_sessions").select("completed_at").eq("user_id", user.id).eq("day", today).maybeSingle(),
     ]);
 
+  const boNote = dailyMessage(await loadBoMessages(supabase, lang).catch(() => []), today, user.id);
   const words = wordsData ?? [];
   const schoolUnits = await loadSchoolUnits(supabase);
   const useSchool = schoolWordTotal(schoolUnits) > 0;
@@ -115,6 +118,15 @@ export default async function HomePage() {
             <p className="text-sm text-ink-soft">{allDone ? t("today.allDone") : t("today.hint")}</p>
           </div>
         </section>
+
+        {boNote && settings.boMessagesPerDay > 0 && (
+          <p className="sheet flex items-start gap-3 px-5 py-4 text-sm leading-7" aria-label={t("boNote.label")}>
+            <span aria-hidden="true" className="mt-1 grid size-7 shrink-0 place-items-center rounded-full bg-indigo/10 text-indigo">
+              ✦
+            </span>
+            <span>{fillName(boNote.text, profile?.display_name ?? "")}</span>
+          </p>
+        )}
 
         {profile?.level_band == null ? (
           <Link href="/level" className="sheet flex min-h-14 items-center gap-3 px-5 py-3 font-medium text-indigo">

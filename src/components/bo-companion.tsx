@@ -14,15 +14,30 @@ import {
 } from "@/features/bo/companion-state";
 import { clampPosition, dockPosition, fromFractions, popoverSide, toFractions, type Point, type Viewport } from "@/features/bo/placement";
 import { CompanionContext, useBoCompanion, type CompanionApi } from "@/components/bo-companion-context";
+import { EMPTY_STATE, FIRST_MESSAGE_DELAY_MS, afterShown, canShowNow, dayKey, fillName, parseState, pickMessage, type BoMessage } from "@/features/bo/messages";
 import { useT } from "@/lib/i18n/provider";
 
 /** Pages that already show a big Bo of their own, so the floating one stays out of the way. */
 const OWN_BO_PATHS = ["/", "/me"];
+/** Pages where the student is in the middle of an exercise: Bo keeps his messages for later. */
+const QUIET_PATHS = ["/review", "/learn", "/quiz", "/translate", "/read", "/talk", "/level", "/writing", "/listening", "/grammar", "/add", "/suggest"];
+const TICK_MS = 20_000;
 const PHONE_BAR = 72;
 const DRAG_THRESHOLD = 6;
 const KEY_STEP = 28;
 
-export function BoCompanionProvider({ children, userId, name }: { children: ReactNode; userId: string; name: string }) {
+interface ProviderProps {
+  children: ReactNode;
+  userId: string;
+  name: string;
+  /** The messages Bo says on his own, written by the admin (already in the student's language). */
+  messages?: BoMessage[];
+  everyMinutes?: number;
+  perDay?: number;
+}
+
+export function BoCompanionProvider({ children, userId, name, messages = [], everyMinutes = 0, perDay = 0 }: ProviderProps) {
+  const pathname = usePathname();
   const [mood, setMoodState] = useState<BoMood>("neutral");
   const [bubble, setBubble] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -63,6 +78,38 @@ export function BoCompanionProvider({ children, userId, name }: { children: Reac
     setBubble(text);
     bubbleTimer.current = setTimeout(() => setBubble(null), ms);
   }, []);
+
+  // Every so often Bo says one of the admin's messages, when it will not disturb: the tab is visible, he is on screen,
+  // nothing else is going on, and the student is not in the middle of an exercise.
+  const startedAt = useRef(Date.now());
+  const busy = useRef({ pathname, hidden: prefs.hidden, guiding, chatOpen, bubble });
+  busy.current = { pathname, hidden: prefs.hidden, guiding, chatOpen, bubble };
+  useEffect(() => {
+    if (!ready || messages.length === 0 || everyMinutes <= 0 || perDay <= 0) return;
+    const key = `bo-messages-v1:${userId}`;
+    const tick = () => {
+      const now = Date.now();
+      const state = busy.current;
+      if (document.visibilityState !== "visible" || now - startedAt.current < FIRST_MESSAGE_DELAY_MS) return;
+      if (state.hidden || state.guiding || state.chatOpen || state.bubble) return;
+      if (OWN_BO_PATHS.includes(state.pathname) || QUIET_PATHS.some((path) => state.pathname.startsWith(path))) return;
+      try {
+        const saved = parseState(window.localStorage.getItem(key));
+        const today = dayKey(new Date(now));
+        if (!canShowNow(saved, now, today, everyMinutes, perDay)) return;
+        const message = pickMessage(messages, saved.seen);
+        if (!message) return;
+        window.localStorage.setItem(key, JSON.stringify(afterShown(saved, message, now, today, messages.length)));
+        const text = fillName(message.text, name);
+        say(text, Math.min(14_000, Math.max(6_000, 3_500 + text.length * 70)));
+        setMood("happy", 3_500);
+      } catch {
+        // Blocked storage: no messages, nothing else breaks.
+      }
+    };
+    const id = setInterval(tick, TICK_MS);
+    return () => clearInterval(id);
+  }, [ready, messages, everyMinutes, perDay, userId, name, say, setMood]);
 
   const size = viewport.width < 1024 ? 76 : 96;
 

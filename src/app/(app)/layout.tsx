@@ -9,6 +9,8 @@ import { FlameIcon, XpIcon } from "@/components/icons";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
 import { setLanguage, signOut } from "@/app/actions";
+import { loadBoMessages } from "@/features/bo/messages-load";
+import { loadSettings } from "@/lib/settings-server";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const { supabase, user } = await requireUserPage();
@@ -20,9 +22,16 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     .single();
 
   const streak = profile?.streak_current ?? 0;
+  const [messages, settings] = await Promise.all([loadBoMessages(supabase, lang).catch(() => []), loadSettings()]);
 
   return (
-    <BoCompanionProvider userId={user.id} name={profile?.display_name ?? ""}>
+    <BoCompanionProvider
+      userId={user.id}
+      name={profile?.display_name ?? ""}
+      messages={messages}
+      everyMinutes={settings.boMessageEveryMinutes}
+      perDay={settings.boMessagesPerDay}
+    >
     <div className="mx-auto flex min-h-dvh max-w-7xl flex-col lg:flex-row">
       <aside className="lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-64 lg:shrink-0 lg:flex-col lg:justify-between lg:py-6">
         <div>

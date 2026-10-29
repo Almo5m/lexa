@@ -55,6 +55,13 @@ const GROUPS: { title: DictKey; fields: FieldSpec[] }[] = [
     ],
   },
   {
+    title: "admin.group.bo",
+    fields: [
+      { key: "boMessageEveryMinutes", kind: "number" },
+      { key: "boMessagesPerDay", kind: "number" },
+    ],
+  },
+  {
     title: "admin.group.srs",
     fields: [
       { key: "srsStartingEase", kind: "number", step: 0.1 },

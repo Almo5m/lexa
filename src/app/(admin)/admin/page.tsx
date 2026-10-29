@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminAiPanel } from "@/components/admin-ai-panel";
 import { AdminPathCards } from "@/components/admin-path-cards";
+import { AdminBoMessages } from "@/components/admin-bo-messages";
 import { AdminGrammar } from "@/components/admin-grammar";
 import { AdminSchool } from "@/components/admin-school";
 import { AdminSettingsForm } from "@/components/admin-settings-form";
@@ -25,7 +26,7 @@ import type { DictKey } from "@/lib/i18n/dictionary";
 export const metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-const TABS = ["overview", "school", "grammar", "ai", "cards", "settings"] as const;
+const TABS = ["overview", "school", "grammar", "bo", "ai", "cards", "settings"] as const;
 type Tab = (typeof TABS)[number];
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
@@ -54,6 +55,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       {tab === "overview" && <Overview />}
       {tab === "school" && <SchoolTab />}
       {tab === "grammar" && <GrammarTab />}
+      {tab === "bo" && <BoMessagesTab everyMinutes={settings.boMessageEveryMinutes} perDay={settings.boMessagesPerDay} />}
       {tab === "ai" && <AdminAiPanel settings={settings} keySet={Boolean(process.env.GEMINI_API_KEY)} />}
       {tab === "cards" && <PathCardsTab />}
       {tab === "settings" && <AdminSettingsForm initial={settings} />}
@@ -273,4 +275,16 @@ async function GrammarTab() {
     })),
   );
   return <AdminGrammar units={units} />;
+}
+
+async function BoMessagesTab({ everyMinutes, perDay }: { everyMinutes: number; perDay: number }) {
+  const { data, error } = await createSupabaseAdminClient().from("bo_messages").select("id, text_ar, text_en, active").order("created_at", { ascending: false });
+  const rows = error ? [] : (data ?? []);
+  return (
+    <AdminBoMessages
+      everyMinutes={everyMinutes}
+      perDay={perDay}
+      messages={rows.map((row) => ({ id: row.id, textAr: row.text_ar, textEn: row.text_en, active: row.active }))}
+    />
+  );
 }

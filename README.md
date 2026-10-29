@@ -98,6 +98,12 @@ The teacher's own explanation of each book unit can be uploaded as pictures from
 
 Pictures are shrunk in the browser before upload (`src/lib/shrink-image.ts`), checked on the server by their real bytes (JPEG, PNG or WebP only), and stored in a private bucket. Students get links that expire after an hour. Code: `src/features/grammar/lesson-images.ts`, `src/app/api/admin/grammar/route.ts`, `src/components/admin-grammar.tsx`. Run `supabase/setup.sql` again for the new table and bucket.
 
+## Messages from Bo (phase 8.3)
+
+Bo says short messages to the students from time to time. The admin writes them in the dashboard (tab "Bo messages"): Arabic text, an optional English version, `{name}` where the student's first name should go, and a switch to turn each one off. The timing is in Settings: the least gap between two messages (default 20 minutes) and the most per day (default 4); 0 turns the messages off.
+
+The message shows in the bubble next to the floating Bo. It waits 90 seconds after the student opens the site, never shows while he is in an exercise, in the chat, during the guide or when Bo is hidden, and goes through all the messages before repeating one. Today shows one message of the day in a small card. The counters live on the student's device only. Code: `src/features/bo/messages.ts` (the rules), `src/components/bo-companion.tsx` (the timer), `src/components/admin-bo-messages.tsx`. Run `supabase/setup.sql` again for the new table.
+
 ## License notice
 
 Copyright (c) 2026 Moaz (AlMo). All Rights Reserved.

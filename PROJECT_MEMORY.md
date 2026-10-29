@@ -340,3 +340,8 @@ Log of decisions and events, newest at the bottom.
 - The written grammar explanation was not organized enough, and the teacher already has the explanation as formatted pictures. Admin tab "Grammar explanation" uploads them per book unit (up to 20, ordered, deletable).
 - Storage: private bucket `grammar-lessons` + table `grammar_lessons` (setup.sql). Students get signed links (1 hour) made server-side. Upload is one file per request (serverless body limit), shrunk in the browser to 1800px JPEG, type checked by magic bytes, max 3.5 MB.
 - Lesson step shows the pictures when they exist, otherwise the built-in text. Exercises unchanged.
+
+## Phase 8.3 — Messages from Bo (2026-10-29)
+- Table `bo_messages` (setup.sql), admin tab "Bo messages" (add / edit / switch off / delete, up to 200), two new settings: `boMessageEveryMinutes` (20) and `boMessagesPerDay` (4); 0 turns it off.
+- Provider checks every 20 s: tab visible, 90 s since opening, Bo not hidden / guiding / in chat / already speaking, not on Today, Account or exercise pages. Counters in localStorage `bo-messages-v1:<user>`. One message of the day is also a card on Today.
+- Tested with a mocked clock: first message at about 100 s, none right after. A missing table means no messages, not an error.

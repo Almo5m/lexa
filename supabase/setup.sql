@@ -204,6 +204,15 @@ begin
 end
 $$;
 
+-- Messages Bo says to the students from time to time. The admin writes them; students can only read the active ones.
+create table if not exists public.bo_messages (
+  id uuid primary key default gen_random_uuid(),
+  text_ar text not null check (char_length(text_ar) between 1 and 200),
+  text_en text not null default '' check (char_length(text_en) <= 200),
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
 -- Talk to Lexa: free writing, analyzed --------------------------------------
 create table if not exists public.talk_sessions (
   id uuid primary key default gen_random_uuid(),
@@ -289,6 +298,7 @@ alter table public.talk_sessions enable row level security;
 alter table public.reading_sessions enable row level security;
 alter table public.path_cards enable row level security;
 alter table public.grammar_lessons enable row level security;
+alter table public.bo_messages enable row level security;
 alter table public.school_units enable row level security;
 alter table public.school_words enable row level security;
 alter table public.book_scores enable row level security;
@@ -308,6 +318,8 @@ create policy "book scores read own" on public.book_scores for select to authent
 revoke all on public.book_scores from anon, authenticated;
 grant select on public.book_scores to authenticated;
 
+drop policy if exists "bo messages read" on public.bo_messages;
+create policy "bo messages read" on public.bo_messages for select to authenticated using (active);
 drop policy if exists "grammar lessons read" on public.grammar_lessons;
 create policy "grammar lessons read" on public.grammar_lessons for select to authenticated using (true);
 drop policy if exists "school units read" on public.school_units;
@@ -353,6 +365,8 @@ create policy "share own delete" on public.share_links for delete using (user_id
 -- Students can edit just their name, interests and the "onboarded" flag, never XP, streak or role.
 revoke all on public.path_cards from anon, authenticated;
 grant select on public.path_cards to authenticated;
+revoke all on public.bo_messages from anon, authenticated;
+grant select on public.bo_messages to authenticated;
 revoke all on public.grammar_lessons from anon, authenticated;
 grant select on public.grammar_lessons to authenticated;
 revoke all on public.school_units, public.school_words from anon, authenticated;
