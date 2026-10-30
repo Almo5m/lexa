@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useBoLook } from "@/features/bo/look-store";
 import type { BoMood, BoScene } from "@/features/bo/scene";
 
 interface BoRobotProps {
@@ -20,11 +21,18 @@ export function BoRobot({ mood = "neutral", size = 120, className = "" }: BoRobo
   const scene = useRef<BoScene | null>(null);
   const moodRef = useRef<BoMood>(mood);
   const [failed, setFailed] = useState(false);
+  const look = useBoLook();
+  const lookRef = useRef(look);
 
   useEffect(() => {
     moodRef.current = mood;
     scene.current?.setMood(mood);
   }, [mood]);
+
+  useEffect(() => {
+    lookRef.current = look;
+    scene.current?.setLook(look);
+  }, [look]);
 
   useEffect(() => {
     const element = canvas.current;
@@ -50,6 +58,7 @@ export function BoRobot({ mood = "neutral", size = 120, className = "" }: BoRobo
         scene.current = created;
         created.resize(size, size);
         created.setMood(moodRef.current);
+        created.setLook(lookRef.current);
         update();
       })
       .catch(() => setFailed(true));

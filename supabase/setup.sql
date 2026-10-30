@@ -213,6 +213,94 @@ create table if not exists public.bo_messages (
   created_at timestamptz not null default now()
 );
 
+-- Daily challenge: the day's questions (the answers stay on the server) and each student's result.
+create table if not exists public.daily_challenges (
+  day date primary key,
+  questions jsonb not null,
+  created_at timestamptz not null default now()
+);
+create table if not exists public.challenge_results (
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  day date not null,
+  score integer not null check (score >= 0),
+  max_score integer not null check (max_score > 0),
+  created_at timestamptz not null default now(),
+  primary key (user_id, day)
+);
+
+-- Word of the day: the admin writes the word, its meaning and a short story or joke that makes it stick.
+create table if not exists public.word_of_day (
+  id uuid primary key default gen_random_uuid(),
+  term text not null check (char_length(term) between 2 and 40),
+  meaning_ar text not null check (char_length(meaning_ar) between 1 and 120),
+  story_ar text not null default '' check (char_length(story_ar) <= 400),
+  story_en text not null default '' check (char_length(story_en) <= 400),
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- Weekly board: students who join get a made-up name (never their real one). Only the server reads these.
+create table if not exists public.board_members (
+  user_id uuid primary key references public.profiles (id) on delete cascade,
+  nickname text not null check (char_length(nickname) between 3 and 40),
+  joined_at timestamptz not null default now()
+);
+
+-- The week's top students by XP, plus the asking student's own row even when he is lower down.
+create or replace function public.weekly_board(week_start date, me uuid, max_rows integer)
+returns table (rank bigint, user_id uuid, nickname text, xp bigint)
+language sql
+security definer
+set search_path = public
+as $$
+  with totals as (
+    select m.user_id, m.nickname, coalesce(sum(d.xp), 0)::bigint as xp
+    from public.board_members m
+    left join public.daily_progress d on d.user_id = m.user_id and d.day >= week_start
+    group by m.user_id, m.nickname
+  ),
+  ranked as (
+    select rank() over (order by xp desc) as rank, user_id, nickname, xp from totals where xp > 0
+  )
+  select rank, user_id, nickname, xp from ranked where rank <= max_rows or user_id = me order by rank, nickname;
+$$;
+revoke all on function public.weekly_board(date, uuid, integer) from public, anon, authenticated;
+grant execute on function public.weekly_board(date, uuid, integer) to service_role;
+
+-- Weekly contest the admin writes. Answers stay on the server; one attempt per student.
+create table if not exists public.contests (
+  id uuid primary key default gen_random_uuid(),
+  title text not null check (char_length(title) between 1 and 120),
+  prize text not null default '' check (char_length(prize) <= 200),
+  questions jsonb not null,
+  starts_at timestamptz not null,
+  ends_at timestamptz not null check (ends_at > starts_at),
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+create table if not exists public.contest_entries (
+  contest_id uuid not null references public.contests (id) on delete cascade,
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  score integer not null,
+  created_at timestamptz not null default now(),
+  primary key (contest_id, user_id)
+);
+
+-- Friend duels: a short code, the same questions for everyone who opens it. Server-only.
+create table if not exists public.duels (
+  code text primary key check (code ~ '^[A-Z2-9]{6}$'),
+  creator uuid not null references public.profiles (id) on delete cascade,
+  questions jsonb not null,
+  created_at timestamptz not null default now()
+);
+create table if not exists public.duel_entries (
+  code text not null references public.duels (code) on delete cascade,
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  score integer not null,
+  created_at timestamptz not null default now(),
+  primary key (code, user_id)
+);
+
 -- Talk to Lexa: free writing, analyzed --------------------------------------
 create table if not exists public.talk_sessions (
   id uuid primary key default gen_random_uuid(),
@@ -299,6 +387,15 @@ alter table public.reading_sessions enable row level security;
 alter table public.path_cards enable row level security;
 alter table public.grammar_lessons enable row level security;
 alter table public.bo_messages enable row level security;
+alter table public.duels enable row level security;
+alter table public.duel_entries enable row level security;
+alter table public.contests enable row level security;
+alter table public.contest_entries enable row level security;
+alter table public.board_members enable row level security;
+alter table public.word_of_day enable row level security;
+alter table public.daily_challenges enable row level security;
+alter table public.challenge_results enable row level security;
+-- daily_challenges and challenge_results have no policies on purpose: only the server (service role) can touch them.
 alter table public.school_units enable row level security;
 alter table public.school_words enable row level security;
 alter table public.book_scores enable row level security;
@@ -318,6 +415,8 @@ create policy "book scores read own" on public.book_scores for select to authent
 revoke all on public.book_scores from anon, authenticated;
 grant select on public.book_scores to authenticated;
 
+drop policy if exists "word of day read" on public.word_of_day;
+create policy "word of day read" on public.word_of_day for select to authenticated using (active);
 drop policy if exists "bo messages read" on public.bo_messages;
 create policy "bo messages read" on public.bo_messages for select to authenticated using (active);
 drop policy if exists "grammar lessons read" on public.grammar_lessons;
@@ -365,6 +464,14 @@ create policy "share own delete" on public.share_links for delete using (user_id
 -- Students can edit just their name, interests and the "onboarded" flag, never XP, streak or role.
 revoke all on public.path_cards from anon, authenticated;
 grant select on public.path_cards to authenticated;
+revoke all on public.daily_challenges, public.challenge_results from anon, authenticated;
+revoke all on public.word_of_day from anon, authenticated;
+grant select on public.word_of_day to authenticated;
+revoke all on public.board_members from anon, authenticated;
+revoke all on public.contests from anon, authenticated;
+revoke all on public.contest_entries from anon, authenticated;
+revoke all on public.duels from anon, authenticated;
+revoke all on public.duel_entries from anon, authenticated;
 revoke all on public.bo_messages from anon, authenticated;
 grant select on public.bo_messages to authenticated;
 revoke all on public.grammar_lessons from anon, authenticated;

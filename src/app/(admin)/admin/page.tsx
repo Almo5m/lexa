@@ -2,6 +2,8 @@ import Link from "next/link";
 import { AdminAiPanel } from "@/components/admin-ai-panel";
 import { AdminPathCards } from "@/components/admin-path-cards";
 import { AdminBoMessages } from "@/components/admin-bo-messages";
+import { AdminContestPanel } from "@/components/admin-contest";
+import { AdminWordOfDayPanel } from "@/components/admin-word-of-day";
 import { AdminGrammar } from "@/components/admin-grammar";
 import { AdminSchool } from "@/components/admin-school";
 import { AdminSettingsForm } from "@/components/admin-settings-form";
@@ -26,7 +28,7 @@ import type { DictKey } from "@/lib/i18n/dictionary";
 export const metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-const TABS = ["overview", "school", "grammar", "bo", "ai", "cards", "settings"] as const;
+const TABS = ["overview", "school", "grammar", "bo", "wod", "contest", "ai", "cards", "settings"] as const;
 type Tab = (typeof TABS)[number];
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
@@ -56,6 +58,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       {tab === "school" && <SchoolTab />}
       {tab === "grammar" && <GrammarTab />}
       {tab === "bo" && <BoMessagesTab everyMinutes={settings.boMessageEveryMinutes} perDay={settings.boMessagesPerDay} />}
+      {tab === "wod" && <WordOfDayTab />}
+      {tab === "contest" && <ContestTab />}
       {tab === "ai" && <AdminAiPanel settings={settings} keySet={Boolean(process.env.GEMINI_API_KEY)} />}
       {tab === "cards" && <PathCardsTab />}
       {tab === "settings" && <AdminSettingsForm initial={settings} />}
@@ -287,4 +291,31 @@ async function BoMessagesTab({ everyMinutes, perDay }: { everyMinutes: number; p
       messages={rows.map((row) => ({ id: row.id, textAr: row.text_ar, textEn: row.text_en, active: row.active }))}
     />
   );
+}
+
+async function WordOfDayTab() {
+  const { data, error } = await createSupabaseAdminClient().from("word_of_day").select("id, term, meaning_ar, story_ar, active").order("created_at", { ascending: false });
+  const rows = error ? [] : (data ?? []);
+  return <AdminWordOfDayPanel words={rows.map((row) => ({ id: row.id, term: row.term, meaningAr: row.meaning_ar, storyAr: row.story_ar, active: row.active }))} />;
+}
+
+async function ContestTab() {
+  const db = createSupabaseAdminClient();
+  const { data, error } = await db.from("contests").select("id, title, prize, questions, starts_at, ends_at, active").order("starts_at", { ascending: false }).limit(30);
+  const rows = error ? [] : (data ?? []);
+  const contests = await Promise.all(
+    rows.map(async (row) => {
+      const entries = await db.from("contest_entries").select("user_id, score").eq("contest_id", row.id).order("score", { ascending: false }).order("created_at", { ascending: true });
+      const list = entries.data ?? [];
+      const top = list.slice(0, 3);
+      const profiles = top.length ? await db.from("profiles").select("id, display_name").in("id", top.map((e) => e.user_id)) : { data: [] as { id: string; display_name: string | null }[] };
+      const nameOf = new Map((profiles.data ?? []).map((p) => [p.id, p.display_name ?? "—"]));
+      return {
+        id: row.id, title: row.title, prize: row.prize, startsAt: row.starts_at, endsAt: row.ends_at, active: row.active,
+        questions: Array.isArray(row.questions) ? row.questions.length : 0, count: list.length,
+        winners: top.map((e) => ({ name: nameOf.get(e.user_id) ?? "—", score: e.score })),
+      };
+    }),
+  );
+  return <AdminContestPanel contests={contests} />;
 }

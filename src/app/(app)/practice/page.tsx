@@ -16,6 +16,13 @@ export default async function PracticePage() {
     <div className="max-w-2xl space-y-8 lg:max-w-5xl">
       <h1 className="text-2xl font-semibold">{t("practice.title")}</h1>
 
+      <Group title={t("challenge.group")}>
+        <Row href="/challenge" icon={<SparkIcon />} title={t("challenge.title")} hint={t("challenge.hint")} />
+        <Row href="/duel" icon={<SparkIcon />} title={t("duel.title")} hint={t("duel.hint")} />
+        <Row href="/contest" icon={<SparkIcon />} title={t("contest.title")} hint={t("contest.hint")} />
+        <Row href="/board" icon={<XpIcon />} title={t("board.title")} hint={t("board.hint")} />
+      </Group>
+
       <Group title={t("practice.groupWords")}>
         <Row href="/review" icon={<ReviewIcon />} title={t("practice.review")} hint={t("practice.reviewHint")} />
         <Row href="/quiz" icon={<QuizIcon />} title={t("practice.quiz")} hint={t("practice.quizHint")} />

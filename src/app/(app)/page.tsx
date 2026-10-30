@@ -6,6 +6,9 @@ import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
 import { dailyMessage, fillName } from "@/features/bo/messages";
 import { loadBoMessages } from "@/features/bo/messages-load";
+import { loadWordsOfDay, wordForDay } from "@/features/wordday/load";
+import { resultForDay } from "@/features/challenge/server";
+import { SpeakButton } from "@/components/speak-button";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { loadSettings } from "@/lib/settings-server";
 import { toDateKey } from "@/features/gamification/streak";
@@ -43,6 +46,8 @@ export default async function HomePage() {
     ]);
 
   const boNote = dailyMessage(await loadBoMessages(supabase, lang).catch(() => []), today, user.id);
+  const wordOfDay = wordForDay(await loadWordsOfDay(supabase, lang).catch(() => []), today);
+  const challengeDone = await resultForDay(createSupabaseAdminClient(), user.id, today).catch(() => null);
   const words = wordsData ?? [];
   const schoolUnits = await loadSchoolUnits(supabase);
   const useSchool = schoolWordTotal(schoolUnits) > 0;
@@ -228,6 +233,36 @@ export default async function HomePage() {
       </div>
 
       <aside className="mt-5 space-y-5 xl:sticky xl:top-6 xl:mt-0">
+        <Link href="/challenge" className="sheet flex min-h-16 items-center justify-between gap-3 px-5 py-3">
+          <span>
+            <span className="block font-semibold">{t("challenge.title")}</span>
+            <span className="block text-sm text-ink-soft">
+              {challengeDone ? t("challenge.todayDone", { a: challengeDone.score, b: challengeDone.max }) : t("challenge.todayHint")}
+            </span>
+          </span>
+          <span aria-hidden="true" className="text-indigo ltr:rotate-180">‹</span>
+        </Link>
+
+        <Link href="/board" className="sheet flex min-h-16 items-center justify-between gap-3 px-5 py-3">
+          <span>
+            <span className="block font-semibold">{t("board.title")}</span>
+            <span className="block text-sm text-ink-soft">{t("board.hint")}</span>
+          </span>
+          <span aria-hidden="true" className="text-indigo ltr:rotate-180">‹</span>
+        </Link>
+
+        {wordOfDay && (
+          <section className="sheet space-y-2 p-5" aria-labelledby="wod-title">
+            <h2 id="wod-title" className="text-sm font-semibold text-ink-faint">{t("wod.title")}</h2>
+            <p className="flex items-center gap-3">
+              <span className="ltr-text text-2xl font-bold">{wordOfDay.term}</span>
+              <SpeakButton text={wordOfDay.term} label={t("wod.listen")} size="small" />
+            </p>
+            <p className="font-medium text-indigo">{wordOfDay.meaningAr}</p>
+            {wordOfDay.story && <p className="text-sm leading-7 text-ink-soft">{wordOfDay.story}</p>}
+          </section>
+        )}
+
         {near && nearUnits[near.metric] && (
           <Link
             href="/achievements"

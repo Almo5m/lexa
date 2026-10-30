@@ -345,3 +345,19 @@ Log of decisions and events, newest at the bottom.
 - Table `bo_messages` (setup.sql), admin tab "Bo messages" (add / edit / switch off / delete, up to 200), two new settings: `boMessageEveryMinutes` (20) and `boMessagesPerDay` (4); 0 turns it off.
 - Provider checks every 20 s: tab visible, 90 s since opening, Bo not hidden / guiding / in chat / already speaking, not on Today, Account or exercise pages. Counters in localStorage `bo-messages-v1:<user>`. One message of the day is also a card on Today.
 - Tested with a mocked clock: first message at about 100 s, none right after. A missing table means no messages, not an error.
+
+## Phase 8.4 — Daily challenge and word of the day (2026-10-29)
+- He chose to build all six activity ideas (Bo look, daily challenge, weekly board, admin contest, duel with a friend, word of the day), in several zips. This one has the daily challenge and the word of the day.
+- Tables `daily_challenges`, `challenge_results` (server-only, no student policies) and `word_of_day` (setup.sql). Challenge: seeded questions per Cairo day, stored on first request, answers never sent to the browser, one result per student per day (primary key), XP 5 per right answer + 15 for a full score (constants in `features/challenge/questions.ts`).
+- Admin tab "Word of the day": add / switch off / delete. Today shows the challenge link and the word of the day card in the side column.
+- Tested with the mock server: full flow intro, five answers, result with the right answers. Note: the result score is shown with `ltr-text`, otherwise "2 / 5" reads as "5 / 2" in Arabic.
+
+## Phase 8.5 - Weekly board and weekly contest
+- Board: opt-in, made-up nicknames only (animal + adjective + number), no class codes because the app is for any student in Egypt. Week starts Saturday (Cairo). Ranking is the SQL function `weekly_board` (service role only). Tables `board_members`, `contests`, `contest_entries` are server-only.
+- Contest: the admin writes questions as `question | A | B | C | D | letter`, sets start and end. One attempt per student, scored on the server. Real names show to the admin only; students see the top three by board nickname.
+- Re-run `supabase/setup.sql` after this update.
+
+## Phase 8.6 - Friend duel and Bo look
+- Duel: `/duel` makes a 6 character code (no 0/1/O/I/L) with 5 questions from the same pool as the daily challenge; `/duel/[code]` plays it. One attempt per student, scored on the server, no XP (so it cannot be farmed), 10 new duels a day per student. Scores show as "you", "the one who challenged" and "a friend", never names. Tables `duels`, `duel_entries` are server-only.
+- Bo look: hats (none, cap, headphones, crown) and colors (blue, coral, green, purple, gold) open by level (`features/bo/look.ts`). The choice is kept on the device (localStorage) and drawn in `scene.ts` for every Bo on screen. It is only a cosmetic, so it is not stored on the server.
+- Re-run `supabase/setup.sql` after this update.

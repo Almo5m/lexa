@@ -2,6 +2,8 @@ import { AccountForm } from "@/components/account-form";
 import { ShareManager } from "@/components/share-manager";
 import { isActive } from "@/features/share/token";
 import { InterestsForm } from "@/components/interests-form";
+import { BoLookPicker } from "@/components/bo-look-picker";
+import { levelFromXp } from "@/features/gamification/xp";
 import { BoVisibility } from "@/components/bo-visibility";
 import { BoMascot } from "@/components/bo-mascot";
 import { requireUserPage } from "@/lib/auth";
@@ -13,7 +15,7 @@ export default async function MePage() {
   const { supabase, user } = await requireUserPage();
   const { t } = await getT();
   const [{ data: profile }, { data: link }] = await Promise.all([
-    supabase.from("profiles").select("interests, display_name").eq("id", user.id).single(),
+    supabase.from("profiles").select("interests, display_name, total_xp").eq("id", user.id).single(),
     supabase.from("share_links").select("expires_at").eq("user_id", user.id).maybeSingle(),
   ]);
   const activeUntil = link && isActive(link.expires_at) ? link.expires_at : null;
@@ -33,6 +35,11 @@ export default async function MePage() {
             {t("boPicker.title")}
           </h2>
           <BoVisibility />
+        </section>
+
+        <section aria-labelledby="look-title" className="sheet space-y-3 p-6">
+          <h2 id="look-title" className="text-xl font-bold">{t("look.title")}</h2>
+          <BoLookPicker level={levelFromXp(profile?.total_xp ?? 0)} />
         </section>
 
         <section className="sheet p-6">

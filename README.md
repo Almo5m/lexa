@@ -104,6 +104,14 @@ Bo says short messages to the students from time to time. The admin writes them 
 
 The message shows in the bubble next to the floating Bo. It waits 90 seconds after the student opens the site, never shows while he is in an exercise, in the chat, during the guide or when Bo is hidden, and goes through all the messages before repeating one. Today shows one message of the day in a small card. The counters live on the student's device only. Code: `src/features/bo/messages.ts` (the rules), `src/components/bo-companion.tsx` (the timer), `src/components/admin-bo-messages.tsx`. Run `supabase/setup.sql` again for the new table.
 
+## Daily challenge and word of the day (phase 8.4)
+
+**Daily challenge:** five "what does this word mean?" questions in two minutes, the same for every student on the same day (the day follows Cairo time). The first request of the day builds the questions from the school words (our own path when there are too few) and stores them, so the set never changes during the day. The answers stay on the server: the browser only gets the words and the four choices, and the score is worked out on the server, once per student per day, with XP for each right answer and a bonus for a full score. Code: `src/features/challenge/`, `src/app/api/challenge/route.ts`, `src/components/challenge-session.tsx`.
+
+**Word of the day:** the admin writes the word, its meaning and a short story or joke (tab "Word of the day"). One word shows each day on Today for all students, in turn, with a button to hear it. Code: `src/features/wordday/`, `src/components/admin-word-of-day.tsx`.
+
+Run `supabase/setup.sql` again for the new tables.
+
 ## License notice
 
 Copyright (c) 2026 Moaz (AlMo). All Rights Reserved.
@@ -147,3 +155,9 @@ From the daily session, "Translate" writes its sentences around the words the st
 The home screen shows four bars: words (learned from the path), understanding (average of the reading questions), translation (share right in the latest 20) and speaking (the band from the latest texts). A bar with too little data says so instead of showing a made-up number.
 
 `/path` lists every unit with how many of its words are learned and how many are solid (two correct reviews in a row). A unit is "mastered" when 80 percent of its words are solid. "Unit test" opens a review of that unit's words, weakest first. All of this is computed from the review state, so nothing is typed in by the browser and no new table is needed.
+
+## Weekly board and contest
+The weekly board ranks students across Egypt by XP. A student joins by choice and appears under a made-up name only. It restarts every Saturday. The admin can also write a weekly contest from the dashboard (questions, dates, prize). Marking happens on the server and each student gets one attempt.
+
+## Challenge a friend and Bo's look
+A student can start a duel, send the link to a friend, and both answer the same five questions. It gives no XP, it is just for fun, and no names are shown. Bo also gets hats and colors that open as the student's level goes up.

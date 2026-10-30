@@ -16,11 +16,13 @@ import {
   PerspectiveCamera,
   Scene,
   SphereGeometry,
+  ConeGeometry,
   TorusGeometry,
   WebGLRenderer,
   MathUtils,
   type Object3D,
 } from "three";
+import { colorHex, type BoLook, type HatId } from "./look";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
@@ -47,6 +49,7 @@ const POSES: Record<BoMood, MoodPose> = {
 
 export interface BoScene {
   setMood(mood: BoMood): void;
+  setLook(look: BoLook): void;
   resize(width: number, height: number): void;
   start(): void;
   stop(): void;
@@ -80,6 +83,8 @@ interface Rig {
   bulbMaterial: MeshBasicMaterial;
   armRight: Group;
   armLeft: Group;
+  trim: MeshStandardMaterial;
+  hats: Record<Exclude<HatId, "none">, Group>;
 }
 
 /** Bo built from real geometry: glossy shell, dark glass face, glowing eyes. The same rig is driven by moods. */
@@ -151,6 +156,38 @@ function buildRobot(): Rig {
   antenna.add(bulb);
   head.add(antenna);
 
+  const gold = new MeshStandardMaterial({ color: "#ffc94a", roughness: 0.25, metalness: 0.85 });
+  const cap = new Group();
+  const dome = new Mesh(new SphereGeometry(0.66, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), trim);
+  dome.scale.set(1.1, 0.75, 0.9);
+  cap.add(dome);
+  const brim = new Mesh(new RoundedBoxGeometry(0.9, 0.06, 0.5, 4, 0.03), trim);
+  brim.position.set(0, 0.02, 0.78);
+  cap.add(brim);
+  cap.position.set(0, 0.5, 0);
+
+  const phones = new Group();
+  const band = new Mesh(new TorusGeometry(0.88, 0.05, 12, 48, Math.PI), trim);
+  band.scale.set(1, 0.78, 1);
+  phones.add(band);
+
+  const crown = new Group();
+  const ring = new Mesh(new CylinderGeometry(0.4, 0.44, 0.18, 24), gold);
+  crown.add(ring);
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 2;
+    const point = new Mesh(new ConeGeometry(0.08, 0.24, 12), gold);
+    point.position.set(Math.cos(angle) * 0.36, 0.2, Math.sin(angle) * 0.36);
+    crown.add(point);
+  }
+  crown.position.set(0, 0.68, 0);
+
+  const hats = { cap, phones, crown };
+  for (const hat of Object.values(hats)) {
+    hat.visible = false;
+    head.add(hat);
+  }
+
   const makeArm = (side: number): Group => {
     const arm = new Group();
     arm.position.set(side * 0.66, -0.5, 0);
@@ -165,7 +202,7 @@ function buildRobot(): Rig {
     return arm;
   };
 
-  return { root, head, eyes, mouth, antenna, bulb, bulbMaterial, armRight: makeArm(1), armLeft: makeArm(-1) };
+  return { root, head, eyes, mouth, antenna, bulb, bulbMaterial, armRight: makeArm(1), armLeft: makeArm(-1), trim, hats };
 }
 
 export async function createBoScene(canvas: HTMLCanvasElement, options: Options): Promise<BoScene> {
@@ -201,6 +238,13 @@ export async function createBoScene(canvas: HTMLCanvasElement, options: Options)
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -1.55;
   scene.add(floor);
+
+  function applyLook(look: BoLook) {
+    rig.trim.color.set(colorHex(look.color));
+    for (const [id, group] of Object.entries(rig.hats)) group.visible = id === look.hat;
+    // The antenna would poke through a cap or crown.
+    rig.antenna.visible = look.hat === "none" || look.hat === "phones";
+  }
 
   let target: MoodPose = POSES.neutral;
   const current: MoodPose = { ...POSES.neutral };
@@ -276,6 +320,10 @@ export async function createBoScene(canvas: HTMLCanvasElement, options: Options)
         bulbColor.set(target.bulb);
         frame(performance.now());
       }
+    },
+    setLook(look) {
+      applyLook(look);
+      if (!running || options.reducedMotion) frame(performance.now());
     },
     resize(width, height) {
       renderer.setSize(width, height, false);
