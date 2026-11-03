@@ -261,7 +261,7 @@ async function SchoolTab() {
         id: unit.id,
         titleAr: unit.titleAr,
         titleEn: unit.titleEn,
-        words: unit.words.map((word) => ({ id: word.id, term: word.term, meaningAr: word.meaningAr })),
+        words: unit.words.map((word) => ({ id: word.id, term: word.term, meaningAr: word.meaningAr, pos: word.pos, exampleEn: word.exampleEn, exampleAr: word.exampleAr })),
       }))}
     />
   );

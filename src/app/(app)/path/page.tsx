@@ -4,6 +4,7 @@ import { getT } from "@/lib/i18n/server";
 import { SkillMeters } from "@/components/skill-meters";
 import { UNITS, pathSizeFrom, startUnitIndex } from "@/features/curriculum";
 import { levelProgress } from "@/features/gamification/xp";
+import { loadSchoolUnits } from "@/features/school/load";
 import { loadSkillMeters } from "@/features/skills/load";
 import { currentUnit, unitProgress, type WordState } from "@/features/curriculum/progress";
 import type { DictKey } from "@/lib/i18n/dictionary";
@@ -25,7 +26,14 @@ export default async function PathPage() {
   const progress = UNITS.map((unit) => unitProgress(unit, states));
   const current = currentUnit(progress.slice(startUnit));
   const learned = [...states.values()].filter((state) => state.learned).length;
-  const meters = await loadSkillMeters(supabase, user.id, { learned, total: pathSizeFrom(startUnit) });
+  // The words bar follows the school book when the admin has uploaded it, and our own path otherwise.
+  const schoolTerms = new Set((await loadSchoolUnits(supabase)).flatMap((unit) => unit.words.map((word) => word.term)));
+  let wordsBar = { learned, total: pathSizeFrom(startUnit) };
+  if (schoolTerms.size > 0) {
+    const { data: schoolRows } = await supabase.from("words").select("term, last_reviewed_at").eq("source", "school");
+    wordsBar = { learned: (schoolRows ?? []).filter((row) => row.last_reviewed_at !== null && schoolTerms.has(row.term)).length, total: schoolTerms.size };
+  }
+  const meters = await loadSkillMeters(supabase, user.id, wordsBar);
   const level = levelProgress(profile?.total_xp ?? 0);
 
   return (

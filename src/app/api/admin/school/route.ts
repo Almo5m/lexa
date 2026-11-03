@@ -12,6 +12,14 @@ const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("renameUnit"), id: z.string().uuid(), titleAr: title, titleEn: z.string().trim().max(80).optional() }),
   z.object({ action: z.literal("deleteUnit"), id: z.string().uuid() }),
   z.object({ action: z.literal("moveUnit"), id: z.string().uuid(), direction: z.enum(["up", "down"]) }),
+  z.object({
+    action: z.literal("editWord"),
+    id: z.string().uuid(),
+    meaningAr: z.string().trim().min(1).max(200),
+    pos: z.string().trim().max(20).optional(),
+    exampleEn: z.string().trim().max(300).optional(),
+    exampleAr: z.string().trim().max(300).optional(),
+  }),
   z.object({ action: z.literal("deleteWord"), id: z.string().uuid() }),
   z.object({ action: z.literal("importWords"), unitId: z.string().uuid(), text: z.string().max(MAX_IMPORT_CHARS), replace: z.boolean().optional() }),
 ]);
@@ -54,6 +62,11 @@ export async function POST(request: Request) {
         const results = await Promise.all(ids.map((id, index) => db.from("school_units").update({ sort: index + 1 }).eq("id", id)));
         const failed = results.find((result) => result.error);
         if (failed?.error) throw failed.error;
+        return NextResponse.json({ ok: true });
+      }
+      case "editWord": {
+        const { error } = await db.from("school_words").update({ meaning_ar: body.meaningAr, pos: body.pos ?? "", example_en: body.exampleEn ?? "", example_ar: body.exampleAr ?? "" }).eq("id", body.id);
+        if (error) throw error;
         return NextResponse.json({ ok: true });
       }
       case "deleteWord": {

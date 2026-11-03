@@ -6,11 +6,20 @@ import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
 
+export interface AdminWord {
+  id: string;
+  term: string;
+  meaningAr: string;
+  pos: string;
+  exampleEn: string;
+  exampleAr: string;
+}
+
 export interface AdminUnit {
   id: string;
   titleAr: string;
   titleEn: string;
-  words: { id: string; term: string; meaningAr: string }[];
+  words: AdminWord[];
 }
 
 interface Problem {
@@ -196,15 +205,7 @@ function UnitCard({
           {showWords && (
             <ul className="mt-2 divide-y divide-line">
               {unit.words.map((word) => (
-                <li key={word.id} className="flex items-center justify-between gap-3 py-2">
-                  <span className="min-w-0">
-                    <span className="ltr-text font-medium">{word.term}</span>
-                    <span className="ms-3 text-sm text-ink-soft">{word.meaningAr}</span>
-                  </span>
-                  <button type="button" className="min-h-11 px-2 text-sm text-pen-red" disabled={busy} onClick={() => void run({ action: "deleteWord", id: word.id })}>
-                    {t("school.admin.deleteWord")}
-                  </button>
-                </li>
+                <WordRow key={word.id} word={word} busy={busy} run={run} />
               ))}
             </ul>
           )}
@@ -228,6 +229,52 @@ function UnitCard({
           </button>
         )}
       </div>
+    </li>
+  );
+}
+
+/** One school word: shows the meaning, and opens a small form to fix the meaning, type and examples without re-uploading the unit. */
+function WordRow({ word, busy, run }: { word: AdminWord; busy: boolean; run: (body: object, done?: (data: Record<string, unknown>) => void) => Promise<void> }) {
+  const { t } = useT();
+  const [editing, setEditing] = useState(false);
+  const [meaningAr, setMeaningAr] = useState(word.meaningAr);
+  const [pos, setPos] = useState(word.pos);
+  const [exampleEn, setExampleEn] = useState(word.exampleEn);
+  const [exampleAr, setExampleAr] = useState(word.exampleAr);
+
+  if (editing) {
+    return (
+      <li className="py-3">
+        <form
+          className="space-y-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void run({ action: "editWord", id: word.id, meaningAr, pos, exampleEn, exampleAr }, () => setEditing(false));
+          }}
+        >
+          <p className="ltr-text font-medium">{word.term}</p>
+          <input className="field" required maxLength={200} value={meaningAr} onChange={(e) => setMeaningAr(e.target.value)} aria-label={t("wod.meaning")} />
+          <input className="field ltr-text" maxLength={20} value={pos} onChange={(e) => setPos(e.target.value)} placeholder="noun / verb / adj" aria-label="pos" />
+          <input className="field ltr-text" maxLength={300} value={exampleEn} onChange={(e) => setExampleEn(e.target.value)} aria-label="Example" />
+          <input className="field" maxLength={300} value={exampleAr} onChange={(e) => setExampleAr(e.target.value)} aria-label={t("school.admin.exampleAr")} />
+          <div className="flex gap-2">
+            <TagButton type="submit" disabled={busy}>{t("school.admin.saveWord")}</TagButton>
+            <TagButton quiet onClick={() => setEditing(false)}>{t("common.cancel")}</TagButton>
+          </div>
+        </form>
+      </li>
+    );
+  }
+  return (
+    <li className="flex items-center justify-between gap-3 py-2">
+      <span className="min-w-0">
+        <span className="ltr-text font-medium">{word.term}</span>
+        <span className="ms-3 text-sm text-ink-soft">{word.meaningAr}</span>
+      </span>
+      <span className="flex shrink-0">
+        <button type="button" className="min-h-11 px-2 text-sm font-semibold text-indigo" disabled={busy} onClick={() => setEditing(true)}>{t("school.admin.editWord")}</button>
+        <button type="button" className="min-h-11 px-2 text-sm text-pen-red" disabled={busy} onClick={() => void run({ action: "deleteWord", id: word.id })}>{t("school.admin.deleteWord")}</button>
+      </span>
     </li>
   );
 }

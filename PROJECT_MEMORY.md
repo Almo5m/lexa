@@ -361,3 +361,8 @@ Log of decisions and events, newest at the bottom.
 - Duel: `/duel` makes a 6 character code (no 0/1/O/I/L) with 5 questions from the same pool as the daily challenge; `/duel/[code]` plays it. One attempt per student, scored on the server, no XP (so it cannot be farmed), 10 new duels a day per student. Scores show as "you", "the one who challenged" and "a friend", never names. Tables `duels`, `duel_entries` are server-only.
 - Bo look: hats (none, cap, headphones, crown) and colors (blue, coral, green, purple, gold) open by level (`features/bo/look.ts`). The choice is kept on the device (localStorage) and drawn in `scene.ts` for every Bo on screen. It is only a cosmetic, so it is not stored on the server.
 - Re-run `supabase/setup.sql` after this update.
+
+## Phase 8.7 - Loose ends
+- The words bar in the skill meters now follows the school book (studied school words out of all school words) when the admin has uploaded it, and our own path otherwise.
+- The admin can edit one school word (meaning, type, examples) from the unit list, without re-uploading the unit.
+- Next.js raised to 16.4.4 (the audit had a critical and a high issue in the older 16.x). The audit still lists moderate issues in dev tools (eslint, minimatch) that do not ship to production.
