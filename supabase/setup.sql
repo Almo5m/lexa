@@ -301,6 +301,26 @@ create table if not exists public.duel_entries (
   primary key (code, user_id)
 );
 
+-- Messages students send to the admin (bug, idea, question). Only the server reads and writes them.
+create table if not exists public.feedback (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  kind text not null check (kind in ('bug', 'idea', 'question')),
+  message text not null check (char_length(message) between 3 and 1000),
+  done boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists feedback_open_idx on public.feedback (done, created_at desc);
+
+-- What the admin did that cannot be undone (deleting a student). The admin keeps a trace, the student's id stays out.
+create table if not exists public.admin_log (
+  id uuid primary key default gen_random_uuid(),
+  admin_id uuid references public.profiles (id) on delete set null,
+  action text not null check (char_length(action) <= 60),
+  detail text not null default '' check (char_length(detail) <= 300),
+  created_at timestamptz not null default now()
+);
+
 -- Talk to Lexa: free writing, analyzed --------------------------------------
 create table if not exists public.talk_sessions (
   id uuid primary key default gen_random_uuid(),
@@ -387,6 +407,8 @@ alter table public.reading_sessions enable row level security;
 alter table public.path_cards enable row level security;
 alter table public.grammar_lessons enable row level security;
 alter table public.bo_messages enable row level security;
+alter table public.feedback enable row level security;
+alter table public.admin_log enable row level security;
 alter table public.duels enable row level security;
 alter table public.duel_entries enable row level security;
 alter table public.contests enable row level security;
@@ -472,6 +494,8 @@ revoke all on public.contests from anon, authenticated;
 revoke all on public.contest_entries from anon, authenticated;
 revoke all on public.duels from anon, authenticated;
 revoke all on public.duel_entries from anon, authenticated;
+revoke all on public.feedback from anon, authenticated;
+revoke all on public.admin_log from anon, authenticated;
 revoke all on public.bo_messages from anon, authenticated;
 grant select on public.bo_messages to authenticated;
 revoke all on public.grammar_lessons from anon, authenticated;

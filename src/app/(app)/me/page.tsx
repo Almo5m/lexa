@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AccountForm } from "@/components/account-form";
 import { ShareManager } from "@/components/share-manager";
 import { isActive } from "@/features/share/token";
@@ -51,6 +52,16 @@ export default async function MePage() {
             {t("share.title")}
           </h2>
           <ShareManager activeUntil={activeUntil} />
+        </section>
+
+        <section aria-labelledby="help-title" className="sheet space-y-3 p-6">
+          <h2 id="help-title" className="text-xl font-bold">{t("feedback.title")}</h2>
+          <p className="text-ink-soft">{t("feedback.hint")}</p>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/feedback" className="tag-btn tag-btn-grad">{t("feedback.open")}</Link>
+            <Link href="/privacy" className="tag-btn tag-btn-quiet">{t("legal.privacy")}</Link>
+            <Link href="/terms" className="tag-btn tag-btn-quiet">{t("legal.terms")}</Link>
+          </div>
         </section>
 
         <section aria-labelledby="account-title" className="sheet p-6">

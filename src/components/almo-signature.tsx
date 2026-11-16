@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getT } from "@/lib/i18n/server";
 
 const PAGE_URL = "https://www.facebook.com/share/1HvQMbwYYV/";
@@ -16,6 +17,10 @@ export async function AlmoSignature() {
         >
           AL-MO
         </a>
+      </p>
+      <p className="mt-1 flex flex-wrap gap-x-4">
+        <Link href="/privacy" className="inline-flex min-h-11 items-center transition-colors hover:text-indigo">{t("legal.privacy")}</Link>
+        <Link href="/terms" className="inline-flex min-h-11 items-center transition-colors hover:text-indigo">{t("legal.terms")}</Link>
       </p>
       <p className="mt-1">© Moaz (AlMo). All Rights Reserved.</p>
     </footer>

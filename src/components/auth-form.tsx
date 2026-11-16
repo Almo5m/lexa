@@ -104,6 +104,13 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         {notice && <p className="text-leaf">{notice}</p>}
       </div>
 
+      {isSignup && (
+        <p className="text-center text-sm text-ink-soft">
+          {t("auth.consent")}{" "}
+          <Link href="/terms" className="font-semibold text-indigo">{t("legal.terms")}</Link> · <Link href="/privacy" className="font-semibold text-indigo">{t("legal.privacy")}</Link>
+        </p>
+      )}
+
       <TagButton type="submit" loading={loading} className="w-full">
         {isSignup ? t("auth.signup") : t("auth.login")}
       </TagButton>

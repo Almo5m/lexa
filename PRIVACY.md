@@ -10,6 +10,10 @@ Booo (بو) is owned by Moaz (AlMo). All Rights Reserved. See `LICENSE`.
 - The texts the student writes in "Talk to Bo", with Bo's levels and the mistakes found. Only the student can read them.
 - The daily reading text Bo writes for him from the words he learned, with his answers to its three questions. Only the server reads this table.
 - A progress link, if the student makes one. Only a hash of its secret is stored, never the secret itself.
+- Challenge, duel and contest results: the score and the day. A duel shows other players only "you", "the one who challenged" and scores, never names.
+- Weekly board: only if the student joins. He appears under a made-up name (never his real one), and it is deleted when he leaves the board or deletes his account. Only the server reads the table.
+- Messages the student sends from "Send us a message": the kind, the text, and who sent it. Only the admin reads them.
+- Bo's look (hat and color) stays in the browser on the student's own device. It is not sent to the server.
 - AI usage records: which feature ran, success or failure, how long it took, and the error text if it failed. No message text is stored here.
 
 ## Photos

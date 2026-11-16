@@ -366,3 +366,12 @@ Log of decisions and events, newest at the bottom.
 - The words bar in the skill meters now follows the school book (studied school words out of all school words) when the admin has uploaded it, and our own path otherwise.
 - The admin can edit one school word (meaning, type, examples) from the unit list, without re-uploading the unit.
 - Next.js raised to 16.4.4 (the audit had a critical and a high issue in the older 16.x). The audit still lists moderate issues in dev tools (eslint, minimatch) that do not ship to production.
+
+## Phase 9.0 - Admin and launch readiness
+- Admin tabs added: Students (search, last activity, one student's numbers, delete with confirmation and an admin log line), Student messages (inbox from the new student page `/feedback`, 5 a day each), Launch check (reads the real project: variables, tables, the board function, content, the AI of the last 24 hours, and lists what only a person can check).
+- Overview now shows growth: all students, studied today / 7 days / 30 days, and new signups per day.
+- In-app `/privacy` and `/terms` (text in `src/features/legal/content.ts`, Arabic and English), linked from signup, the footer and the Account page. The contact email is not written in the code: set `NEXT_PUBLIC_CONTACT_EMAIL` to show one.
+- Friendly error page and 404 page with Bo, `robots.txt` and `sitemap.xml` (the sitemap needs `NEXT_PUBLIC_SITE_URL`), HSTS header. The proxy lets robots.txt and sitemap.xml through without a login.
+- New tables `feedback` and `admin_log` (server-only). Re-run `supabase/setup.sql`.
+- Docs: `docs/LAUNCH_CHECKLIST.md` rewritten, `docs/OPERATIONS.md` added, `PRIVACY.md` updated for the board, duels, contests and messages.
+- Not tested against the real Supabase: the admin tabs were only type-checked and built.

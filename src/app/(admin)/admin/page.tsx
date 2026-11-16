@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { FeedbackTab } from "./tabs/feedback";
+import { GrowthSection } from "./tabs/growth";
+import { LaunchTab } from "./tabs/launch";
+import { StudentsTab } from "./tabs/students";
 import { AdminAiPanel } from "@/components/admin-ai-panel";
 import { AdminPathCards } from "@/components/admin-path-cards";
 import { AdminBoMessages } from "@/components/admin-bo-messages";
@@ -28,10 +32,10 @@ import type { DictKey } from "@/lib/i18n/dictionary";
 export const metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-const TABS = ["overview", "school", "grammar", "bo", "wod", "contest", "ai", "cards", "settings"] as const;
+const TABS = ["overview", "students", "feedback", "launch", "school", "grammar", "bo", "wod", "contest", "ai", "cards", "settings"] as const;
 type Tab = (typeof TABS)[number];
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; page?: string; id?: string }> }) {
   const params = await searchParams;
   const tab: Tab = TABS.includes(params.tab as Tab) ? (params.tab as Tab) : "overview";
   const { t } = await getT();
@@ -55,6 +59,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       </nav>
 
       {tab === "overview" && <Overview />}
+      {tab === "students" && <StudentsTab q={params.q} page={params.page} id={params.id} />}
+      {tab === "feedback" && <FeedbackTab />}
+      {tab === "launch" && <LaunchTab />}
       {tab === "school" && <SchoolTab />}
       {tab === "grammar" && <GrammarTab />}
       {tab === "bo" && <BoMessagesTab everyMinutes={settings.boMessageEveryMinutes} perDay={settings.boMessagesPerDay} />}
@@ -102,6 +109,8 @@ async function Overview() {
           </Link>
         </div>
       )}
+
+      <GrowthSection />
 
       <section aria-label={t("admin.today")} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi label={t("admin.requests")} value={String(today.total)} />

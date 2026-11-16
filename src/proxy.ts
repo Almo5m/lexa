@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = ["/login", "/signup"];
 // Open to everyone: the landing page, the guarded demo API, and parent/teacher links (the token is the key).
-const OPEN_PATHS = ["/welcome", "/api/demo", "/share/", "/forgot", "/reset"];
+const OPEN_PATHS = ["/welcome", "/api/demo", "/share/", "/forgot", "/reset", "/privacy", "/terms"];
 
 export async function proxy(request: NextRequest) {
   if (OPEN_PATHS.some((p) => request.nextUrl.pathname.startsWith(p))) return NextResponse.next({ request });
@@ -46,5 +46,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icons/|api/health|bo/).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|icons/|api/health|bo/).*)"],
 };
