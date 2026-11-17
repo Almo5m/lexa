@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CodesTab } from "./tabs/codes";
 import { FeedbackTab } from "./tabs/feedback";
 import { GrowthSection } from "./tabs/growth";
 import { LaunchTab } from "./tabs/launch";
@@ -32,7 +33,7 @@ import type { DictKey } from "@/lib/i18n/dictionary";
 export const metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-const TABS = ["overview", "students", "feedback", "launch", "school", "grammar", "bo", "wod", "contest", "ai", "cards", "settings"] as const;
+const TABS = ["overview", "students", "codes", "feedback", "launch", "school", "grammar", "bo", "wod", "contest", "ai", "cards", "settings"] as const;
 type Tab = (typeof TABS)[number];
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; page?: string; id?: string }> }) {
@@ -60,6 +61,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
       {tab === "overview" && <Overview />}
       {tab === "students" && <StudentsTab q={params.q} page={params.page} id={params.id} />}
+      {tab === "codes" && <CodesTab />}
       {tab === "feedback" && <FeedbackTab />}
       {tab === "launch" && <LaunchTab />}
       {tab === "school" && <SchoolTab />}

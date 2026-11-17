@@ -321,6 +321,61 @@ create table if not exists public.admin_log (
   created_at timestamptz not null default now()
 );
 
+-- Booo Plus. Who has it, and the activation codes. Only the server reads and writes these tables,
+-- so a student cannot give himself Plus (the profile update policy only protects the role).
+create table if not exists public.memberships (
+  user_id uuid primary key references public.profiles (id) on delete cascade,
+  plus_until timestamptz not null,
+  updated_at timestamptz not null default now()
+);
+create table if not exists public.plus_codes (
+  code text primary key check (code ~ '^[A-Z2-9]{12}$'),
+  days integer not null check (days between 1 and 400),
+  label text not null default '' check (char_length(label) <= 60),
+  created_at timestamptz not null default now(),
+  redeemed_by uuid references public.profiles (id) on delete set null,
+  redeemed_at timestamptz,
+  revoked boolean not null default false
+);
+create index if not exists plus_codes_label_idx on public.plus_codes (label, created_at desc);
+create table if not exists public.plus_attempts (
+  id bigserial primary key,
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+create index if not exists plus_attempts_user_idx on public.plus_attempts (user_id, created_at desc);
+
+-- Uses a code in one step, so two students cannot use the same code. Adds the days after the current end if Plus is still on.
+create or replace function public.redeem_plus_code(p_code text, p_user uuid) returns timestamptz
+language plpgsql security definer set search_path = public as $$
+declare v_days integer; v_until timestamptz;
+begin
+  update public.plus_codes set redeemed_by = p_user, redeemed_at = now()
+  where code = p_code and redeemed_at is null and not revoked
+  returning days into v_days;
+  if v_days is null then raise exception 'invalid_code'; end if;
+  insert into public.memberships (user_id, plus_until) values (p_user, now() + make_interval(days => v_days))
+  on conflict (user_id) do update
+    set plus_until = greatest(public.memberships.plus_until, now()) + make_interval(days => v_days), updated_at = now()
+  returning plus_until into v_until;
+  return v_until;
+end $$;
+
+create or replace function public.grant_plus(p_user uuid, p_days integer) returns timestamptz
+language plpgsql security definer set search_path = public as $$
+declare v_until timestamptz;
+begin
+  insert into public.memberships (user_id, plus_until) values (p_user, now() + make_interval(days => p_days))
+  on conflict (user_id) do update
+    set plus_until = greatest(public.memberships.plus_until, now()) + make_interval(days => p_days), updated_at = now()
+  returning plus_until into v_until;
+  return v_until;
+end $$;
+revoke all on function public.redeem_plus_code(text, uuid) from public, anon, authenticated;
+revoke all on function public.grant_plus(uuid, integer) from public, anon, authenticated;
+grant execute on function public.redeem_plus_code(text, uuid) to service_role;
+grant execute on function public.grant_plus(uuid, integer) to service_role;
+
 -- Talk to Lexa: free writing, analyzed --------------------------------------
 create table if not exists public.talk_sessions (
   id uuid primary key default gen_random_uuid(),
@@ -407,6 +462,9 @@ alter table public.reading_sessions enable row level security;
 alter table public.path_cards enable row level security;
 alter table public.grammar_lessons enable row level security;
 alter table public.bo_messages enable row level security;
+alter table public.memberships enable row level security;
+alter table public.plus_codes enable row level security;
+alter table public.plus_attempts enable row level security;
 alter table public.feedback enable row level security;
 alter table public.admin_log enable row level security;
 alter table public.duels enable row level security;
@@ -496,6 +554,9 @@ revoke all on public.duels from anon, authenticated;
 revoke all on public.duel_entries from anon, authenticated;
 revoke all on public.feedback from anon, authenticated;
 revoke all on public.admin_log from anon, authenticated;
+revoke all on public.memberships from anon, authenticated;
+revoke all on public.plus_codes from anon, authenticated;
+revoke all on public.plus_attempts from anon, authenticated;
 revoke all on public.bo_messages from anon, authenticated;
 grant select on public.bo_messages to authenticated;
 revoke all on public.grammar_lessons from anon, authenticated;

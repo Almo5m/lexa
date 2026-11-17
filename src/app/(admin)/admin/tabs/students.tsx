@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { getT } from "@/lib/i18n/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { GrantPlus } from "@/components/admin-grant-plus";
+import { loadPlusUntil } from "@/features/plus/server";
+import { daysLeft } from "@/features/plus/plan";
 import { DeleteStudent } from "@/components/admin-delete-student";
 import { lastActiveByUser, safeLike } from "@/features/admin/growth";
 import { levelFromXp } from "@/features/gamification/xp";
@@ -79,13 +82,14 @@ async function StudentDetail({ id }: { id: string }) {
   if (!profile) return <p className="sheet p-6 text-center text-ink-soft">{t("students.none")}</p>;
 
   const head = (table: string) => db.from(table).select("*", { count: "exact", head: true }).eq("user_id", id);
-  const [email, words, reviews, challenges, talks, week] = await Promise.all([
+  const [email, words, reviews, challenges, talks, week, plusUntil] = await Promise.all([
     db.auth.admin.getUserById(id),
     head("words"),
     head("review_logs"),
     head("challenge_results"),
     head("talk_sessions"),
     db.from("daily_progress").select("day, xp, reviews, new_words").eq("user_id", id).order("day", { ascending: false }).limit(7),
+    loadPlusUntil(db, id),
   ]);
 
   const stats: [string, string][] = [
@@ -97,6 +101,7 @@ async function StudentDetail({ id }: { id: string }) {
     [t("students.challenges"), String(challenges.count ?? 0)],
     [t("students.talks"), String(talks.count ?? 0)],
     [t("students.joined"), profile.created_at.slice(0, 10)],
+    ["Plus", daysLeft(plusUntil) > 0 ? t("students.plusDays", { n: daysLeft(plusUntil) }) : "—"],
   ];
 
   return (
@@ -131,6 +136,7 @@ async function StudentDetail({ id }: { id: string }) {
           )}
         </div>
       </section>
+      <GrantPlus id={id} />
       {profile.role !== "admin" && <DeleteStudent id={id} />}
     </div>
   );

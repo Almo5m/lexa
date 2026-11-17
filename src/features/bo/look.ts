@@ -1,5 +1,5 @@
-export type HatId = "none" | "cap" | "phones" | "crown";
-export type ColorId = "blue" | "coral" | "green" | "purple" | "gold";
+export type HatId = "none" | "cap" | "phones" | "crown" | "halo" | "wizard";
+export type ColorId = "blue" | "coral" | "green" | "purple" | "gold" | "pink" | "teal";
 
 export interface BoLook {
   hat: HatId;
@@ -7,19 +7,23 @@ export interface BoLook {
 }
 
 /** What each piece needs: the student's level. Add a line here to add a new piece (and its words in the dictionary). */
-export const HATS: { id: HatId; minLevel: number }[] = [
+export const HATS: { id: HatId; minLevel: number; plus?: true }[] = [
   { id: "none", minLevel: 1 },
   { id: "cap", minLevel: 2 },
   { id: "phones", minLevel: 3 },
   { id: "crown", minLevel: 5 },
+  { id: "halo", minLevel: 1, plus: true },
+  { id: "wizard", minLevel: 1, plus: true },
 ];
 
-export const COLORS: { id: ColorId; hex: string; minLevel: number }[] = [
+export const COLORS: { id: ColorId; hex: string; minLevel: number; plus?: true }[] = [
   { id: "blue", hex: "#3d5bff", minLevel: 1 },
   { id: "coral", hex: "#ff6b57", minLevel: 2 },
   { id: "green", hex: "#1fb57a", minLevel: 4 },
   { id: "purple", hex: "#8a5cf6", minLevel: 6 },
   { id: "gold", hex: "#e0a800", minLevel: 8 },
+  { id: "pink", hex: "#ec4899", minLevel: 1, plus: true },
+  { id: "teal", hex: "#0ea5a4", minLevel: 1, plus: true },
 ];
 
 export const DEFAULT_LOOK: BoLook = { hat: "none", color: "blue" };
@@ -42,9 +46,14 @@ export function colorHex(id: ColorId): string {
   return COLORS.find((color) => color.id === id)?.hex ?? COLORS[0].hex;
 }
 
+/** A piece is open when the level is high enough, and, for the Plus pieces, when the student has Plus. */
+export function isOpen(piece: { minLevel: number; plus?: true }, level: number, plus: boolean): boolean {
+  return piece.minLevel <= level && (!piece.plus || plus);
+}
+
 /** A look the student has not unlocked yet drops back to the default piece. */
-export function clampLook(look: BoLook, level: number): BoLook {
-  const hatOk = HATS.find((hat) => hat.id === look.hat)!.minLevel <= level;
-  const colorOk = COLORS.find((color) => color.id === look.color)!.minLevel <= level;
+export function clampLook(look: BoLook, level: number, plus = false): BoLook {
+  const hatOk = isOpen(HATS.find((hat) => hat.id === look.hat)!, level, plus);
+  const colorOk = isOpen(COLORS.find((color) => color.id === look.color)!, level, plus);
   return { hat: hatOk ? look.hat : DEFAULT_LOOK.hat, color: colorOk ? look.color : DEFAULT_LOOK.color };
 }

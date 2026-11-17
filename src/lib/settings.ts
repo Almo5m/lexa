@@ -25,6 +25,9 @@ export const settingsSchema = z.object({
   demoDailyLimitTotal: z.number().int().min(0).max(5000),
   boMessageEveryMinutes: z.number().int().min(0).max(240),
   boMessagesPerDay: z.number().int().min(0).max(20),
+  plusAiMultiplier: z.number().int().min(1).max(10),
+  plusPrice: z.string().max(80),
+  plusHowToBuy: z.string().max(500),
 });
 
 export type AppSettings = z.infer<typeof settingsSchema>;
@@ -54,6 +57,9 @@ export const defaultSettings: AppSettings = {
   demoDailyLimitTotal: 300,
   boMessageEveryMinutes: 20,
   boMessagesPerDay: 4,
+  plusAiMultiplier: 3,
+  plusPrice: "",
+  plusHowToBuy: "",
 };
 
 export function mergeSettings(stored: unknown): AppSettings {

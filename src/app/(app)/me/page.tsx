@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { daysLeft, isPlus } from "@/features/plus/plan";
+import { loadPlusUntil } from "@/features/plus/server";
 import { AccountForm } from "@/components/account-form";
 import { ShareManager } from "@/components/share-manager";
 import { isActive } from "@/features/share/token";
@@ -15,6 +18,9 @@ export const metadata = { title: "Me" };
 export default async function MePage() {
   const { supabase, user } = await requireUserPage();
   const { t } = await getT();
+  const plusUntil = await loadPlusUntil(createSupabaseAdminClient(), user.id);
+  const plus = isPlus(plusUntil);
+  const plusDays = daysLeft(plusUntil);
   const [{ data: profile }, { data: link }] = await Promise.all([
     supabase.from("profiles").select("interests, display_name, total_xp").eq("id", user.id).single(),
     supabase.from("share_links").select("expires_at").eq("user_id", user.id).maybeSingle(),
@@ -38,9 +44,15 @@ export default async function MePage() {
           <BoVisibility />
         </section>
 
+        <section aria-labelledby="plus-title" className="hero-card space-y-2 p-6">
+          <h2 id="plus-title" className="text-xl font-bold">{t("plus.title")}</h2>
+          <p className="opacity-90">{plus ? t("plus.activeLine", { n: plusDays }) : t("plus.pitch")}</p>
+          <Link href="/plus" className="tag-btn tag-btn-quiet">{plus ? t("plus.manage") : t("plus.see")}</Link>
+        </section>
+
         <section aria-labelledby="look-title" className="sheet space-y-3 p-6">
           <h2 id="look-title" className="text-xl font-bold">{t("look.title")}</h2>
-          <BoLookPicker level={levelFromXp(profile?.total_xp ?? 0)} />
+          <BoLookPicker level={levelFromXp(profile?.total_xp ?? 0)} plus={plus} />
         </section>
 
         <section className="sheet p-6">

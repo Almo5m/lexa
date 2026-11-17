@@ -62,6 +62,14 @@ const GROUPS: { title: DictKey; fields: FieldSpec[] }[] = [
     ],
   },
   {
+    title: "admin.group.plus",
+    fields: [
+      { key: "plusAiMultiplier", kind: "number" },
+      { key: "plusPrice", kind: "text" },
+      { key: "plusHowToBuy", kind: "text" },
+    ],
+  },
+  {
     title: "admin.group.srs",
     fields: [
       { key: "srsStartingEase", kind: "number", step: 0.1 },

@@ -383,3 +383,11 @@ Log of decisions and events, newest at the bottom.
 ## Phase 9.0.2 - Wrong Supabase address
 - The console showed `Unexpected token '<', "<!DOCTYPE" is not valid JSON` on sign-up: the Supabase address on the host pointed at a web page, not at the project API.
 - The form now says so (`auth.errorUrl`), the address is cleaned (spaces, trailing slash and any path are dropped) in `src/lib/env.ts`, and the Launch check marks the address red unless it looks like `https://xxxx.supabase.co`.
+
+## Phase 10.0 - Booo Plus
+- Decision (2026-11-17): the student himself pays, students are adults from all stages, no teachers or classes, and paid features must never reduce the free app. So Plus only adds extras.
+- Plus gives: the daily AI limit times a multiplier (setting `plusAiMultiplier`, default 3; the free limit is not lowered), export of all own words as CSV (`/api/words/export`, 402 without Plus), and extra Bo pieces (wizard hat, halo, pink, teal).
+- Payment is outside the app for now: the admin makes batches of activation codes (tab "Plus codes", CSV download, cancel unused), or gifts days from a student's page. The student redeems at `/plus`. A bank or wallet gateway can come later and just call `grant_plus`.
+- Tables `memberships`, `plus_codes`, `plus_attempts` are server-only (a student cannot edit them). `redeem_plus_code` claims a code in one step; 8 wrong tries an hour block a student. Re-run `supabase/setup.sql`.
+- Settings added: `plusPrice` and `plusHowToBuy` (text shown on `/plus`).
+- Limits: the Plus Bo pieces are only checked in the picker; Bo itself reads the saved look from the device, so a student who edits his browser storage can show them. It is cosmetic and was accepted. The new hat shapes were not looked at in a browser. Not tested against the real Supabase.

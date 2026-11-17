@@ -1,3 +1,6 @@
+import { dailyLimitFor, isPlus } from "@/features/plus/plan";
+import { loadPlusUntil } from "@/features/plus/server";
+import { loadSettings } from "@/lib/settings-server";
 import { after } from "next/server";
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import type { z } from "zod";
@@ -49,7 +52,10 @@ export async function assertWithinDailyLimit(userId: string, limit: number): Pro
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
     .gte("created_at", since.toISOString());
-  if ((count ?? 0) >= limit) throw new AiLimitError();
+  if ((count ?? 0) < limit) return;
+  // Over the free limit: Plus students have a higher one. This is only looked up when the free limit is reached.
+  const [settings, until] = await Promise.all([loadSettings(), loadPlusUntil(createSupabaseAdminClient(), userId)]);
+  if ((count ?? 0) >= dailyLimitFor(limit, isPlus(until), settings.plusAiMultiplier)) throw new AiLimitError();
 }
 
 /** Writes the usage row after the response is sent, so logging never makes the student wait. */

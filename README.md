@@ -161,3 +161,6 @@ The weekly board ranks students across Egypt by XP. A student joins by choice an
 
 ## Challenge a friend and Bo's look
 A student can start a duel, send the link to a friend, and both answer the same five questions. It gives no XP, it is just for fun, and no names are shown. Bo also gets hats and colors that open as the student's level goes up.
+
+## Booo Plus
+Everything in Booo stays free. Plus only adds extras for students who want more: a higher daily AI limit, export of their words, and more looks for Bo. Payment happens outside the app for now, through activation codes made in the admin dashboard.

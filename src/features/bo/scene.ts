@@ -182,7 +182,22 @@ function buildRobot(): Rig {
   }
   crown.position.set(0, 0.68, 0);
 
-  const hats = { cap, phones, crown };
+  const halo = new Group();
+  const haloRing = new Mesh(new TorusGeometry(0.34, 0.04, 12, 40), gold);
+  haloRing.rotation.x = Math.PI / 2;
+  halo.add(haloRing);
+  halo.position.set(0, 1.0, 0);
+
+  const wizard = new Group();
+  const wizardCone = new Mesh(new ConeGeometry(0.46, 0.9, 24), trim);
+  wizardCone.position.y = 0.45;
+  const wizardBrim = new Mesh(new CylinderGeometry(0.75, 0.75, 0.04, 32), trim);
+  const wizardStar = new Mesh(new SphereGeometry(0.07, 12, 8), gold);
+  wizardStar.position.set(0, 0.5, 0.42);
+  wizard.add(wizardCone, wizardBrim, wizardStar);
+  wizard.position.set(0, 0.6, 0);
+
+  const hats = { cap, phones, crown, halo, wizard };
   for (const hat of Object.values(hats)) {
     hat.visible = false;
     head.add(hat);
@@ -243,7 +258,7 @@ export async function createBoScene(canvas: HTMLCanvasElement, options: Options)
     rig.trim.color.set(colorHex(look.color));
     for (const [id, group] of Object.entries(rig.hats)) group.visible = id === look.hat;
     // The antenna would poke through a cap or crown.
-    rig.antenna.visible = look.hat === "none" || look.hat === "phones";
+    rig.antenna.visible = look.hat === "none" || look.hat === "phones" || look.hat === "halo";
   }
 
   let target: MoodPose = POSES.neutral;
