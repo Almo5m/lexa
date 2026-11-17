@@ -198,3 +198,9 @@ The listening texts are read by the browser's own voice, so quality and availabi
 - **Symptom:** every page showed "This page couldn't load" on Vercel right after deploying 8.0.
 - **Cause:** Today, Words and Learn read `school_units` / `school_words`, and the deploy went live before `supabase/setup.sql` was run, so the tables did not exist and the query threw.
 - **Fix:** `loadSchoolUnits` / `loadSchoolUnit` treat a missing table (`42P01`, `PGRST205`) as "no school words", so the site falls back to our path until the SQL is run. Rule for the future: run setup.sql first, then deploy; and code that reads a new table must survive its absence.
+
+## Login and sign-up fail with "wrong email or password" (2026-11-16)
+- **What happened:** after the account was deleted from the Supabase dashboard, neither login nor a new sign-up worked. The page said the email or password was wrong, and the browser console showed nothing.
+- **Why it was hard:** the form turned every Supabase error into the same sentence, so a wrong key, an unconfirmed email, a rate limit and a failing sign-up trigger all looked like a wrong password.
+- **Fix:** the real error is mapped to its own message and logged to the console (`src/features/auth/errors.ts`).
+- **Things to check when it happens:** the `NEXT_PUBLIC_SUPABASE_ANON_KEY` on the host (then redeploy), Authentication > Providers > Email (confirm email on or off), Authentication > Rate limits, the Auth logs, and that `supabase/setup.sql` ran so the sign-up trigger can create the profile. Clear the site data of the page once, because an old session of a deleted user can stay in the browser.

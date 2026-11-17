@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { TagButton } from "@/components/tag-button";
+import { authErrorKey } from "@/features/auth/errors";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useT } from "@/lib/i18n/provider";
 
@@ -33,13 +34,17 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         options: { data: { display_name: displayName } },
       });
       setLoading(false);
-      if (signUpError) return setError(t("auth.errorSignup"));
+      if (signUpError) {
+        console.error("signup failed:", signUpError.code, signUpError.status, signUpError.message);
+        return setError(t(authErrorKey(signUpError, "signup")));
+      }
       if (!data.session) return setNotice(t("auth.checkEmail"));
     } else {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) {
         setLoading(false);
-        return setError(t("auth.errorLogin"));
+        console.error("login failed:", signInError.code, signInError.status, signInError.message);
+        return setError(t(authErrorKey(signInError, "login")));
       }
     }
     router.replace("/");

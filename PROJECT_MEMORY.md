@@ -375,3 +375,7 @@ Log of decisions and events, newest at the bottom.
 - New tables `feedback` and `admin_log` (server-only). Re-run `supabase/setup.sql`.
 - Docs: `docs/LAUNCH_CHECKLIST.md` rewritten, `docs/OPERATIONS.md` added, `PRIVACY.md` updated for the board, duels, contests and messages.
 - Not tested against the real Supabase: the admin tabs were only type-checked and built.
+
+## Phase 9.0.1 - Real login and sign-up errors
+- Moaz could not log in or sign up after deleting his account in Supabase; every failure showed "wrong email or password" and the console was empty, so the cause was hidden.
+- `src/features/auth/errors.ts` now maps what Supabase says to a clear message (wrong key on the host, unconfirmed email, rate limit, existing account, weak password, sign-up closed, server error, no network). The form also writes the code and status to the console.
