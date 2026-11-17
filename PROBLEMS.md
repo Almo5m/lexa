@@ -204,3 +204,7 @@ The listening texts are read by the browser's own voice, so quality and availabi
 - **Why it was hard:** the form turned every Supabase error into the same sentence, so a wrong key, an unconfirmed email, a rate limit and a failing sign-up trigger all looked like a wrong password.
 - **Fix:** the real error is mapped to its own message and logged to the console (`src/features/auth/errors.ts`).
 - **Things to check when it happens:** the `NEXT_PUBLIC_SUPABASE_ANON_KEY` on the host (then redeploy), Authentication > Providers > Email (confirm email on or off), Authentication > Rate limits, the Auth logs, and that `supabase/setup.sql` ran so the sign-up trigger can create the profile. Clear the site data of the page once, because an old session of a deleted user can stay in the browser.
+
+## Sign-up says "Unexpected token '<' ... is not valid JSON" (2026-11-17)
+- **Cause:** `NEXT_PUBLIC_SUPABASE_URL` on the host was not the project API address, so Supabase's client received an HTML page instead of JSON.
+- **Fix:** set it to `https://<project-ref>.supabase.co` (Project Settings > API > Project URL), then redeploy, because `NEXT_PUBLIC_` values are baked in at build time. The code now cleans a trailing slash or path, and the Launch check flags a wrong address.

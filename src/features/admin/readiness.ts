@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cleanSupabaseUrl } from "@/lib/env";
 
 export type CheckLevel = "must" | "should";
 
@@ -46,7 +47,7 @@ async function countOf(db: SupabaseClient, table: string, filter: Filter = {}): 
  */
 export async function checkReadiness(db: SupabaseClient): Promise<Readiness> {
   const checks: Check[] = [
-    { id: "env.url", level: "must", ok: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) },
+    { id: "env.url", level: "must", ok: /^https:\/\/[a-z0-9]+\.supabase\.co$/.test(cleanSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "")) || /^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(cleanSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "")) },
     { id: "env.anon", level: "must", ok: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) },
     { id: "env.service", level: "must", ok: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY) },
     { id: "env.gemini", level: "must", ok: Boolean(process.env.GEMINI_API_KEY) },

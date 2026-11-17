@@ -379,3 +379,7 @@ Log of decisions and events, newest at the bottom.
 ## Phase 9.0.1 - Real login and sign-up errors
 - Moaz could not log in or sign up after deleting his account in Supabase; every failure showed "wrong email or password" and the console was empty, so the cause was hidden.
 - `src/features/auth/errors.ts` now maps what Supabase says to a clear message (wrong key on the host, unconfirmed email, rate limit, existing account, weak password, sign-up closed, server error, no network). The form also writes the code and status to the console.
+
+## Phase 9.0.2 - Wrong Supabase address
+- The console showed `Unexpected token '<', "<!DOCTYPE" is not valid JSON` on sign-up: the Supabase address on the host pointed at a web page, not at the project API.
+- The form now says so (`auth.errorUrl`), the address is cleaned (spaces, trailing slash and any path are dropped) in `src/lib/env.ts`, and the Launch check marks the address red unless it looks like `https://xxxx.supabase.co`.

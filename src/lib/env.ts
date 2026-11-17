@@ -8,8 +8,17 @@ function required(value: string | undefined, name: string): string {
   return value;
 }
 
+/** The project address only: spaces, a trailing slash and any path after it (like /rest/v1) are dropped. */
+export function cleanSupabaseUrl(value: string): string {
+  try {
+    return new URL(value.trim()).origin;
+  } catch {
+    return value.trim();
+  }
+}
+
 export const publicEnv = {
-  supabaseUrl: () => required(process.env.NEXT_PUBLIC_SUPABASE_URL, "NEXT_PUBLIC_SUPABASE_URL"),
+  supabaseUrl: () => cleanSupabaseUrl(required(process.env.NEXT_PUBLIC_SUPABASE_URL, "NEXT_PUBLIC_SUPABASE_URL")),
   supabaseAnonKey: () => required(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, "NEXT_PUBLIC_SUPABASE_ANON_KEY"),
 };
 

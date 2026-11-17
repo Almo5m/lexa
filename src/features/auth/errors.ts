@@ -15,6 +15,8 @@ export function authErrorKey(error: AuthLike, mode: "login" | "signup"): DictKey
   const code = error.code ?? "";
   const message = (error.message ?? "").toLowerCase();
 
+  // An HTML page came back instead of JSON: the Supabase address is not the project address.
+  if (message.includes("not valid json") || message.includes("<!doctype") || message.includes("unexpected token")) return "auth.errorUrl";
   if (message.includes("invalid api key") || message.includes("apikey") || error.status === 401 && !code) return "auth.errorKey";
   if (error.status === 0 || message.includes("failed to fetch") || message.includes("network")) return "auth.errorNetwork";
   if (code === "email_not_confirmed" || message.includes("email not confirmed")) return "auth.errorUnconfirmed";
