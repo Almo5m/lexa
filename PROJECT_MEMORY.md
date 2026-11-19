@@ -391,3 +391,10 @@ Log of decisions and events, newest at the bottom.
 - Tables `memberships`, `plus_codes`, `plus_attempts` are server-only (a student cannot edit them). `redeem_plus_code` claims a code in one step; 8 wrong tries an hour block a student. Re-run `supabase/setup.sql`.
 - Settings added: `plusPrice` and `plusHowToBuy` (text shown on `/plus`).
 - Limits: the Plus Bo pieces are only checked in the picker; Bo itself reads the saved look from the device, so a student who edits his browser storage can show them. It is cosmetic and was accepted. The new hat shapes were not looked at in a browser. Not tested against the real Supabase.
+
+## Phase 11.0 - Smarter placement and a check for words he already knows
+- Level test now has two parts: the vocabulary test (as before) then 7 short skill tasks (2 English→Arabic, 2 Arabic→English, 2 word meanings, 1 writing). Task ids are sent, the prompt is re-derived on the server (`src/features/levels/tasks.ts`), so the client cannot invent tasks.
+- `POST /api/level/assess` marks the answers with Gemini (feature `level`), combines the result with the vocabulary band (`combine.ts`: 40% vocab, 60% AI, never more than 1 band from vocab) and saves `profiles.level_band` and `profiles.level_detail` (new jsonb column). If the AI fails or the limit is reached, the vocabulary level stays and the student is told.
+- Learn flow has a "check" phase before teaching (4+ words): pick the meaning from 4 choices. Known words go to `POST /api/words/known` (marked learned, review in 7 days), then `/api/path/learn` is called again (max 4 times) to fill today's quota with words he does not know. Works for school and path tracks.
+- After deploy: re-run `supabase/setup.sql` (column `level_detail`, `ai_usage_feature_check` now has `level`).
+- Next: 11.1 memory hooks written by the student (my_hook, submissions, credit by name, admin review).

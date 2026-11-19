@@ -4,6 +4,7 @@ import { requireUser, HttpError } from "@/lib/auth";
 import { handleApiError } from "@/lib/api";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { BAND_COUNT, PSEUDO_WORDS, WORD_BANK } from "@/features/levels/bank";
+import { buildSkillTasks } from "@/features/levels/tasks";
 import { PSEUDO_COUNT, REAL_PER_BAND, scorePlacement, type TestItem } from "@/features/levels/placement";
 
 const bodySchema = z.object({
@@ -48,7 +49,8 @@ export async function POST(request: Request) {
       if (error) throw error;
     }
 
-    return NextResponse.json({ level: result.level, reliable: result.reliable });
+    // The skills part is built around the vocabulary level, and only when the result can be trusted.
+    return NextResponse.json({ level: result.level, reliable: result.reliable, tasks: result.reliable ? buildSkillTasks(result.level) : [] });
   } catch (error) {
     return handleApiError(error);
   }

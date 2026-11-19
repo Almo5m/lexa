@@ -22,6 +22,8 @@ create table if not exists public.profiles (
 
 -- Columns added in later phases
 alter table public.profiles add column if not exists level_band integer check (level_band between 1 and 5);
+-- What the level test found: the vocabulary band, the skills band and a short summary for the student.
+alter table public.profiles add column if not exists level_detail jsonb;
 alter table public.profiles add column if not exists level_tested_at timestamptz;
 alter table public.profiles add column if not exists interests text[] not null default '{}';
 alter table public.profiles add column if not exists onboarded boolean not null default false;
@@ -132,7 +134,7 @@ create index if not exists ai_usage_user_day_idx on public.ai_usage (user_id, cr
 
 alter table public.ai_usage drop constraint if exists ai_usage_feature_check;
 alter table public.ai_usage add constraint ai_usage_feature_check
-  check (feature in ('extract', 'cards', 'tutor', 'translate', 'review', 'demo', 'talk', 'reading', 'writing'));
+  check (feature in ('extract', 'cards', 'tutor', 'translate', 'review', 'demo', 'talk', 'reading', 'writing', 'level'));
 
 -- Reading: one short text a day with three questions. The passage holds the right answers,
 -- so students have no policy on this table; only the server reads and writes it.

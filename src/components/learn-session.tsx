@@ -14,10 +14,27 @@ import { TEACH_ROUND } from "@/features/curriculum/session-plan";
 import type { WordCard } from "@/features/ai/schemas";
 import type { LearnWord } from "@/app/api/path/learn/route";
 
-type Phase = { name: "loading" } | { name: "error" } | { name: "empty" } | { name: "teach"; round: number; index: number } | { name: "test"; round: number } | { name: "done" };
+type Phase = { name: "loading" } | { name: "error" } | { name: "empty" } | { name: "allknown" } | { name: "check"; list: LearnWord[]; index: number; known: string[] } | { name: "teach"; round: number; index: number } | { name: "test"; round: number } | { name: "done" };
 
 const ENRICH_GROUP = 4;
 const ENRICH_PARALLEL = 3;
+/** Below this many words the check is not worth a step of its own. */
+const CHECK_MIN = 4;
+/** How many times we top the quota up with new words after the student already knew some. */
+const CHECK_REFILLS = 4;
+const DONT_KNOW = "__dont_know__";
+
+/** Four choices for one word: its meaning, up to two wrong meanings taken from the other words, and "I don't know". */
+function checkOptions(list: LearnWord[], word: LearnWord): string[] {
+  const right = word.card.meaningsAr[0] ?? "";
+  const wrong = list
+    .filter((other) => other.id !== word.id)
+    .map((other) => other.card.meaningsAr[0] ?? "")
+    .filter((meaning) => meaning && meaning !== right);
+  const hash = (text: string) => [...(word.id + text)].reduce((sum, ch) => (sum * 31 + ch.charCodeAt(0)) % 100_003, 7);
+  const picked = [...new Set(wrong)].sort((a, b) => hash(a) - hash(b)).slice(0, 2);
+  return [right, ...picked].sort((a, b) => hash(a) - hash(b));
+}
 
 export function LearnSession({ more, unit, track }: { more: boolean; unit?: string; track?: "path" }) {
   const { t } = useT();
@@ -25,6 +42,9 @@ export function LearnSession({ more, unit, track }: { more: boolean; unit?: stri
   const [cards, setCards] = useState<Record<string, WordCard>>({});
   const [phase, setPhase] = useState<Phase>({ name: "loading" });
   const started = useRef(false);
+  const seen = useRef(new Set<string>());
+  const kept = useRef<LearnWord[]>([]);
+  const refills = useRef(0);
 
   /** The hand-written card is enough to start. The AI examples arrive while the student is already learning. */
   const enrich = useCallback(async (list: LearnWord[]) => {
@@ -64,14 +84,48 @@ export function LearnSession({ more, unit, track }: { more: boolean; unit?: stri
         });
         if (!response.ok) throw new Error("learn_failed");
         const data: { words: LearnWord[] } = await response.json();
-        setWords(data.words);
-        setPhase(data.words.length === 0 ? { name: "empty" } : { name: "teach", round: 0, index: 0 });
-        void enrich(data.words);
+        if (data.words.length === 0) return setPhase({ name: "empty" });
+        if (data.words.length < CHECK_MIN) {
+          setWords(data.words);
+          setPhase({ name: "teach", round: 0, index: 0 });
+          return void enrich(data.words);
+        }
+        data.words.forEach((word) => seen.current.add(word.id));
+        setPhase({ name: "check", list: data.words, index: 0, known: [] });
       } catch {
         setPhase({ name: "error" });
       }
     })();
   }, [more, unit, track, enrich]);
+
+  /** Ends one pass of the check: known words are saved as learned, the rest go to teaching, and the quota is topped up. */
+  async function finishCheck(list: LearnWord[], known: string[]) {
+    kept.current = [...kept.current, ...list.filter((word) => !known.includes(word.id))];
+    if (known.length > 0) {
+      setPhase({ name: "loading" });
+      await fetch("/api/words/known", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids: known }) }).catch(() => undefined);
+      if (refills.current < CHECK_REFILLS) {
+        refills.current += 1;
+        try {
+          const response = await fetch("/api/path/learn", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ more, unit, track }) });
+          if (response.ok) {
+            const data: { words: LearnWord[] } = await response.json();
+            const fresh = data.words.filter((word) => !seen.current.has(word.id));
+            if (fresh.length > 0) {
+              fresh.forEach((word) => seen.current.add(word.id));
+              return setPhase({ name: "check", list: fresh, index: 0, known: [] });
+            }
+          }
+        } catch {
+          // The words we have are enough.
+        }
+      }
+    }
+    if (kept.current.length === 0) return setPhase({ name: "allknown" });
+    setWords(kept.current);
+    setPhase({ name: "teach", round: 0, index: 0 });
+    void enrich(kept.current);
+  }
 
   const rounds = Math.ceil(words.length / TEACH_ROUND);
   const roundWords = (round: number) => words.slice(round * TEACH_ROUND, (round + 1) * TEACH_ROUND);
@@ -91,6 +145,44 @@ export function LearnSession({ more, unit, track }: { more: boolean; unit?: stri
       <section className="sheet space-y-4 p-6 text-center">
         <p role="alert" className="text-pen-red">{t("common.error")}</p>
         <Link href="/" className="tag-btn">{t("review.back")}</Link>
+      </section>
+    );
+  }
+
+  if (phase.name === "check") {
+    const word = phase.list[phase.index];
+    const options = checkOptions(phase.list, word);
+    const answer = (choice: string) => {
+      const known = choice === (word.card.meaningsAr[0] ?? "") ? [...phase.known, word.id] : phase.known;
+      if (phase.index === phase.list.length - 1) void finishCheck(phase.list, known);
+      else setPhase({ ...phase, index: phase.index + 1, known });
+    };
+    return (
+      <section className="sheet space-y-5 p-6" aria-live="polite">
+        <p className="text-sm text-ink-faint">{t("learn.check.progress", { a: phase.index + 1, b: phase.list.length })}</p>
+        <p className="text-ink-soft">{t("learn.check.title")}</p>
+        <div className="ltr-text flex items-center gap-3">
+          <h2 className="text-4xl font-semibold tracking-tight">{word.term}</h2>
+          <SpeakButton text={word.term} label={t("card.listen")} />
+        </div>
+        <div className="grid gap-3">
+          {options.map((option) => (
+            <TagButton key={option} quiet className="justify-center" onClick={() => answer(option)}>{option}</TagButton>
+          ))}
+          <TagButton quiet className="justify-center" onClick={() => answer(DONT_KNOW)}>{t("learn.check.dontKnow")}</TagButton>
+        </div>
+        <p className="text-sm text-ink-soft">{t("learn.check.hint")}</p>
+      </section>
+    );
+  }
+
+  if (phase.name === "allknown") {
+    return (
+      <section className="sheet flex flex-col items-center gap-4 p-8 text-center" aria-live="polite">
+        <BoMascot mood="happy" size={130} />
+        <h2 className="text-2xl font-semibold">{t("learn.check.allTitle")}</h2>
+        <p className="text-ink-soft">{t("learn.check.allHint")}</p>
+        <Link href="/" className="tag-btn justify-center">{t("learn.backToday")}</Link>
       </section>
     );
   }

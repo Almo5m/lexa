@@ -8,7 +8,7 @@ Stack: Next.js (App Router), TypeScript, Tailwind CSS, Supabase (auth + database
 
 Booo is built around one daily session for third-secondary students (15, 30 or 45 minutes, the student picks). Today shows four steps: review old words, learn new ones, read a short text, translate. Speaking with Bo is a bonus step.
 
-- **Plan:** a path of about 2300 words from A1 to B1 in 93 units. A level test decides where each student starts. Every word has a finished card (meaning, example, note), made once and stored, so learning a word is instant.
+- **Plan:** a path of about 2300 words from A1 to B1 in 93 units. A level test (words, then short translation and writing tasks marked by Bo) decides where each student starts, and before teaching a word Bo asks if he already knows it, so nobody wastes time on words he has. Every word has a finished card (meaning, example, note), made once and stored, so learning a word is instant.
 - **Skills:** five bars (words, understanding, translation, speaking, book) computed from what the student really did.
 - **The school book:** grammar lessons and drills for the six units of Year 3 Term 1, three writing tasks marked by Bo out of 20, and five listening texts. The content is written for this app; only the topics follow the ministry book.
 - **Practice:** review, quizzes from the student's own cards, translation both ways, daily reading, talking to Bo with a language profile.
