@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { StagePicker } from "@/components/stage-picker";
 import { TagButton } from "@/components/tag-button";
+import { isStage } from "@/features/stage/stage";
 import { authErrorKey } from "@/features/auth/errors";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useT } from "@/lib/i18n/provider";
@@ -31,7 +33,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { display_name: displayName } },
+        options: { data: { display_name: displayName, stage: isStage(form.get("stage")) ? form.get("stage") : undefined } },
       });
       setLoading(false);
       if (signUpError) {
@@ -65,6 +67,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           <input id="name" name="name" className="field" autoComplete="name" maxLength={40} required />
         </div>
       )}
+
+      {isSignup && <StagePicker />}
 
       <div>
         <label htmlFor="email" className="mb-1 block text-sm font-medium">

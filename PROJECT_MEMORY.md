@@ -398,3 +398,28 @@ Log of decisions and events, newest at the bottom.
 - Learn flow has a "check" phase before teaching (4+ words): pick the meaning from 4 choices. Known words go to `POST /api/words/known` (marked learned, review in 7 days), then `/api/path/learn` is called again (max 4 times) to fill today's quota with words he does not know. Works for school and path tracks.
 - After deploy: re-run `supabase/setup.sql` (column `level_detail`, `ai_usage_feature_check` now has `level`).
 - Next: 11.1 memory hooks written by the student (my_hook, submissions, credit by name, admin review).
+
+## Phase 11.1 - The student's own memory hooks
+- `words.my_hook` (≤150 chars) is his own hook; it replaces the AI hook on his cards. Written from the word page and the learn flow (`HookBlock`, `POST /api/hooks`).
+- He can also send it to be shared: table `shared_hooks` (server-only, one row per user+term, pending/approved/rejected, `author_name` snapshot chosen by him: first name / board nickname / none). Limit 10 sent per day.
+- Admin tab "Student hooks" approves/rejects/deletes; approving gives the student 25 XP once. Approved hooks show to everyone as "Hook by {name}" when the student has no hook of his own (order: his, shared, AI).
+- AI hook prompt rewritten: one clear sentence, real sound-alike or a picture, with a good and a bad example, empty if unsure.
+- Privacy and terms mention shared hooks. After deploy: re-run `supabase/setup.sql` (column my_hook, table shared_hooks).
+- Not done: regenerate old AI hooks stored in shared path_cards (they keep the old wording until regenerated from the admin "Cards" tab).
+- Next: stage selection at signup (profiles.stage already exists with default 'secondary').
+
+## Phase 11.2 - Student stage
+- Signup asks the stage (sec1, sec2, sec3, general) and sends it as auth metadata; the `handle_new_user` trigger saves it to `profiles.stage` if valid, else keeps the old default `secondary` (= never chose). Students change it in /me (`POST /api/profile/stage`); Today shows a banner until he chooses.
+- `src/features/stage/stage.ts`: `chosenStage`, `hasBook` (book grammar/writing/listening only for sec3 and for accounts that never chose), `unitFits`.
+- `school_units.stage` ('all' default, sec1/sec2/sec3/general); admin sets it when adding a unit or from the unit card. `unitsForStage` filters in the learn API, Today, Words and Path. A stage with no school units falls back to our own path automatically (general learners start there).
+- Missing column (setup.sql not re-run) is tolerated: every unit counts as "all".
+- Not done: grammar-lesson images per stage, stage-targeted Bo messages/word of the day/contest, a per-stage board, our own path content per stage.
+- After deploy: re-run `supabase/setup.sql` (trigger + `school_units.stage`).
+
+## Phase 12.0 - Dashboard redesign
+- Admin shell: sidebar (collapsible list on phones) grouped by work: Overview / Students (students, messages) / Content (school book, grammar, path cards, hooks, word of the day, Bo messages, contest) / Subscriptions (Plus codes) / System (AI, launch check, settings). Tab ids and URLs (`/admin?tab=...`) are unchanged. Groups live in `src/features/admin/nav.ts`.
+- Number badges on tabs for what waits for the admin (open messages, pending hooks) via `src/features/admin/counts.ts`; the overview starts with a "Needs your attention" block.
+- Every page has a title and one line saying what it is for (`admin.desc.*`).
+- Eye comfort: calmer night palette (no pure white, soft slate surfaces, muted accent), flatter cards and buttons, smaller radii, 16.5px base text, reduced motion respected. All in the `[data-theme="admin"]` block of globals.css, so the student app is untouched.
+- Deleting a message or a hook asks for confirmation.
+- Not checked in a real browser (no admin login in my test environment): look at the sidebar, mobile menu and colors yourself and tell me what to adjust.

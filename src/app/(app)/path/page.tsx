@@ -4,7 +4,7 @@ import { getT } from "@/lib/i18n/server";
 import { SkillMeters } from "@/components/skill-meters";
 import { UNITS, pathSizeFrom, startUnitIndex } from "@/features/curriculum";
 import { levelProgress } from "@/features/gamification/xp";
-import { loadSchoolUnits } from "@/features/school/load";
+import { loadSchoolUnits, unitsForStage } from "@/features/school/load";
 import { loadSkillMeters } from "@/features/skills/load";
 import { currentUnit, unitProgress, type WordState } from "@/features/curriculum/progress";
 import type { DictKey } from "@/lib/i18n/dictionary";
@@ -16,7 +16,7 @@ export const metadata = { title: "Path" };
 export default async function PathPage() {
   const { supabase, user } = await requireUserPage();
   const { t } = await getT();
-  const { data: profile } = await supabase.from("profiles").select("level_band, total_xp").eq("id", user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("level_band, total_xp, stage").eq("id", user.id).single();
   const startUnit = startUnitIndex(profile?.level_band);
   const { data } = await supabase.from("words").select("term, repetitions, last_reviewed_at").eq("source", "path");
 
@@ -27,7 +27,7 @@ export default async function PathPage() {
   const current = currentUnit(progress.slice(startUnit));
   const learned = [...states.values()].filter((state) => state.learned).length;
   // The words bar follows the school book when the admin has uploaded it, and our own path otherwise.
-  const schoolTerms = new Set((await loadSchoolUnits(supabase)).flatMap((unit) => unit.words.map((word) => word.term)));
+  const schoolTerms = new Set(unitsForStage(await loadSchoolUnits(supabase), profile?.stage).flatMap((unit) => unit.words.map((word) => word.term)));
   let wordsBar = { learned, total: pathSizeFrom(startUnit) };
   if (schoolTerms.size > 0) {
     const { data: schoolRows } = await supabase.from("words").select("term, last_reviewed_at").eq("source", "school");

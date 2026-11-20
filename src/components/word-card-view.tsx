@@ -2,17 +2,22 @@
 
 import { useState } from "react";
 import { RevealIcon } from "@/components/icons";
+import { HookBlock } from "@/components/hook-block";
 import { SpeakButton } from "@/components/speak-button";
 import { useT } from "@/lib/i18n/provider";
 import type { WordCard } from "@/features/ai/schemas";
+import type { HookInfo } from "@/features/hooks/hooks";
 
 interface Props {
   card: WordCard;
   startRevealed?: boolean;
   onRevealChange?: (revealed: boolean) => void;
+  /** With these, the student can write his own memory hook on the card. */
+  wordId?: string;
+  hookInfo?: HookInfo;
 }
 
-export function WordCardView({ card, startRevealed = false, onRevealChange }: Props) {
+export function WordCardView({ card, startRevealed = false, onRevealChange, wordId, hookInfo }: Props) {
   const { t } = useT();
   const [revealed, setRevealed] = useState(startRevealed);
 
@@ -57,7 +62,7 @@ export function WordCardView({ card, startRevealed = false, onRevealChange }: Pr
           <p className="text-ink-soft">{card.sentenceAr}</p>
 
           {card.situationAr && <Block title={t("card.situation")}>{card.situationAr}</Block>}
-          {card.memoryHookAr && <Block title={t("card.hook")}>{card.memoryHookAr}</Block>}
+          {(card.memoryHookAr || wordId || hookInfo?.shared) && <HookBlock aiHook={card.memoryHookAr} wordId={wordId} info={hookInfo} />}
           {card.usageNoteAr && <Block title={t("card.usage")}>{card.usageNoteAr}</Block>}
 
           {card.extraExamples.length > 0 && (

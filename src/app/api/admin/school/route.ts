@@ -3,12 +3,14 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { handleApiError } from "@/lib/api";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { UNIT_STAGES } from "@/features/stage/stage";
 import { MAX_IMPORT_CHARS, MAX_IMPORT_WORDS, parseWordLines } from "@/features/school/parse";
 
 const title = z.string().trim().min(1).max(80);
 
 const bodySchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("addUnit"), titleAr: title, titleEn: z.string().trim().max(80).optional() }),
+  z.object({ action: z.literal("addUnit"), titleAr: title, titleEn: z.string().trim().max(80).optional(), stage: z.enum(UNIT_STAGES).optional() }),
+  z.object({ action: z.literal("setUnitStage"), id: z.string().uuid(), stage: z.enum(UNIT_STAGES) }),
   z.object({ action: z.literal("renameUnit"), id: z.string().uuid(), titleAr: title, titleEn: z.string().trim().max(80).optional() }),
   z.object({ action: z.literal("deleteUnit"), id: z.string().uuid() }),
   z.object({ action: z.literal("moveUnit"), id: z.string().uuid(), direction: z.enum(["up", "down"]) }),
@@ -37,7 +39,12 @@ export async function POST(request: Request) {
     switch (body.action) {
       case "addUnit": {
         const { data: last } = await db.from("school_units").select("sort").order("sort", { ascending: false }).limit(1).maybeSingle();
-        const { error } = await db.from("school_units").insert({ title_ar: body.titleAr, title_en: body.titleEn ?? "", sort: (last?.sort ?? 0) + 1 });
+        const { error } = await db.from("school_units").insert({ title_ar: body.titleAr, title_en: body.titleEn ?? "", sort: (last?.sort ?? 0) + 1, stage: body.stage ?? "all" });
+        if (error) throw error;
+        return NextResponse.json({ ok: true });
+      }
+      case "setUnitStage": {
+        const { error } = await db.from("school_units").update({ stage: body.stage }).eq("id", body.id);
         if (error) throw error;
         return NextResponse.json({ ok: true });
       }

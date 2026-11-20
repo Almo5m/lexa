@@ -13,6 +13,8 @@ export interface SchoolUnit {
   id: string;
   titleAr: string;
   titleEn: string;
+  /** 'all' or one stage. */
+  stage?: string;
   words: SchoolWord[];
 }
 

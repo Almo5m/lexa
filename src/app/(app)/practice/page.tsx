@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ReviewIcon, QuizIcon, ReadIcon, TranslateIcon, GrammarIcon, WritingIcon, ListenIcon, MicIcon, SparkIcon, XpIcon } from "@/components/icons";
+import { hasBook } from "@/features/stage/stage";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
 import type { ReactNode } from "react";
@@ -9,7 +10,7 @@ export const metadata = { title: "Practice" };
 export default async function PracticePage() {
   const { supabase, user } = await requireUserPage();
   const { t } = await getT();
-  const { data: profile } = await supabase.from("profiles").select("level_band").eq("id", user.id).single();
+  const { data: profile } = await supabase.from("profiles").select("level_band, stage").eq("id", user.id).single();
   const level = profile?.level_band ?? null;
 
   return (
@@ -33,11 +34,13 @@ export default async function PracticePage() {
         <Row href="/translate" icon={<TranslateIcon />} title={t("practice.translate")} hint={t("practice.translateHint")} />
       </Group>
 
-      <Group title={t("practice.groupGrammar")}>
-        <Row href="/grammar" icon={<GrammarIcon />} title={t("practice.grammar")} hint={t("practice.grammarHint")} />
-        <Row href="/writing" icon={<WritingIcon />} title={t("practice.writing")} hint={t("practice.writingHint")} />
-        <Row href="/listening" icon={<ListenIcon />} title={t("practice.listening")} hint={t("practice.listeningHint")} />
-      </Group>
+      {hasBook(profile?.stage) && (
+        <Group title={t("practice.groupGrammar")}>
+          <Row href="/grammar" icon={<GrammarIcon />} title={t("practice.grammar")} hint={t("practice.grammarHint")} />
+          <Row href="/writing" icon={<WritingIcon />} title={t("practice.writing")} hint={t("practice.writingHint")} />
+          <Row href="/listening" icon={<ListenIcon />} title={t("practice.listening")} hint={t("practice.listeningHint")} />
+        </Group>
+      )}
 
       <Group title={t("practice.groupSpeak")}>
         <Row href="/talk" icon={<MicIcon />} title={t("practice.talk")} hint={t("practice.talkHint")} />

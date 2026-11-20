@@ -25,7 +25,7 @@ export function FeedbackActions({ id, done }: { id: string; done: boolean }) {
       <button type="button" disabled={busy} className="min-h-11 px-3 font-semibold text-indigo" onClick={() => void run({ action: "done", id, done: !done })}>
         {done ? t("feedback.admin.reopen") : t("feedback.admin.done")}
       </button>
-      <button type="button" disabled={busy} className="min-h-11 px-3 text-pen-red" onClick={() => void run({ action: "delete", id })}>
+      <button type="button" disabled={busy} className="min-h-11 px-3 text-pen-red" onClick={() => window.confirm(t("admin.confirmDelete")) && void run({ action: "delete", id })}>
         {t("school.admin.deleteWord")}
       </button>
     </div>

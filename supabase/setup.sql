@@ -41,8 +41,12 @@ alter table public.profiles add constraint profiles_interests_check
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.profiles (id, display_name)
-  values (new.id, coalesce(new.raw_user_meta_data ->> 'display_name', ''));
+  insert into public.profiles (id, display_name, stage)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data ->> 'display_name', ''),
+    case when new.raw_user_meta_data ->> 'stage' in ('sec1', 'sec2', 'sec3', 'general') then new.raw_user_meta_data ->> 'stage' else 'secondary' end
+  );
   return new;
 end $$;
 
@@ -168,6 +172,9 @@ create table if not exists public.school_units (
   title_en text not null default '' check (char_length(title_en) <= 80),
   created_at timestamptz not null default now()
 );
+
+-- Which stage a unit is for: 'all', 'sec1', 'sec2', 'sec3' or 'general'.
+alter table public.school_units add column if not exists stage text not null default 'all';
 
 create table if not exists public.school_words (
   id uuid primary key default gen_random_uuid(),
@@ -313,6 +320,21 @@ create table if not exists public.feedback (
   created_at timestamptz not null default now()
 );
 create index if not exists feedback_open_idx on public.feedback (done, created_at desc);
+
+-- The student's own memory hook for a word (shown instead of the AI one), and hooks he sent to be shared.
+alter table public.words add column if not exists my_hook text check (my_hook is null or char_length(my_hook) <= 150);
+create table if not exists public.shared_hooks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  term text not null,
+  hook text not null check (char_length(hook) between 3 and 150),
+  author_name text not null default '',
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  created_at timestamptz not null default now(),
+  unique (user_id, term)
+);
+create index if not exists shared_hooks_term_idx on public.shared_hooks (term, status);
+create index if not exists shared_hooks_status_idx on public.shared_hooks (status, created_at desc);
 
 -- What the admin did that cannot be undone (deleting a student). The admin keeps a trace, the student's id stays out.
 create table if not exists public.admin_log (
@@ -468,6 +490,7 @@ alter table public.memberships enable row level security;
 alter table public.plus_codes enable row level security;
 alter table public.plus_attempts enable row level security;
 alter table public.feedback enable row level security;
+alter table public.shared_hooks enable row level security;
 alter table public.admin_log enable row level security;
 alter table public.duels enable row level security;
 alter table public.duel_entries enable row level security;
@@ -555,6 +578,7 @@ revoke all on public.contest_entries from anon, authenticated;
 revoke all on public.duels from anon, authenticated;
 revoke all on public.duel_entries from anon, authenticated;
 revoke all on public.feedback from anon, authenticated;
+revoke all on public.shared_hooks from anon, authenticated;
 revoke all on public.admin_log from anon, authenticated;
 revoke all on public.memberships from anon, authenticated;
 revoke all on public.plus_codes from anon, authenticated;

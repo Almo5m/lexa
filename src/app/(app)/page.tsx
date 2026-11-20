@@ -14,7 +14,8 @@ import { loadSettings } from "@/lib/settings-server";
 import { toDateKey } from "@/features/gamification/streak";
 import { nearestBadge } from "@/features/achievements/badges";
 import { nextPathWords, startUnitIndex, unitById } from "@/features/curriculum";
-import { loadSchoolUnits } from "@/features/school/load";
+import { chosenStage, hasBook } from "@/features/stage/stage";
+import { loadSchoolUnits, unitsForStage } from "@/features/school/load";
 import { nextSchoolWords, schoolWordTotal } from "@/features/school/pick";
 import { isDailyMinutes, newWordsQuota } from "@/features/curriculum/session-plan";
 import { STEP_HREF, planToday, stepNumber, type PlannedStep, type StepKey } from "@/features/curriculum/today-plan";
@@ -35,7 +36,7 @@ export default async function HomePage() {
     await Promise.all([
       supabase
         .from("profiles")
-        .select("display_name, level_band, onboarded, daily_minutes, streak_current, streak_longest")
+        .select("display_name, level_band, onboarded, daily_minutes, streak_current, streak_longest, stage")
         .eq("id", user.id)
         .single(),
       supabase.from("words").select("term, source, due_at, last_reviewed_at"),
@@ -49,7 +50,7 @@ export default async function HomePage() {
   const wordOfDay = wordForDay(await loadWordsOfDay(supabase, lang).catch(() => []), today);
   const challengeDone = await resultForDay(createSupabaseAdminClient(), user.id, today).catch(() => null);
   const words = wordsData ?? [];
-  const schoolUnits = await loadSchoolUnits(supabase);
+  const schoolUnits = unitsForStage(await loadSchoolUnits(supabase), profile?.stage);
   const useSchool = schoolWordTotal(schoolUnits) > 0;
   const now = Date.now();
   const due = words.filter((w) => w.last_reviewed_at !== null && new Date(w.due_at).getTime() <= now).length;
@@ -131,6 +132,13 @@ export default async function HomePage() {
             </span>
             <span>{fillName(boNote.text, profile?.display_name ?? "")}</span>
           </p>
+        )}
+
+        {profile && chosenStage(profile.stage) === null && (
+          <Link href="/me" className="sheet flex min-h-14 items-center justify-between gap-3 px-5 py-3 font-medium text-indigo">
+            {t("stage.banner")}
+            <span className="text-sm">{t("stage.bannerButton")}</span>
+          </Link>
         )}
 
         {profile?.level_band == null ? (
@@ -275,15 +283,17 @@ export default async function HomePage() {
           </Link>
         )}
 
-        <Link href="/grammar" className="sheet flex min-h-16 items-center justify-between gap-3 px-5 py-3">
-          <span>
-            <span className="block font-semibold">{t("today.bookLink")}</span>
-            <span className="block text-sm text-ink-soft">{t("today.bookLinkHint")}</span>
-          </span>
-          <span aria-hidden="true" className="text-indigo ltr:rotate-180">
-            ‹
-          </span>
-        </Link>
+        {hasBook(profile?.stage) && (
+          <Link href="/grammar" className="sheet flex min-h-16 items-center justify-between gap-3 px-5 py-3">
+            <span>
+              <span className="block font-semibold">{t("today.bookLink")}</span>
+              <span className="block text-sm text-ink-soft">{t("today.bookLinkHint")}</span>
+            </span>
+            <span aria-hidden="true" className="text-indigo ltr:rotate-180">
+              ‹
+            </span>
+          </Link>
+        )}
 
         <Link href="/path" className="sheet flex min-h-16 items-center justify-between gap-3 px-5 py-3">
           <span>

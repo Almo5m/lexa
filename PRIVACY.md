@@ -12,7 +12,9 @@ Booo (بو) is owned by Moaz (AlMo). All Rights Reserved. See `LICENSE`.
 - A progress link, if the student makes one. Only a hash of its secret is stored, never the secret itself.
 - Challenge, duel and contest results: the score and the day. A duel shows other players only "you", "the one who challenged" and scores, never names.
 - Weekly board: only if the student joins. He appears under a made-up name (never his real one), and it is deleted when he leaves the board or deletes his account. Only the server reads the table.
+- The school stage he chooses (first, second, third secondary, or general learner), used only to pick his curriculum.
 - Messages the student sends from "Send us a message": the kind, the text, and who sent it. Only the admin reads them.
+- Memory hooks the student writes: kept on his own word. If he sends one to be shared and the admin approves it, it shows to all students with the name he chose (first name, board nickname, or none). Deleted with the account.
 - Bo's look (hat and color) stays in the browser on the student's own device. It is not sent to the server.
 - Booo Plus: the date it ends, and the activation codes (a code stays linked to the student who used it). No payment details are stored, payment happens outside the app. Only the server reads these tables.
 - AI usage records: which feature ran, success or failure, how long it took, and the error text if it failed. No message text is stored here.

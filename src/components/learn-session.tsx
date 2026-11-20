@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BoLoader } from "@/components/bo-loader";
 import { BoMascot } from "@/components/bo-mascot";
+import { HookBlock } from "@/components/hook-block";
 import { ReviewSession, type SessionWord } from "@/components/review-session";
 import { SpeakButton } from "@/components/speak-button";
 import { TagButton } from "@/components/tag-button";
@@ -212,7 +213,7 @@ export function LearnSession({ more, unit, track }: { more: boolean; unit?: stri
         <p className="text-sm text-ink-faint" aria-live="polite">
           {t("learn.round", { r: phase.round + 1, n: rounds })} · {t("learn.word", { a: phase.index + 1, b: list.length })}
         </p>
-        <TeachCard key={word.id} card={cardOf(word)} unitTitle={word.unitTitleAr} />
+        <TeachCard key={word.id} card={cardOf(word)} unitTitle={word.unitTitleAr} word={word} />
         <TagButton
           autoFocus
           className="w-full sm:w-auto"
@@ -237,7 +238,7 @@ export function LearnSession({ more, unit, track }: { more: boolean; unit?: stri
   );
 }
 
-function TeachCard({ card, unitTitle }: { card: WordCard; unitTitle: string }) {
+function TeachCard({ card, unitTitle, word }: { card: WordCard; unitTitle: string; word: LearnWord }) {
   const { t } = useT();
   return (
     <article className="sheet space-y-5 p-6">
@@ -260,12 +261,7 @@ function TeachCard({ card, unitTitle }: { card: WordCard; unitTitle: string }) {
         </div>
         <p className="text-ink-soft">{card.sentenceAr}</p>
       </div>
-      {card.memoryHookAr && (
-        <div>
-          <h3 className="font-semibold">{t("card.hook")}</h3>
-          <p className="text-ink-soft">{card.memoryHookAr}</p>
-        </div>
-      )}
+      <HookBlock aiHook={card.memoryHookAr} wordId={word.id} info={word.hookInfo} />
       {card.usageNoteAr && <p className="text-sm text-ink-soft">{card.usageNoteAr}</p>}
       {card.extraExamples.slice(0, 1).map((example) => (
         <div key={example.en}>

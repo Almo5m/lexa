@@ -7,10 +7,13 @@ import { toDateKey } from "@/features/gamification/streak";
 import { entryFor, nextPathWords, pathIndex, startUnitIndex, unitById } from "@/features/curriculum";
 import { basicCard } from "@/features/curriculum/basic-card";
 import { schoolCard } from "@/features/school/card";
-import { loadSchoolUnits } from "@/features/school/load";
+import { loadSchoolUnits, unitsForStage } from "@/features/school/load";
 import { nextSchoolWords, schoolWordTotal } from "@/features/school/pick";
 import { loadPathCards } from "@/features/curriculum/path-cards-db";
 import { isDailyMinutes, newWordsQuota } from "@/features/curriculum/session-plan";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { loadHookInfo } from "@/features/hooks/server";
+import type { HookInfo } from "@/features/hooks/hooks";
 import type { WordCard } from "@/features/ai/schemas";
 
 const EXTRA_WORDS = 10;
@@ -28,6 +31,17 @@ export interface LearnWord {
   card: WordCard;
   enriched: boolean;
   unitTitleAr: string;
+  hookInfo?: HookInfo;
+}
+
+/** Adds the student's own hook and the approved shared one to each word. A failure here never blocks learning. */
+async function withHooks(userId: string, words: LearnWord[]): Promise<LearnWord[]> {
+  try {
+    const info = await loadHookInfo(createSupabaseAdminClient(), userId, words.map((word) => word.term));
+    return words.map((word) => ({ ...word, hookInfo: info.get(word.term.toLowerCase()) }));
+  } catch {
+    return words;
+  }
 }
 
 /**
@@ -42,13 +56,14 @@ export async function POST(request: Request) {
     const { more, unit, track } = bodySchema.parse(await request.json().catch(() => ({})));
     const settings = await loadSettings();
 
-    const [{ data: profile }, { data: day }, { data: owned }, schoolUnits] = await Promise.all([
-      supabase.from("profiles").select("daily_minutes, level_band").eq("id", user.id).single(),
+    const [{ data: profile }, { data: day }, { data: owned }, allUnits] = await Promise.all([
+      supabase.from("profiles").select("daily_minutes, level_band, stage").eq("id", user.id).single(),
       supabase.from("daily_progress").select("new_words").eq("user_id", user.id).eq("day", toDateKey(new Date())).maybeSingle(),
       supabase.from("words").select("term, source, last_reviewed_at"),
       loadSchoolUnits(supabase),
     ]);
 
+    const schoolUnits = unitsForStage(allUnits, profile?.stage);
     const source: "school" | "path" = track === "path" || schoolWordTotal(schoolUnits) === 0 ? "path" : "school";
     const minutes = isDailyMinutes(profile?.daily_minutes) ? profile.daily_minutes : 15;
     const quota = newWordsQuota(settings.dailyGoalNewWords, minutes);
@@ -91,7 +106,7 @@ export async function POST(request: Request) {
         .sort((a, b) => (order.get(a.term) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.term) ?? Number.MAX_SAFE_INTEGER))
         .slice(0, Math.max(limit, 0))
         .map((row) => ({ id: row.id, term: row.term, card: row.card as WordCard, enriched: row.enriched, unitTitleAr: titles.get(row.unit_id ?? "") ?? "" }));
-      return NextResponse.json({ words });
+      return NextResponse.json({ words: await withHooks(user.id, words) });
     }
 
     const fresh = nextPathWords(ownedTerms, room, startUnitIndex(profile?.level_band));
@@ -144,7 +159,7 @@ export async function POST(request: Request) {
       .slice(0, Math.max(limit, 0))
       .map((item) => item.word);
 
-    return NextResponse.json({ words });
+    return NextResponse.json({ words: await withHooks(user.id, words) });
   } catch (error) {
     return handleApiError(error);
   }

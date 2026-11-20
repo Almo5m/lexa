@@ -5,6 +5,8 @@ import { loadPlusUntil } from "@/features/plus/server";
 import { AccountForm } from "@/components/account-form";
 import { ShareManager } from "@/components/share-manager";
 import { isActive } from "@/features/share/token";
+import { StageForm } from "@/components/stage-form";
+import { chosenStage } from "@/features/stage/stage";
 import { InterestsForm } from "@/components/interests-form";
 import { BoLookPicker } from "@/components/bo-look-picker";
 import { levelFromXp } from "@/features/gamification/xp";
@@ -22,7 +24,7 @@ export default async function MePage() {
   const plus = isPlus(plusUntil);
   const plusDays = daysLeft(plusUntil);
   const [{ data: profile }, { data: link }] = await Promise.all([
-    supabase.from("profiles").select("interests, display_name, total_xp").eq("id", user.id).single(),
+    supabase.from("profiles").select("interests, display_name, total_xp, stage").eq("id", user.id).single(),
     supabase.from("share_links").select("expires_at").eq("user_id", user.id).maybeSingle(),
   ]);
   const activeUntil = link && isActive(link.expires_at) ? link.expires_at : null;
@@ -53,6 +55,10 @@ export default async function MePage() {
         <section aria-labelledby="look-title" className="sheet space-y-3 p-6">
           <h2 id="look-title" className="text-xl font-bold">{t("look.title")}</h2>
           <BoLookPicker level={levelFromXp(profile?.total_xp ?? 0)} plus={plus} />
+        </section>
+
+        <section className="sheet p-6">
+          <StageForm initial={chosenStage(profile?.stage)} />
         </section>
 
         <section className="sheet p-6">

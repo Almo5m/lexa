@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { CodesTab } from "./tabs/codes";
 import { FeedbackTab } from "./tabs/feedback";
+import { HooksTab } from "./tabs/hooks";
+import { loadBadgeCounts } from "@/features/admin/counts";
 import { GrowthSection } from "./tabs/growth";
 import { LaunchTab } from "./tabs/launch";
 import { StudentsTab } from "./tabs/students";
@@ -12,6 +14,7 @@ import { AdminWordOfDayPanel } from "@/components/admin-word-of-day";
 import { AdminGrammar } from "@/components/admin-grammar";
 import { AdminSchool } from "@/components/admin-school";
 import { AdminSettingsForm } from "@/components/admin-settings-form";
+import { isAdminTab, type AdminTab } from "@/features/admin/nav";
 import { getT } from "@/lib/i18n/server";
 import { loadSettings } from "@/lib/settings-server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
@@ -33,36 +36,26 @@ import type { DictKey } from "@/lib/i18n/dictionary";
 export const metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-const TABS = ["overview", "students", "codes", "feedback", "launch", "school", "grammar", "bo", "wod", "contest", "ai", "cards", "settings"] as const;
-type Tab = (typeof TABS)[number];
+type Tab = AdminTab;
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; page?: string; id?: string }> }) {
   const params = await searchParams;
-  const tab: Tab = TABS.includes(params.tab as Tab) ? (params.tab as Tab) : "overview";
+  const tab: Tab = isAdminTab(params.tab) ? params.tab : "overview";
   const { t } = await getT();
   const settings = await loadSettings();
 
   return (
     <div className="space-y-6">
-      <nav aria-label={t("admin.title")} className="flex gap-1 overflow-x-auto rounded-full bg-sheet p-1 shadow-[var(--shadow-1)]">
-        {TABS.map((item) => (
-          <Link
-            key={item}
-            href={item === "overview" ? "/admin" : `/admin?tab=${item}`}
-            aria-current={tab === item ? "page" : undefined}
-            className={`inline-flex min-h-11 flex-1 items-center justify-center whitespace-nowrap rounded-full px-5 text-sm font-semibold ${
-              tab === item ? "bg-[image:var(--grad)] text-white" : "text-ink-soft hover:bg-paper-deep"
-            }`}
-          >
-            {t(`admin.tab.${item}` as DictKey)}
-          </Link>
-        ))}
-      </nav>
+      <header className="space-y-1 border-b border-line pb-4">
+        <h1 className="text-2xl font-bold">{t(`admin.tab.${tab}` as DictKey)}</h1>
+        <p className="max-w-2xl text-ink-soft">{t(`admin.desc.${tab}` as DictKey)}</p>
+      </header>
 
       {tab === "overview" && <Overview />}
       {tab === "students" && <StudentsTab q={params.q} page={params.page} id={params.id} />}
       {tab === "codes" && <CodesTab />}
       {tab === "feedback" && <FeedbackTab />}
+      {tab === "hooks" && <HooksTab />}
       {tab === "launch" && <LaunchTab />}
       {tab === "school" && <SchoolTab />}
       {tab === "grammar" && <GrammarTab />}
@@ -84,12 +77,13 @@ async function Overview() {
   startOfToday.setUTCHours(0, 0, 0, 0);
   const sevenDaysAgo = new Date(startOfToday.getTime() - 6 * 86_400_000);
 
-  const [usage, errors, students, accounts, words] = await Promise.all([
+  const [usage, errors, students, accounts, words, waiting] = await Promise.all([
     db.from("ai_usage").select("feature, ok, latency_ms, created_at").gte("created_at", sevenDaysAgo.toISOString()).limit(20000),
     db.from("ai_usage").select("feature, error, created_at").eq("ok", false).order("created_at", { ascending: false }).limit(8),
     db.from("daily_progress").select("user_id", { count: "exact", head: true }).eq("day", toDateKey(now)),
     db.from("profiles").select("id", { count: "exact", head: true }),
     db.from("words").select("id", { count: "exact", head: true }),
+    loadBadgeCounts(db),
   ]);
 
   const rows = (usage.data ?? []) as UsageRow[];
@@ -111,6 +105,26 @@ async function Overview() {
           </Link>
         </div>
       )}
+
+      <section aria-labelledby="attention-title" className="sheet space-y-3 p-5">
+        <h2 id="attention-title" className="font-bold">{t("admin.attention.title")}</h2>
+        {(waiting.feedback ?? 0) + (waiting.hooks ?? 0) === 0 ? (
+          <p className="text-leaf">{t("admin.attention.clear")}</p>
+        ) : (
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {(["feedback", "hooks"] as const).map((key) =>
+              (waiting[key] ?? 0) > 0 ? (
+                <li key={key}>
+                  <Link href={`/admin?tab=${key}`} className="flex min-h-14 items-center gap-3 rounded-lg border border-line px-4 hover:bg-paper-deep">
+                    <span className="min-w-8 rounded-full bg-amber/20 px-2 text-center font-bold text-amber">{waiting[key]}</span>
+                    <span>{t(`admin.attention.${key}` as DictKey)}</span>
+                  </Link>
+                </li>
+              ) : null,
+            )}
+          </ul>
+        )}
+      </section>
 
       <GrowthSection />
 
@@ -272,6 +286,7 @@ async function SchoolTab() {
         id: unit.id,
         titleAr: unit.titleAr,
         titleEn: unit.titleEn,
+        stage: unit.stage ?? "all",
         words: unit.words.map((word) => ({ id: word.id, term: word.term, meaningAr: word.meaningAr, pos: word.pos, exampleEn: word.exampleEn, exampleAr: word.exampleAr })),
       }))}
     />

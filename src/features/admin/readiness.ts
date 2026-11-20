@@ -20,7 +20,7 @@ export interface Readiness {
 const TABLES = [
   "profiles", "words", "school_units", "school_words", "grammar_lessons", "bo_messages", "daily_challenges",
   "challenge_results", "word_of_day", "board_members", "contests", "contest_entries", "duels", "duel_entries",
-  "feedback", "admin_log", "memberships", "plus_codes", "plus_attempts", "path_cards", "app_settings",
+  "feedback", "shared_hooks", "admin_log", "memberships", "plus_codes", "plus_attempts", "path_cards", "app_settings",
 ] as const;
 
 export function summarize(checks: Check[]): Readiness {

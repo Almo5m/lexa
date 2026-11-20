@@ -4,7 +4,7 @@ import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
 import { loadSettings } from "@/lib/settings-server";
 import { SchoolUnitCard } from "@/components/school-unit-card";
-import { loadSchoolUnits } from "@/features/school/load";
+import { loadSchoolUnits, unitsForStage } from "@/features/school/load";
 import { percent, unitProgress, type SchoolWordState } from "@/features/school/progress";
 import { statusOf, type WordRow } from "@/lib/words";
 import type { WordStatus } from "@/features/srs/types";
@@ -22,11 +22,12 @@ export default async function WordsPage({
 }) {
   const params = await searchParams;
   const filter: Filter = FILTERS.includes(params.filter as Filter) ? (params.filter as Filter) : "all";
-  const { supabase } = await requireUserPage();
+  const { supabase, user } = await requireUserPage();
   const { t } = await getT();
   const settings = await loadSettings();
 
-  const schoolUnits = await loadSchoolUnits(supabase);
+  const { data: stageRow } = await supabase.from("profiles").select("stage").eq("id", user.id).single();
+  const schoolUnits = unitsForStage(await loadSchoolUnits(supabase), stageRow?.stage);
   const tab: "school" | "mine" = params.tab === "mine" ? "mine" : params.tab === "school" || schoolUnits.length > 0 ? "school" : "mine";
 
   const [{ data: wordsData }, { data: groups }] = await Promise.all([

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
+import { UNIT_STAGES, type UnitStage } from "@/features/stage/stage";
 import type { DictKey } from "@/lib/i18n/dictionary";
 
 export interface AdminWord {
@@ -19,6 +20,7 @@ export interface AdminUnit {
   id: string;
   titleAr: string;
   titleEn: string;
+  stage: string;
   words: AdminWord[];
 }
 
@@ -39,6 +41,7 @@ export function AdminSchool({ units }: { units: AdminUnit[] }) {
   const router = useRouter();
   const [titleAr, setTitleAr] = useState("");
   const [titleEn, setTitleEn] = useState("");
+  const [newStage, setNewStage] = useState<UnitStage>("all");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -75,11 +78,11 @@ export function AdminSchool({ units }: { units: AdminUnit[] }) {
           {t("school.admin.addUnit")}
         </h2>
         <form
-          className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
+          className="grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto]"
           onSubmit={(event) => {
             event.preventDefault();
             if (!titleAr.trim()) return;
-            void run({ action: "addUnit", titleAr, titleEn }, () => {
+            void run({ action: "addUnit", titleAr, titleEn, stage: newStage }, () => {
               setTitleAr("");
               setTitleEn("");
             });
@@ -87,6 +90,11 @@ export function AdminSchool({ units }: { units: AdminUnit[] }) {
         >
           <input className="field" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} placeholder={t("school.admin.titleAr")} maxLength={80} required aria-label={t("school.admin.titleAr")} />
           <input className="field ltr-text" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} placeholder={t("school.admin.titleEn")} maxLength={80} aria-label={t("school.admin.titleEn")} />
+          <select className="field" value={newStage} onChange={(e) => setNewStage(e.target.value as UnitStage)} aria-label={t("school.admin.stage")}>
+            {UNIT_STAGES.map((item) => (
+              <option key={item} value={item}>{t(`school.admin.stage.${item}` as DictKey)}</option>
+            ))}
+          </select>
           <TagButton type="submit" disabled={busy} gradient>
             {t("school.admin.add")}
           </TagButton>
@@ -140,6 +148,17 @@ function UnitCard({
         </div>
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="rounded-full bg-paper-deep px-3 py-1 font-semibold">{t("school.admin.wordsCount", { n: unit.words.length })}</span>
+          <select
+            className="field min-h-11 w-auto py-1 text-sm"
+            value={unit.stage}
+            disabled={busy}
+            aria-label={t("school.admin.stage")}
+            onChange={(e) => void run({ action: "setUnitStage", id: unit.id, stage: e.target.value })}
+          >
+            {UNIT_STAGES.map((item) => (
+              <option key={item} value={item}>{t(`school.admin.stage.${item}` as DictKey)}</option>
+            ))}
+          </select>
           <button type="button" className="min-h-11 px-2 text-ink-soft hover:text-indigo disabled:opacity-40" disabled={busy || first} onClick={() => void run({ action: "moveUnit", id: unit.id, direction: "up" })}>
             {t("school.admin.up")}
           </button>
