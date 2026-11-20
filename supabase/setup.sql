@@ -202,6 +202,20 @@ create table if not exists public.grammar_lessons (
 );
 create index if not exists grammar_lessons_unit_idx on public.grammar_lessons (unit_id, sort);
 
+-- Extra grammar lessons the admin creates for any stage (first / second secondary, general learners...).
+-- Their pictures live in grammar_lessons with the topic's id as unit_id.
+create table if not exists public.grammar_topics (
+  id uuid primary key default gen_random_uuid(),
+  stage text not null check (stage in ('sec1', 'sec2', 'sec3', 'general')),
+  title text not null check (char_length(title) between 1 and 100),
+  sort integer not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists grammar_topics_stage_idx on public.grammar_topics (stage, sort);
+alter table public.grammar_lessons drop constraint if exists grammar_lessons_unit_id_check;
+alter table public.grammar_lessons add constraint grammar_lessons_unit_id_check
+  check (unit_id ~ '^g[0-9]{1,2}$' or unit_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
+
 do $$
 begin
   if to_regclass('storage.buckets') is not null then
@@ -485,6 +499,7 @@ alter table public.talk_sessions enable row level security;
 alter table public.reading_sessions enable row level security;
 alter table public.path_cards enable row level security;
 alter table public.grammar_lessons enable row level security;
+alter table public.grammar_topics enable row level security;
 alter table public.bo_messages enable row level security;
 alter table public.memberships enable row level security;
 alter table public.plus_codes enable row level security;
@@ -526,6 +541,8 @@ drop policy if exists "bo messages read" on public.bo_messages;
 create policy "bo messages read" on public.bo_messages for select to authenticated using (active);
 drop policy if exists "grammar lessons read" on public.grammar_lessons;
 create policy "grammar lessons read" on public.grammar_lessons for select to authenticated using (true);
+drop policy if exists "grammar topics read" on public.grammar_topics;
+create policy "grammar topics read" on public.grammar_topics for select to authenticated using (true);
 drop policy if exists "school units read" on public.school_units;
 create policy "school units read" on public.school_units for select to authenticated using (true);
 drop policy if exists "school words read" on public.school_words;
@@ -587,6 +604,8 @@ revoke all on public.bo_messages from anon, authenticated;
 grant select on public.bo_messages to authenticated;
 revoke all on public.grammar_lessons from anon, authenticated;
 grant select on public.grammar_lessons to authenticated;
+revoke all on public.grammar_topics from anon, authenticated;
+grant select on public.grammar_topics to authenticated;
 revoke all on public.school_units, public.school_words from anon, authenticated;
 grant select on public.school_units, public.school_words to authenticated;
 revoke update on public.profiles from authenticated;

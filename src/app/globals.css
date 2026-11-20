@@ -39,24 +39,24 @@
 }
 
 [data-theme="admin"] {
-  /* Calm night palette: soft slate surfaces, no pure white, quiet accent. Contrast of body text stays above 7:1. */
-  --color-paper: #121826;
-  --color-paper-deep: #1d2538;
-  --color-sheet: #182032;
-  --color-ink: #dde4f2;
-  --color-ink-soft: #aab5cf;
-  --color-ink-faint: #8995b3;
-  --color-line: #2a3550;
-  --color-indigo: #8fb0ff;
-  --color-cyan: #6cb4ff;
-  --color-pen-red: #f09a93;
-  --color-leaf: #84d6ab;
-  --color-amber: #e6c373;
-  --grad: linear-gradient(135deg, #4a63c4 0%, #3f7fc2 100%);
-  --lip: #2f3b58;
-  --shadow-1: none;
-  --shadow-2: 0 6px 20px rgba(0, 0, 0, 0.25);
-  --focus: #6cb4ff;
+  /* Light and quiet: a soft grey page, white cards, thin borders, one muted blue accent. No gradients, no glare, nothing competing for attention. */
+  --color-paper: #f4f6f9;
+  --color-paper-deep: #e9edf3;
+  --color-sheet: #ffffff;
+  --color-ink: #1b2434;
+  --color-ink-soft: #465168;
+  --color-ink-faint: #667189;
+  --color-line: #dde2ea;
+  --color-indigo: #3b55c4;
+  --color-cyan: #3b82d6;
+  --color-pen-red: #b83a3a;
+  --color-leaf: #1b7f55;
+  --color-amber: #8a5a00;
+  --grad: linear-gradient(135deg, #4d66cc 0%, #4285c9 100%);
+  --lip: #d3d9e4;
+  --shadow-1: 0 1px 2px rgba(20, 30, 50, 0.05);
+  --shadow-2: 0 6px 20px rgba(20, 30, 50, 0.1);
+  --focus: #3b82d6;
   --r-lg: 14px;
   --r-md: 12px;
   --r-sm: 10px;
@@ -71,25 +71,29 @@
   border-bottom-width: 1px;
 }
 [data-theme="admin"] a.sheet:active { transform: none; border-bottom-width: 1px; }
-[data-theme="admin"] .field { border-width: 1px; min-height: 46px; background: var(--color-paper); }
-[data-theme="admin"] .field:focus { box-shadow: 0 0 0 3px rgba(108, 180, 255, 0.22); }
+[data-theme="admin"] .field { border-width: 1px; border-color: #cdd4e0; min-height: 46px; background: #fff; }
+[data-theme="admin"] .field:focus { border-color: var(--color-cyan); box-shadow: 0 0 0 3px rgba(59, 130, 214, 0.18); }
 [data-theme="admin"] .tag-btn {
-  min-height: 46px;
+  min-height: 44px;
   padding: 0 20px;
-  --depth: #2c3f7e;
-  background: #4560b5;
-  color: #f2f5ff;
-  box-shadow: 0 3px 0 var(--depth);
+  --depth: #2b3f94;
+  background: #3b55c4;
+  color: #fff;
+  box-shadow: 0 2px 0 var(--depth);
 }
-[data-theme="admin"] .tag-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--depth); }
-[data-theme="admin"] .tag-btn-quiet { --depth: #2a3550; background: transparent; color: var(--color-ink-soft); border: 1px solid var(--color-line); box-shadow: 0 3px 0 var(--depth); }
-[data-theme="admin"] .tag-btn-grad { background: #3f7fc2; --depth: #2b5a8c; }
-[data-theme="admin"] .hero-card { background: var(--color-sheet); color: var(--color-ink); border: 1px solid var(--color-line); border-bottom-width: 1px; box-shadow: none; }
+[data-theme="admin"] .tag-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 1px 0 var(--depth); }
+[data-theme="admin"] .tag-btn-quiet { --depth: #d3d9e4; background: #fff; color: var(--color-ink-soft); border: 1px solid #cdd4e0; box-shadow: 0 2px 0 var(--depth); }
+[data-theme="admin"] .tag-btn-grad { background: #3b55c4; --depth: #2b3f94; }
+[data-theme="admin"] .hero-card { background: var(--color-sheet); color: var(--color-ink); border: 1px solid var(--color-line); border-bottom-width: 1px; box-shadow: var(--shadow-1); }
 [data-theme="admin"] .hero-card::after { display: none; }
-[data-theme="admin"] .pen-error { background: rgba(240, 154, 147, 0.1); border-radius: 8px; padding: 8px 12px; }
-[data-theme="admin"] table tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
-[data-theme="admin"] ::selection { background: #35507f; color: #fff; }
-[data-theme="admin"] details > summary::-webkit-details-marker { display: none; }
+[data-theme="admin"] .pen-error { background: rgba(184, 58, 58, 0.08); border-radius: 8px; padding: 8px 12px; }
+[data-theme="admin"] table tbody tr:hover { background: rgba(20, 30, 50, 0.03); }
+[data-theme="admin"] ::selection { background: #cfdcf7; color: #1b2434; }
+[data-theme="admin"] summary { list-style: none; }
+[data-theme="admin"] summary::-webkit-details-marker { display: none; }
+[data-theme="admin"] details > summary { transition: background-color 120ms ease; border-radius: var(--r-lg); }
+[data-theme="admin"] details[open] > summary { border-end-start-radius: 0; border-end-end-radius: 0; }
+[data-theme="admin"] details > summary:hover { background: rgba(20, 30, 50, 0.025); }
 @media (prefers-reduced-motion: reduce) {
   [data-theme="admin"] * { animation: none !important; transition: none !important; }
 }

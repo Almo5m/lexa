@@ -28,6 +28,9 @@ import {
 } from "@/features/admin/stats";
 import { toDateKey } from "@/features/gamification/streak";
 import { GRAMMAR_UNITS } from "@/features/grammar";
+import { AdminStageTabs } from "@/components/admin-stage-tabs";
+import { loadTopics } from "@/features/grammar/topics";
+import { STAGES, isStage, type Stage } from "@/features/stage/stage";
 import { loadLessonImages } from "@/features/grammar/lesson-images";
 import { loadSchoolUnits } from "@/features/school/load";
 import { PATH_SIZE } from "@/features/curriculum";
@@ -38,7 +41,7 @@ export const dynamic = "force-dynamic";
 
 type Tab = AdminTab;
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; page?: string; id?: string }> }) {
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; page?: string; id?: string; stage?: string }> }) {
   const params = await searchParams;
   const tab: Tab = isAdminTab(params.tab) ? params.tab : "overview";
   const { t } = await getT();
@@ -57,8 +60,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       {tab === "feedback" && <FeedbackTab />}
       {tab === "hooks" && <HooksTab />}
       {tab === "launch" && <LaunchTab />}
-      {tab === "school" && <SchoolTab />}
-      {tab === "grammar" && <GrammarTab />}
+      {tab === "school" && <SchoolTab stage={params.stage} />}
+      {tab === "grammar" && <GrammarTab stage={params.stage} />}
       {tab === "bo" && <BoMessagesTab everyMinutes={settings.boMessageEveryMinutes} perDay={settings.boMessagesPerDay} />}
       {tab === "wod" && <WordOfDayTab />}
       {tab === "contest" && <ContestTab />}
@@ -100,7 +103,7 @@ async function Overview() {
           <p className="font-semibold text-pen-red">
             {t("admin.errors")}: {today.failed} / {today.total}
           </p>
-          <Link href="/admin?tab=ai" className="inline-flex min-h-11 items-center rounded-full bg-pen-red px-5 font-semibold text-[#1a1066]">
+          <Link href="/admin?tab=ai" className="inline-flex min-h-11 items-center rounded-full bg-pen-red px-5 font-semibold text-white">
             {t("admin.tab.ai")}
           </Link>
         </div>
@@ -278,10 +281,11 @@ async function PathCardsTab() {
   );
 }
 
-async function SchoolTab() {
+async function SchoolTab({ stage }: { stage?: string }) {
   const units = await loadSchoolUnits(createSupabaseAdminClient());
   return (
     <AdminSchool
+      stage={stage === "all" || isStage(stage) ? stage : "all"}
       units={units.map((unit) => ({
         id: unit.id,
         titleAr: unit.titleAr,
@@ -293,18 +297,32 @@ async function SchoolTab() {
   );
 }
 
-async function GrammarTab() {
+async function GrammarTab({ stage }: { stage?: string }) {
+  const { t } = await getT();
   const db = createSupabaseAdminClient();
-  const units = await Promise.all(
-    GRAMMAR_UNITS.map(async (unit) => ({
-      id: unit.id,
-      number: unit.number,
-      topic: unit.topic,
-      rule: unit.rule,
-      images: (await loadLessonImages(db, unit.id)).map((image) => ({ id: image.id, url: image.url })),
-    })),
+  const current: Stage = isStage(stage) ? stage : "sec3";
+  const allTopics = await loadTopics(db).catch(() => []);
+  const withPictures = async (id: string) => (await loadLessonImages(db, id).catch(() => [])).map((image) => ({ id: image.id, url: image.url }));
+
+  // The book we have inside is the third-secondary book, so its units show under that stage only.
+  const book =
+    current === "sec3"
+      ? await Promise.all(GRAMMAR_UNITS.map(async (unit) => ({ id: unit.id, kicker: t("grammar.unit", { n: unit.number }) + " · " + unit.topic, title: unit.rule, ltr: true, images: await withPictures(unit.id) })))
+      : [];
+  const topics = await Promise.all(allTopics.filter((topic) => topic.stage === current).map(async (topic) => ({ id: topic.id, title: topic.title, images: await withPictures(topic.id) })));
+  const countOf = (stage: Stage) => allTopics.filter((topic) => topic.stage === stage).length + (stage === "sec3" ? GRAMMAR_UNITS.length : 0);
+
+  return (
+    <div className="space-y-6">
+      <AdminStageTabs
+        tab="grammar"
+        current={current}
+        label={t("school.admin.stage")}
+        items={STAGES.map((item) => ({ value: item, label: t(`school.admin.stage.${item}` as DictKey), count: countOf(item) }))}
+      />
+      <AdminGrammar key={current} stage={current} book={book} topics={topics} />
+    </div>
   );
-  return <AdminGrammar units={units} />;
 }
 
 async function BoMessagesTab({ everyMinutes, perDay }: { everyMinutes: number; perDay: number }) {

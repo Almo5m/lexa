@@ -423,3 +423,10 @@ Log of decisions and events, newest at the bottom.
 - Eye comfort: calmer night palette (no pure white, soft slate surfaces, muted accent), flatter cards and buttons, smaller radii, 16.5px base text, reduced motion respected. All in the `[data-theme="admin"]` block of globals.css, so the student app is untouched.
 - Deleting a message or a hook asks for confirmation.
 - Not checked in a real browser (no admin login in my test environment): look at the sidebar, mobile menu and colors yourself and tell me what to adjust.
+
+## Phase 12.1 - Light dashboard, organised curriculum, grammar for every stage
+- Admin theme is now light and quiet (soft grey page, white cards, thin borders, one muted blue accent, no gradients) instead of dark. Still only inside `[data-theme="admin"]`.
+- School tab: stage tabs on top (all units / first / second / third secondary / general) with counts; "stage view" shows that stage's units plus the shared ones in their study order; "add unit" is a collapsed box; each unit is a closed row that opens to three parts (unit words, add words, unit settings incl. rename, stage, move, delete). `moveUnit` takes the stage on screen so "up/down" skips units he cannot see.
+- Grammar tab: stage tabs. Third secondary shows the book units (with drills and pictures) plus extra lessons; other stages show extra lessons only. New table `grammar_topics` (stage, title, sort); pictures live in `grammar_lessons` with the topic id as `unit_id` (check constraint widened). API `/api/admin/grammar-topics` (add, rename, setStage, move, delete with pictures).
+- Students: `/grammar` shows "Extra lessons" of their stage and, for third secondary (or accounts that never chose), the book units; `/grammar/topic/[id]` shows the pictures. Practice always lists Grammar; Writing and Listening stay book-only.
+- After deploy: re-run `supabase/setup.sql` (table grammar_topics, widened constraint).

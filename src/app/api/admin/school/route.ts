@@ -13,7 +13,7 @@ const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("setUnitStage"), id: z.string().uuid(), stage: z.enum(UNIT_STAGES) }),
   z.object({ action: z.literal("renameUnit"), id: z.string().uuid(), titleAr: title, titleEn: z.string().trim().max(80).optional() }),
   z.object({ action: z.literal("deleteUnit"), id: z.string().uuid() }),
-  z.object({ action: z.literal("moveUnit"), id: z.string().uuid(), direction: z.enum(["up", "down"]) }),
+  z.object({ action: z.literal("moveUnit"), id: z.string().uuid(), direction: z.enum(["up", "down"]), stage: z.enum(UNIT_STAGES).optional() }),
   z.object({
     action: z.literal("editWord"),
     id: z.string().uuid(),
@@ -59,11 +59,16 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
       case "moveUnit": {
-        const { data: units, error } = await db.from("school_units").select("id").order("sort").order("created_at");
+        const { data: units, error } = await db.from("school_units").select("id, stage").order("sort").order("created_at");
         if (error) throw error;
-        const ids = (units ?? []).map((unit) => unit.id as string);
+        const rows = (units ?? []) as { id: string; stage: string }[];
+        const ids = rows.map((unit) => unit.id);
         const at = ids.indexOf(body.id);
-        const to = body.direction === "up" ? at - 1 : at + 1;
+        // With a stage filter on screen, "up" means above the previous unit he can see, not above a hidden one.
+        const shown = (unit: { stage: string }) => !body.stage || body.stage === "all" || unit.stage === "all" || unit.stage === body.stage;
+        const step = body.direction === "up" ? -1 : 1;
+        let to = at + step;
+        while (to >= 0 && to < rows.length && !shown(rows[to])) to += step;
         if (at === -1 || to < 0 || to >= ids.length) return NextResponse.json({ ok: true });
         [ids[at], ids[to]] = [ids[to], ids[at]];
         const results = await Promise.all(ids.map((id, index) => db.from("school_units").update({ sort: index + 1 }).eq("id", id)));

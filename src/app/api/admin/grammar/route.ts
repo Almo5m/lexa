@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { handleApiError } from "@/lib/api";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { grammarUnit } from "@/features/grammar";
+import { topicExists } from "@/features/grammar/topics";
 import { LESSON_BUCKET, MAX_IMAGES_PER_UNIT, MAX_IMAGE_BYTES, MIME, detectImageType } from "@/features/grammar/lesson-images";
 
 export const maxDuration = 30;
@@ -23,7 +24,6 @@ export async function PUT(request: Request) {
     const form = await request.formData();
     const unitId = String(form.get("unitId") ?? "");
     const file = form.get("file");
-    if (!grammarUnit(unitId)) return NextResponse.json({ error: "invalid_input" }, { status: 400 });
     if (!(file instanceof File) || file.size === 0) return NextResponse.json({ error: "invalid_input" }, { status: 400 });
     if (file.size > MAX_IMAGE_BYTES) return NextResponse.json({ error: "too_big" }, { status: 413 });
 
@@ -32,6 +32,7 @@ export async function PUT(request: Request) {
     if (!type) return NextResponse.json({ error: "bad_type" }, { status: 415 });
 
     const db = createSupabaseAdminClient();
+    if (!grammarUnit(unitId) && !(await topicExists(db, unitId))) return NextResponse.json({ error: "invalid_input" }, { status: 400 });
     const { data: existing, error: listError } = await db.from("grammar_lessons").select("sort").eq("unit_id", unitId).order("sort", { ascending: false });
     if (listError) throw listError;
     if ((existing ?? []).length >= MAX_IMAGES_PER_UNIT) return NextResponse.json({ error: "too_many" }, { status: 400 });

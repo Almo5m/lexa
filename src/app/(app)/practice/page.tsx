@@ -34,13 +34,15 @@ export default async function PracticePage() {
         <Row href="/translate" icon={<TranslateIcon />} title={t("practice.translate")} hint={t("practice.translateHint")} />
       </Group>
 
-      {hasBook(profile?.stage) && (
-        <Group title={t("practice.groupGrammar")}>
-          <Row href="/grammar" icon={<GrammarIcon />} title={t("practice.grammar")} hint={t("practice.grammarHint")} />
-          <Row href="/writing" icon={<WritingIcon />} title={t("practice.writing")} hint={t("practice.writingHint")} />
-          <Row href="/listening" icon={<ListenIcon />} title={t("practice.listening")} hint={t("practice.listeningHint")} />
-        </Group>
-      )}
+      <Group title={t("practice.groupGrammar")}>
+        <Row href="/grammar" icon={<GrammarIcon />} title={t("practice.grammar")} hint={t("practice.grammarHint")} />
+        {hasBook(profile?.stage) && (
+          <>
+            <Row href="/writing" icon={<WritingIcon />} title={t("practice.writing")} hint={t("practice.writingHint")} />
+            <Row href="/listening" icon={<ListenIcon />} title={t("practice.listening")} hint={t("practice.listeningHint")} />
+          </>
+        )}
+      </Group>
 
       <Group title={t("practice.groupSpeak")}>
         <Row href="/talk" icon={<MicIcon />} title={t("practice.talk")} hint={t("practice.talkHint")} />
