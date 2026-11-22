@@ -430,3 +430,6 @@ Log of decisions and events, newest at the bottom.
 - Grammar tab: stage tabs. Third secondary shows the book units (with drills and pictures) plus extra lessons; other stages show extra lessons only. New table `grammar_topics` (stage, title, sort); pictures live in `grammar_lessons` with the topic id as `unit_id` (check constraint widened). API `/api/admin/grammar-topics` (add, rename, setStage, move, delete with pictures).
 - Students: `/grammar` shows "Extra lessons" of their stage and, for third secondary (or accounts that never chose), the book units; `/grammar/topic/[id]` shows the pictures. Practice always lists Grammar; Writing and Listening stay book-only.
 - After deploy: re-run `supabase/setup.sql` (table grammar_topics, widened constraint).
+
+## Phase 12.1.1 - Fix: account page crash
+- /me crashed since 10.0 because the four Plus Bo pieces had no dictionary texts. Fixed and guarded by `tests/dynamic-keys.test.ts`. Crawled every page (admin, student general, student that never chose a stage, and with setup.sql not re-run) against a fake Supabase: no other server errors found. Real data was not tested.

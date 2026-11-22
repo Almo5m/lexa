@@ -208,3 +208,9 @@ The listening texts are read by the browser's own voice, so quality and availabi
 ## Sign-up says "Unexpected token '<' ... is not valid JSON" (2026-11-17)
 - **Cause:** `NEXT_PUBLIC_SUPABASE_URL` on the host was not the project API address, so Supabase's client received an HTML page instead of JSON.
 - **Fix:** set it to `https://<project-ref>.supabase.co` (Project Settings > API > Project URL), then redeploy, because `NEXT_PUBLIC_` values are baked in at build time. The code now cleans a trailing slash or path, and the Launch check flags a wrong address.
+
+## /me page crashed (missing dictionary keys for Plus hats and colors)
+- Symptom: the account page ("أنا") showed "This page couldn't load". Server log: `Cannot read properties of undefined (reading 'replaceAll')`.
+- Cause: phase 10.0 added four Bo pieces (halo, wizard, pink, teal) but not their texts. The picker builds keys at run time (`t(`look.hat.${id}`)`), which TypeScript cannot check, and `t` crashes on an unknown key.
+- Fix: added the four texts in Arabic and English, and added `tests/dynamic-keys.test.ts` that lists every id family (hats, colors, stages, Plus features, skill tasks, statuses, settings fields) and fails if any text is missing.
+- How it was found: a fake Supabase server and a crawl of every page, watching the server log (a page can answer 200 while its content is the error screen, so the status code alone is not enough).
