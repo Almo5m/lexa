@@ -6,10 +6,11 @@ import { getT } from "@/lib/i18n/server";
 import { GRAMMAR_UNITS } from "@/features/grammar";
 import { loadTopics } from "@/features/grammar/topics";
 import { LISTENING_TASKS } from "@/features/listening/tasks";
-import { WRITING_TASKS } from "@/features/writing/tasks";
+import { writingTasksFor } from "@/features/writing/tasks";
 import { loadSchoolUnits, unitsForStage } from "@/features/school/load";
 import { unitProgress, type SchoolWordState } from "@/features/school/progress";
 import { chosenStage, hasBook } from "@/features/stage/stage";
+import { bookFor } from "@/features/stage/books";
 import { buildOverview } from "@/features/stage/overview";
 import type { DictKey } from "@/lib/i18n/dictionary";
 
@@ -35,7 +36,7 @@ export default async function CurriculumPage() {
     loadSchoolUnits(supabase).then((all) => unitsForStage(all, profile?.stage)),
     stage ? loadTopics(supabase, stage) : Promise.resolve([]),
     supabase.from("words").select("term, last_reviewed_at").not("last_reviewed_at", "is", null),
-    book ? supabase.from("book_scores").select("kind, item_id") : Promise.resolve({ data: [] }),
+    supabase.from("book_scores").select("kind, item_id"),
   ]);
 
   const studied = new Set((wordsData.data ?? []).map((row) => row.term));
@@ -45,16 +46,17 @@ export default async function CurriculumPage() {
   const wordsStarted = progresses.reduce((sum, item) => sum + item.started, 0);
 
   const overview = buildOverview({
-    book,
     wordsTotal,
     wordsStarted,
     grammarTopics: topics.length,
     scores: (scoresData.data ?? []) as { kind: "grammar" | "writing" | "listening"; item_id: string }[],
-    grammarUnits: GRAMMAR_UNITS.length,
-    writingTasks: WRITING_TASKS.length,
-    listeningTasks: LISTENING_TASKS.length,
+    grammarUnits: book ? GRAMMAR_UNITS.length : 0,
+    writingTasks: writingTasksFor(stage).length,
+    listeningTasks: book ? LISTENING_TASKS.length : 0,
   });
 
+  const roadmap = bookFor(stage);
+  const writingByUnit = new Map(writingTasksFor(stage).map((task) => [task.unit, task]));
   const stageName = stage ? t(`stage.${stage}` as DictKey) : t("cur.allStages");
   const openUnits = units.map((unit, index) => ({ unit, index, progress: progresses[index] })).filter((item) => item.progress.started < item.progress.total).slice(0, 3);
 
@@ -109,6 +111,31 @@ export default async function CurriculumPage() {
           </li>
         ))}
       </ul>
+
+      {roadmap.length > 0 && (
+        <section className="space-y-3" aria-labelledby="cur-book">
+          <h2 id="cur-book" className="text-lg font-bold">{t("cur.bookTitle")}</h2>
+          <ol className="grid gap-3 lg:grid-cols-2">
+            {roadmap.map((unit) => {
+              const task = writingByUnit.get(unit.number);
+              return (
+                <li key={unit.number} className="sheet flex gap-4 rounded-3xl p-4">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-indigo/10 text-lg font-bold text-indigo" aria-hidden="true">{unit.number}</span>
+                  <span className="min-w-0 space-y-1">
+                    <span className="ltr-text block font-semibold">{unit.titleEn}</span>
+                    <span className="block text-sm text-ink-soft">{t("cur.grammarFocus")}: <span className="ltr-text">{unit.grammarEn}</span></span>
+                    {task && (
+                      <Link href={`/writing/${task.id}`} className="inline-flex min-h-9 items-center text-sm font-medium text-indigo">
+                        {t("cur.writeTask")}: <span className="ltr-text ms-1">{task.titleEn}</span>
+                      </Link>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      )}
 
       {openUnits.length > 0 && (
         <section className="space-y-3" aria-labelledby="cur-units">

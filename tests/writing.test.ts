@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { WRITING_TASKS, countWords, writingTask } from "@/features/writing/tasks";
+import { WRITING_TASKS, countWords, writingTask, writingTasksFor } from "@/features/writing/tasks";
 import { totalMarks, writingGradeSchema } from "@/features/writing/schemas";
+
+describe("writing tasks by stage", () => {
+  it("each year has one task per unit", () => {
+    for (const stage of ["sec1", "sec2", "sec3"]) {
+      const units = writingTasksFor(stage).map((task) => task.unit);
+      expect(new Set(units).size, stage).toBe(units.length);
+    }
+    expect(writingTasksFor("sec1")).toHaveLength(6);
+    expect(writingTasksFor("sec2")).toHaveLength(6);
+    expect(writingTasksFor(null)).toEqual(writingTasksFor("sec3"));
+    expect(writingTasksFor("general")).toEqual([]);
+  });
+});
 
 describe("writing tasks", () => {
   it("have unique ids, sane limits and a plan", () => {

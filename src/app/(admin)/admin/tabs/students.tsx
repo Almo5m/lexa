@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getT } from "@/lib/i18n/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { AdminSetStage } from "@/components/admin-set-stage";
+import { chosenStage } from "@/features/stage/stage";
 import { GrantPlus } from "@/components/admin-grant-plus";
 import { loadPlusUntil } from "@/features/plus/server";
 import { daysLeft } from "@/features/plus/plan";
@@ -78,7 +80,7 @@ export async function StudentsTab({ q, page, id }: Props) {
 async function StudentDetail({ id }: { id: string }) {
   const { t } = await getT();
   const db = createSupabaseAdminClient();
-  const { data: profile } = await db.from("profiles").select("display_name, total_xp, streak_current, streak_longest, level_band, created_at, role, onboarded").eq("id", id).maybeSingle();
+  const { data: profile } = await db.from("profiles").select("display_name, total_xp, streak_current, streak_longest, level_band, created_at, role, onboarded, stage").eq("id", id).maybeSingle();
   if (!profile) return <p className="sheet p-6 text-center text-ink-soft">{t("students.none")}</p>;
 
   const head = (table: string) => db.from(table).select("*", { count: "exact", head: true }).eq("user_id", id);
@@ -136,6 +138,7 @@ async function StudentDetail({ id }: { id: string }) {
           )}
         </div>
       </section>
+      <AdminSetStage id={id} current={chosenStage(profile.stage)} />
       <GrantPlus id={id} />
       {profile.role !== "admin" && <DeleteStudent id={id} />}
     </div>

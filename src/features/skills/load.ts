@@ -3,9 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { QUESTION_COUNT } from "@/features/reading/schemas";
 import type { StoredSession } from "@/features/talk/analyze";
 import { bookMeter } from "@/features/book/progress";
-import { GRAMMAR_UNITS } from "@/features/grammar";
-import { LISTENING_TASKS } from "@/features/listening/tasks";
-import { WRITING_TASKS } from "@/features/writing/tasks";
+import { bookTotalFor } from "@/features/book/total";
 import { readingMeter, speakMeter, translateMeter, wordsMeter, type Meter } from "./meters";
 
 export interface LoadedMeters {
@@ -24,6 +22,7 @@ export async function loadSkillMeters(
   supabase: SupabaseClient,
   userId: string,
   words: { learned: number; total: number },
+  stage: string | null,
 ): Promise<LoadedMeters> {
   const admin = createSupabaseAdminClient();
   const [{ data: translateLogs }, { data: readingRows }, { data: talkRows }, { data: bookRows }] = await Promise.all([
@@ -37,6 +36,6 @@ export async function loadSkillMeters(
     read: readingMeter((readingRows ?? []).map((row) => ({ answers: row.answers as { correct: boolean }[] | null, questions: QUESTION_COUNT }))),
     translate: translateMeter((translateLogs ?? []).map((row) => row.grade)),
     speak: speakMeter((talkRows ?? []) as unknown as StoredSession[]),
-    book: bookMeter(bookRows ?? [], GRAMMAR_UNITS.length + WRITING_TASKS.length + LISTENING_TASKS.length),
+    book: bookMeter(bookRows ?? [], bookTotalFor(stage)),
   };
 }

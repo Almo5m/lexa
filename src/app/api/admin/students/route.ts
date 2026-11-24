@@ -3,10 +3,12 @@ import { z } from "zod";
 import { requireAdmin, HttpError } from "@/lib/auth";
 import { handleApiError } from "@/lib/api";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { STAGES } from "@/features/stage/stage";
 import { isSameOrigin } from "@/features/demo/limits";
 
 const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("delete"), id: z.string().uuid(), confirm: z.literal(true) }),
+  z.object({ action: z.literal("setStage"), id: z.string().uuid(), stage: z.enum(STAGES) }),
   z.object({ action: z.literal("grantPlus"), id: z.string().uuid(), days: z.number().int().min(1).max(400) }),
 ]);
 
@@ -20,6 +22,13 @@ export async function POST(request: Request) {
     const { user } = await requireAdmin();
     const body = bodySchema.parse(await request.json());
     const db = createSupabaseAdminClient();
+
+    if (body.action === "setStage") {
+      const { error } = await db.from("profiles").update({ stage: body.stage }).eq("id", body.id);
+      if (error) throw error;
+      await db.from("admin_log").insert({ admin_id: user.id, action: "set_stage", detail: `stage set to ${body.stage}` });
+      return NextResponse.json({ ok: true });
+    }
 
     if (body.action === "grantPlus") {
       const { error } = await db.rpc("grant_plus", { p_user: body.id, p_days: body.days });

@@ -18,8 +18,6 @@ export interface PartCard {
 }
 
 export interface OverviewInput {
-  /** The ministry book we hold (third secondary) or an unchosen account. */
-  book: boolean;
   wordsTotal: number;
   wordsStarted: number;
   grammarTopics: number;
@@ -41,16 +39,11 @@ export function buildOverview(input: OverviewInput): { parts: PartCard[]; overal
   const tried = (kind: "grammar" | "writing" | "listening") => new Set(input.scores.filter((s) => s.kind === kind).map((s) => s.item_id)).size;
 
   const parts: PartCard[] = [card("words", "/words", input.wordsStarted, input.wordsTotal)];
-  if (input.book) {
-    parts.push(
-      card("grammar", "/grammar", tried("grammar"), input.grammarUnits),
-      card("writing", "/writing", tried("writing"), input.writingTasks),
-      card("listening", "/listening", tried("listening"), input.listeningTasks),
-      card("speaking", "/talk", null, null),
-    );
-  } else {
-    parts.push(card("grammar", "/grammar", null, input.grammarTopics), card("speaking", "/talk", null, null));
-  }
+  // Grammar is scored when we hold the book's own lessons (third secondary); otherwise it is the admin's uploaded lessons.
+  parts.push(input.grammarUnits > 0 ? card("grammar", "/grammar", tried("grammar"), input.grammarUnits) : card("grammar", "/grammar", null, input.grammarTopics));
+  if (input.writingTasks > 0) parts.push(card("writing", "/writing", tried("writing"), input.writingTasks));
+  if (input.listeningTasks > 0) parts.push(card("listening", "/listening", tried("listening"), input.listeningTasks));
+  parts.push(card("speaking", "/talk", null, null));
 
   const measured = parts.filter((part) => part.percent !== null);
   const overall = measured.length === 0 ? null : Math.round(measured.reduce((sum, part) => sum + (part.percent ?? 0), 0) / measured.length);

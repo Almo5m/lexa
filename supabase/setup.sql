@@ -677,3 +677,37 @@ revoke all on function public.take_chat_message(uuid, integer) from public, anon
 revoke all on function public.refund_chat_message(uuid) from public, anon, authenticated;
 grant execute on function public.take_chat_message(uuid, integer) to service_role;
 grant execute on function public.refund_chat_message(uuid) to service_role;
+
+-- The stage is chosen once (at signup, or once for an old account that never chose). After that only the admin
+-- changes it, from the dashboard (service role) or the SQL editor. A signed-in student cannot, even by calling the API directly.
+create or replace function public.lock_stage() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.stage is distinct from old.stage and old.stage <> 'secondary' and auth.role() = 'authenticated' then
+    raise exception 'stage_locked';
+  end if;
+  return new;
+end $$;
+drop trigger if exists lock_stage_trigger on public.profiles;
+create trigger lock_stage_trigger before update of stage on public.profiles
+  for each row execute function public.lock_stage();
+
+-- Grammar topics of Year 1 and Year 2 (from each book's Scope and Sequence). Only titles: the admin uploads the lesson pictures.
+-- Added only while a stage has no topics at all, so the admin's own edits are never brought back by re-running this file.
+insert into public.grammar_topics (stage, title, sort)
+select v.stage, v.title, v.sort
+from (values
+  ('sec1', 'Past Simple and Past Continuous | الماضي البسيط والماضي المستمر', 1),
+  ('sec1', 'Modal Verbs: must, have to | الأفعال الناقصة', 2),
+  ('sec1', 'Conditional sentences | الجمل الشرطية', 3),
+  ('sec1', 'Verbs + infinitive or -ing | الفعل + مصدر أو ing', 4),
+  ('sec1', 'Countable and Uncountable Nouns | الأسماء المعدودة وغير المعدودة', 5),
+  ('sec1', 'Definite and Indefinite Articles | أدوات التعريف والتنكير', 6),
+  ('sec2', 'Present Continuous: Active and Passive | المضارع المستمر معلوم ومجهول', 1),
+  ('sec2', 'Past Perfect: Active and Passive | الماضي التام معلوم ومجهول', 2),
+  ('sec2', 'Adjectives and Adverbs | الصفات والأحوال', 3),
+  ('sec2', 'Comparative and Superlative Adjectives | المقارنة والتفضيل', 4),
+  ('sec2', 'Tag Questions | الأسئلة المذيّلة', 5),
+  ('sec2', 'Defining and Non-defining Relative Clauses | جمل الصلة', 6)
+) as v(stage, title, sort)
+where not exists (select 1 from public.grammar_topics g where g.stage = v.stage);

@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
-import { WRITING_TASKS } from "@/features/writing/tasks";
+import { chosenStage } from "@/features/stage/stage";
+import { writingTasksFor } from "@/features/writing/tasks";
 
 export const metadata = { title: "Writing" };
 
 export default async function WritingPage() {
-  await requireUserPage();
+  const { supabase, user } = await requireUserPage();
+  const { data: profile } = await supabase.from("profiles").select("stage").eq("id", user.id).single();
+  const tasks = writingTasksFor(chosenStage(profile?.stage));
   const { t } = await getT();
   return (
     <div className="max-w-2xl space-y-5">
@@ -15,7 +18,7 @@ export default async function WritingPage() {
         <p className="text-ink-soft">{t("writing.intro")}</p>
       </div>
       <ul className="divide-y divide-line border-y border-line">
-        {WRITING_TASKS.map((task) => (
+        {tasks.map((task) => (
           <li key={task.id}>
             <Link href={`/writing/${task.id}`} className="flex min-h-16 items-center justify-between gap-4 px-1 py-2 hover:bg-paper-deep/60">
               <span>

@@ -5,6 +5,7 @@ import { SkillMeters } from "@/components/skill-meters";
 import { UNITS, pathSizeFrom, startUnitIndex } from "@/features/curriculum";
 import { levelProgress } from "@/features/gamification/xp";
 import { loadSchoolUnits, unitsForStage } from "@/features/school/load";
+import { chosenStage } from "@/features/stage/stage";
 import { loadSkillMeters } from "@/features/skills/load";
 import { currentUnit, unitProgress, type WordState } from "@/features/curriculum/progress";
 import type { DictKey } from "@/lib/i18n/dictionary";
@@ -33,7 +34,7 @@ export default async function PathPage() {
     const { data: schoolRows } = await supabase.from("words").select("term, last_reviewed_at").eq("source", "school");
     wordsBar = { learned: (schoolRows ?? []).filter((row) => row.last_reviewed_at !== null && schoolTerms.has(row.term)).length, total: schoolTerms.size };
   }
-  const meters = await loadSkillMeters(supabase, user.id, wordsBar);
+  const meters = await loadSkillMeters(supabase, user.id, wordsBar, chosenStage(profile?.stage));
   const level = levelProgress(profile?.total_xp ?? 0);
 
   return (
