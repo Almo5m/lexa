@@ -32,7 +32,7 @@ import { GRAMMAR_UNITS } from "@/features/grammar";
 import { AdminStageTabs } from "@/components/admin-stage-tabs";
 import { loadTopics } from "@/features/grammar/topics";
 import { STAGES, isStage, type Stage } from "@/features/stage/stage";
-import { loadLessonImages } from "@/features/grammar/lesson-images";
+import { loadLessonBlocks } from "@/features/grammar/lesson-images";
 import { loadSchoolUnits } from "@/features/school/load";
 import { PATH_SIZE } from "@/features/curriculum";
 import type { DictKey } from "@/lib/i18n/dictionary";
@@ -304,14 +304,14 @@ async function GrammarTab({ stage }: { stage?: string }) {
   const db = createSupabaseAdminClient();
   const current: Stage = isStage(stage) ? stage : "sec3";
   const allTopics = await loadTopics(db).catch(() => []);
-  const withPictures = async (id: string) => (await loadLessonImages(db, id).catch(() => [])).map((image) => ({ id: image.id, url: image.url }));
+  const withPictures = async (id: string) => loadLessonBlocks(db, id).catch(() => []);
 
   // The book we have inside is the third-secondary book, so its units show under that stage only.
   const book =
     current === "sec3"
-      ? await Promise.all(GRAMMAR_UNITS.map(async (unit) => ({ id: unit.id, kicker: t("grammar.unit", { n: unit.number }) + " · " + unit.topic, title: unit.rule, ltr: true, images: await withPictures(unit.id) })))
+      ? await Promise.all(GRAMMAR_UNITS.map(async (unit) => ({ id: unit.id, kicker: t("grammar.unit", { n: unit.number }) + " · " + unit.topic, title: unit.rule, ltr: true, blocks: await withPictures(unit.id) })))
       : [];
-  const topics = await Promise.all(allTopics.filter((topic) => topic.stage === current).map(async (topic) => ({ id: topic.id, title: topic.title, images: await withPictures(topic.id) })));
+  const topics = await Promise.all(allTopics.filter((topic) => topic.stage === current).map(async (topic) => ({ id: topic.id, title: topic.title, blocks: await withPictures(topic.id) })));
   const countOf = (stage: Stage) => allTopics.filter((topic) => topic.stage === stage).length + (stage === "sec3" ? GRAMMAR_UNITS.length : 0);
 
   return (

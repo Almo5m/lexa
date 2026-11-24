@@ -5,6 +5,9 @@ import { useRef, useState } from "react";
 import { TagButton } from "@/components/tag-button";
 import { shrinkImage } from "@/lib/shrink-image";
 import { useT } from "@/lib/i18n/provider";
+import { LessonText } from "@/components/lesson-text";
+import { LessonEditor } from "@/components/lesson-editor";
+import type { LessonBlock } from "@/features/grammar/lesson-images";
 import { STAGES, type Stage } from "@/features/stage/stage";
 import type { DictKey } from "@/lib/i18n/dictionary";
 
@@ -15,7 +18,7 @@ export interface AdminLesson {
   title: string;
   /** English rule names read left to right. */
   ltr?: boolean;
-  images: { id: string; url: string }[];
+  blocks: LessonBlock[];
 }
 
 /**
@@ -109,6 +112,7 @@ function LessonRow({ lesson, topic }: { lesson: AdminLesson; topic?: TopicContro
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(lesson.title);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState<string | "new" | null>(null);
   const locked = busy || Boolean(topic?.busy);
 
   async function upload(files: FileList | null) {
@@ -166,7 +170,7 @@ function LessonRow({ lesson, topic }: { lesson: AdminLesson; topic?: TopicContro
             <span className={`block font-semibold ${lesson.ltr ? "ltr-text" : ""}`}>{lesson.title}</span>
           </span>
           <span className="rounded-full bg-paper-deep px-3 py-1 text-sm font-medium text-ink-soft">
-            {lesson.images.length === 0 ? (topic ? t("grammar.admin.noPictures") : t("grammar.admin.builtIn")) : t("grammar.admin.count", { n: lesson.images.length })}
+            {lesson.blocks.length === 0 ? (topic ? t("grammar.admin.noPictures") : t("grammar.admin.builtIn")) : t("grammar.admin.count", { n: lesson.blocks.length })}
           </span>
         </summary>
 
@@ -210,28 +214,60 @@ function LessonRow({ lesson, topic }: { lesson: AdminLesson; topic?: TopicContro
             </div>
           )}
 
-          {lesson.images.length > 0 && (
-            <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {lesson.images.map((image, index) => (
-                <li key={image.id} className="space-y-2 rounded-lg border border-line p-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={image.url} alt={t("grammar.imageAlt", { n: index + 1 })} loading="lazy" className="aspect-[3/4] w-full rounded-md bg-paper-deep object-contain" />
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-semibold">{index + 1}</span>
-                    <span className="flex">
-                      <button type="button" className="min-h-11 px-2 text-ink-soft hover:text-indigo disabled:opacity-40" disabled={locked || index === 0} onClick={() => void act({ action: "move", id: image.id, direction: "up" })} aria-label={t("school.admin.up")}>↑</button>
-                      <button type="button" className="min-h-11 px-2 text-ink-soft hover:text-indigo disabled:opacity-40" disabled={locked || index === lesson.images.length - 1} onClick={() => void act({ action: "move", id: image.id, direction: "down" })} aria-label={t("school.admin.down")}>↓</button>
-                      <button type="button" className="min-h-11 px-2 text-pen-red disabled:opacity-40" disabled={locked} onClick={() => void act({ action: "delete", id: image.id })}>{t("school.admin.deleteWord")}</button>
+          {lesson.blocks.length > 0 && (
+            <ol className="space-y-3">
+              {lesson.blocks.map((block, index) => (
+                <li key={block.id} className="space-y-2 rounded-lg border border-line p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <span className="font-semibold">{index + 1} · {block.kind === "image" ? t("lessonEditor.kindImage") : t("lessonEditor.kindText")}</span>
+                    <span className="flex flex-wrap">
+                      {block.kind === "text" && (
+                        <button type="button" className="min-h-11 px-2 font-semibold text-indigo disabled:opacity-40" disabled={locked} onClick={() => setEditing(editing === block.id ? null : block.id)}>{t("grammar.admin.rename")}</button>
+                      )}
+                      <button type="button" className="min-h-11 px-2 text-ink-soft hover:text-indigo disabled:opacity-40" disabled={locked || index === 0} onClick={() => void act({ action: "move", id: block.id, direction: "up" })} aria-label={t("school.admin.up")}>↑</button>
+                      <button type="button" className="min-h-11 px-2 text-ink-soft hover:text-indigo disabled:opacity-40" disabled={locked || index === lesson.blocks.length - 1} onClick={() => void act({ action: "move", id: block.id, direction: "down" })} aria-label={t("school.admin.down")}>↓</button>
+                      <button type="button" className="min-h-11 px-2 text-pen-red disabled:opacity-40" disabled={locked} onClick={() => window.confirm(t("lessonEditor.deleteBlock")) && void act({ action: "delete", id: block.id })}>{t("school.admin.deleteWord")}</button>
                     </span>
                   </div>
+                  {block.kind === "image" ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={block.url} alt={t("grammar.imageAlt", { n: index + 1 })} loading="lazy" className="max-h-72 w-auto rounded-md bg-paper-deep object-contain" />
+                  ) : editing === block.id ? (
+                    <LessonEditor
+                      initial={block.body}
+                      busy={locked}
+                      onCancel={() => setEditing(null)}
+                      onSave={(body) => {
+                        void act({ action: "editText", id: block.id, body }).then(() => setEditing(null));
+                      }}
+                    />
+                  ) : (
+                    <div className="max-h-56 overflow-hidden rounded-xl bg-paper p-3 [mask-image:linear-gradient(to_bottom,black_70%,transparent)]">
+                      <LessonText body={block.body} />
+                    </div>
+                  )}
                 </li>
               ))}
             </ol>
           )}
 
+          {editing === "new" && (
+            <LessonEditor
+              initial=""
+              busy={locked}
+              onCancel={() => setEditing(null)}
+              onSave={(body) => {
+                void act({ action: "addText", unitId: lesson.id, body }).then(() => setEditing(null));
+              }}
+            />
+          )}
+
           <div className="space-y-2">
             <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" onChange={(event) => void upload(event.target.files)} aria-label={t("grammar.admin.add")} />
-            <TagButton disabled={locked} onClick={() => input.current?.click()}>{busy ? t("grammar.admin.uploading") : t("grammar.admin.add")}</TagButton>
+            <div className="flex flex-wrap gap-2">
+              <TagButton disabled={locked} onClick={() => input.current?.click()}>{busy ? t("grammar.admin.uploading") : t("grammar.admin.add")}</TagButton>
+              <TagButton disabled={locked || editing === "new"} onClick={() => setEditing("new")}>{t("lessonEditor.addText")}</TagButton>
+            </div>
             <p className="text-xs text-ink-faint">{t("grammar.admin.hint")}</p>
             {message && <p role="status" className="text-sm font-semibold">{message}</p>}
           </div>

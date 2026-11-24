@@ -1,5 +1,7 @@
 "use client";
 
+import { LessonBlocks } from "@/components/lesson-text";
+import type { LessonBlock } from "@/features/grammar/lesson-images";
 import { SessionProgress } from "@/components/session-progress";
 import Link from "next/link";
 import { useState } from "react";
@@ -10,7 +12,7 @@ import { useT } from "@/lib/i18n/provider";
 type Phase = "lesson" | "exercise" | "done";
 
 /** Lesson first, then the exercises one by one with an instant check and a short reason after each answer. */
-export function GrammarSession({ unit, images = [] }: { unit: GrammarUnit; images?: { id: string; url: string }[] }) {
+export function GrammarSession({ unit, blocks = [] }: { unit: GrammarUnit; blocks?: LessonBlock[] }) {
   const { t } = useT();
   const [phase, setPhase] = useState<Phase>("lesson");
   const [index, setIndex] = useState(0);
@@ -63,20 +65,8 @@ export function GrammarSession({ unit, images = [] }: { unit: GrammarUnit; image
           <p className="text-sm text-ink-soft">{t("grammar.unit", { n: unit.number })} · {unit.topic}</p>
           <h1 className="text-2xl font-semibold" dir="ltr">{unit.rule}</h1>
         </div>
-        {images.length > 0 ? (
-          <section className="space-y-3" aria-label={t("grammar.lesson")}>
-            <ol className="space-y-3">
-              {images.map((image, index) => (
-                <li key={image.id}>
-                  <a href={image.url} target="_blank" rel="noopener noreferrer" className="sheet block overflow-hidden p-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={image.url} alt={t("grammar.imageAlt", { n: index + 1 })} loading={index === 0 ? "eager" : "lazy"} className="h-auto w-full rounded-xl" />
-                  </a>
-                </li>
-              ))}
-            </ol>
-            <p className="text-center text-xs text-ink-faint">{t("grammar.imageTap")}</p>
-          </section>
+        {blocks.length > 0 ? (
+          <LessonBlocks blocks={blocks} imageAlt={(n) => t("grammar.imageAlt", { n })} tapHint={t("grammar.imageTap")} />
         ) : (
           <>
           <section className="sheet space-y-3 p-5" aria-labelledby="lesson-title">

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { LessonBlocks } from "@/components/lesson-text";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { loadLessonImages } from "@/features/grammar/lesson-images";
+import { loadLessonBlocks } from "@/features/grammar/lesson-images";
 import { loadTopics } from "@/features/grammar/topics";
 import { chosenStage } from "@/features/stage/stage";
 
@@ -17,30 +18,18 @@ export default async function GrammarTopicPage({ params }: { params: Promise<{ i
   const stage = chosenStage(profile?.stage);
   const topic = (await loadTopics(supabase, stage)).find((item) => item.id === id);
   if (!topic) notFound();
-  const images = await loadLessonImages(createSupabaseAdminClient(), id).catch(() => []);
+  const blocks = await loadLessonBlocks(createSupabaseAdminClient(), id).catch(() => []);
 
   return (
-    <div className="max-w-2xl space-y-5">
+    <div className="max-w-2xl space-y-5 lg:max-w-3xl">
       <div>
         <Link href="/grammar" className="text-sm text-indigo">{t("grammar.title")}</Link>
         <h1 className="text-2xl font-semibold">{topic.title}</h1>
       </div>
-      {images.length === 0 ? (
+      {blocks.length === 0 ? (
         <p className="sheet p-6 text-center text-ink-soft">{t("grammar.topicEmpty")}</p>
       ) : (
-        <section className="space-y-3" aria-label={t("grammar.lesson")}>
-          <ol className="space-y-3">
-            {images.map((image, index) => (
-              <li key={image.id}>
-                <a href={image.url} target="_blank" rel="noopener noreferrer" className="sheet block overflow-hidden p-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={image.url} alt={t("grammar.imageAlt", { n: index + 1 })} loading={index === 0 ? "eager" : "lazy"} className="h-auto w-full rounded-xl" />
-                </a>
-              </li>
-            ))}
-          </ol>
-          <p className="text-center text-xs text-ink-faint">{t("grammar.imageTap")}</p>
-        </section>
+        <LessonBlocks blocks={blocks} imageAlt={(n) => t("grammar.imageAlt", { n })} tapHint={t("grammar.imageTap")} />
       )}
     </div>
   );

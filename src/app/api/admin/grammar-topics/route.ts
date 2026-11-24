@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     }
     // delete: pictures first (files, then rows), then the lesson itself
     const { data: pictures } = await db.from("grammar_lessons").select("path").eq("unit_id", body.id);
-    const paths = (pictures ?? []).map((item) => item.path as string);
+    const paths = (pictures ?? []).flatMap((item) => (item.path ? [item.path as string] : []));
     if (paths.length > 0) await db.storage.from(LESSON_BUCKET).remove(paths);
     await db.from("grammar_lessons").delete().eq("unit_id", body.id);
     const { error } = await db.from("grammar_topics").delete().eq("id", body.id);

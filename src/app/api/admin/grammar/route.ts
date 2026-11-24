@@ -5,6 +5,7 @@ import { handleApiError } from "@/lib/api";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { grammarUnit } from "@/features/grammar";
 import { topicExists } from "@/features/grammar/topics";
+import { MAX_BODY_CHARS } from "@/features/grammar/markup";
 import { LESSON_BUCKET, MAX_IMAGES_PER_UNIT, MAX_IMAGE_BYTES, MIME, detectImageType } from "@/features/grammar/lesson-images";
 
 export const maxDuration = 30;
@@ -12,6 +13,8 @@ export const maxDuration = 30;
 const jsonSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("delete"), id: z.string().uuid() }),
   z.object({ action: z.literal("move"), id: z.string().uuid(), direction: z.enum(["up", "down"]) }),
+  z.object({ action: z.literal("addText"), unitId: z.string().min(1).max(40), body: z.string().trim().min(1).max(MAX_BODY_CHARS) }),
+  z.object({ action: z.literal("editText"), id: z.string().uuid(), body: z.string().trim().min(1).max(MAX_BODY_CHARS) }),
 ]);
 
 /**
@@ -59,12 +62,27 @@ export async function POST(request: Request) {
     const body = jsonSchema.parse(await request.json());
     const db = createSupabaseAdminClient();
 
+    if (body.action === "addText") {
+      if (!grammarUnit(body.unitId) && !(await topicExists(db, body.unitId))) return NextResponse.json({ error: "invalid_input" }, { status: 400 });
+      const { data: existing, error: listError } = await db.from("grammar_lessons").select("sort").eq("unit_id", body.unitId).order("sort", { ascending: false });
+      if (listError) throw listError;
+      if ((existing ?? []).length >= MAX_IMAGES_PER_UNIT) return NextResponse.json({ error: "too_many" }, { status: 400 });
+      const { error: insertError } = await db.from("grammar_lessons").insert({ unit_id: body.unitId, body: body.body, sort: (existing?.[0]?.sort ?? 0) + 1 });
+      if (insertError) throw insertError;
+      return NextResponse.json({ ok: true });
+    }
+    if (body.action === "editText") {
+      const { error: updateError } = await db.from("grammar_lessons").update({ body: body.body }).eq("id", body.id).not("body", "is", null);
+      if (updateError) throw updateError;
+      return NextResponse.json({ ok: true });
+    }
+
     const { data: row, error } = await db.from("grammar_lessons").select("id, unit_id, path").eq("id", body.id).maybeSingle();
     if (error) throw error;
     if (!row) return NextResponse.json({ ok: true });
 
     if (body.action === "delete") {
-      await db.storage.from(LESSON_BUCKET).remove([row.path]);
+      if (row.path) await db.storage.from(LESSON_BUCKET).remove([row.path]);
       const { error: deleteError } = await db.from("grammar_lessons").delete().eq("id", row.id);
       if (deleteError) throw deleteError;
       return NextResponse.json({ ok: true });

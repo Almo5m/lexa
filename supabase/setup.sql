@@ -201,6 +201,12 @@ create table if not exists public.grammar_lessons (
   created_at timestamptz not null default now()
 );
 create index if not exists grammar_lessons_unit_idx on public.grammar_lessons (unit_id, sort);
+-- A lesson block is a picture (path) or a formatted text (body), never both. Text uses the lesson format in src/features/grammar/markup.ts.
+alter table public.grammar_lessons alter column path drop not null;
+alter table public.grammar_lessons add column if not exists body text;
+alter table public.grammar_lessons drop constraint if exists grammar_lessons_kind_check;
+alter table public.grammar_lessons add constraint grammar_lessons_kind_check
+  check ((path is not null and body is null) or (path is null and body is not null and char_length(body) between 1 and 20000));
 
 -- Extra grammar lessons the admin creates for any stage (first / second secondary, general learners...).
 -- Their pictures live in grammar_lessons with the topic's id as unit_id.
