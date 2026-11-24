@@ -23,6 +23,9 @@ const families: Record<string, string[]> = {
   "sort.": [...SORTS],
   "plans.name.": ["free", "plus"],
   "plans.state.": ["active", "expiring", "expired"],
+  "cur.part.": ["words", "grammar", "writing", "listening", "speaking"],
+  "cur.hint.": ["words", "grammar", "writing", "listening", "speaking"],
+  "cur.state.": ["empty", "todo", "progress", "done"],
   "level.name.": ["1", "2", "3", "4", "5"],
 };
 

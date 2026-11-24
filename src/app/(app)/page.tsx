@@ -258,7 +258,7 @@ export default async function HomePage() {
       <aside className="mt-5 space-y-5 xl:sticky xl:top-6 xl:mt-0">
         <div className="grid grid-cols-2 gap-3">
           <BlockCard href="/words" tone="indigo" icon={<WordsIcon />} title={t("blocks.words")} hint={t("blocks.wordsHint")} />
-          <BlockCard href="/grammar" tone="leaf" icon={<GrammarIcon />} title={t("blocks.explain")} hint={t("blocks.explainHint")} />
+          <BlockCard href="/curriculum" tone="leaf" icon={<GrammarIcon />} title={t("cur.title")} hint={t("blocks.explainHint")} />
           <BlockCard href="/path" tone="amber" icon={<PathIcon />} title={t("blocks.path")} hint={t("blocks.pathHint")} />
           <BlockCard
             href="/challenge"

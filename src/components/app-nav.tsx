@@ -16,7 +16,7 @@ interface NavLink {
 }
 
 /** Pages that belong to a tab without being its own route, so the tab stays lit while the student works. */
-const TODAY_PATHS = ["/learn", "/read"];
+const TODAY_PATHS = ["/learn", "/read", "/curriculum"];
 const PRACTICE_PATHS = ["/review", "/quiz", "/translate", "/level", "/suggest", "/talk"];
 const WORDS_PATHS = ["/add"];
 
