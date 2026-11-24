@@ -9,7 +9,7 @@ import { loadPlusUntil } from "@/features/plus/server";
 
 export const metadata = { title: "Booo Plus" };
 
-const FEATURES = ["ai", "export", "look"] as const;
+const FEATURES = ["ai", "export", "look", "chat"] as const;
 
 export default async function PlusPage() {
   const { user } = await requireUserPage();
@@ -32,7 +32,7 @@ export default async function PlusPage() {
           {FEATURES.map((feature) => (
             <li key={feature} className="flex gap-3">
               <span aria-hidden="true" className="font-bold text-leaf">✓</span>
-              <span>{t(`plus.feature.${feature}` as never, { n: settings.plusAiMultiplier })}</span>
+              <span>{t(`plus.feature.${feature}` as never, { n: settings.plusAiMultiplier, a: settings.chatDailyPlus, b: settings.chatDailyFree })}</span>
             </li>
           ))}
         </ul>

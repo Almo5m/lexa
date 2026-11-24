@@ -3,7 +3,7 @@ export const ADMIN_GROUPS = [
   { key: "main", tabs: ["overview"] },
   { key: "students", tabs: ["students", "feedback"] },
   { key: "content", tabs: ["school", "grammar", "cards", "hooks", "wod", "bo", "contest"] },
-  { key: "money", tabs: ["codes"] },
+  { key: "money", tabs: ["plans", "codes"] },
   { key: "system", tabs: ["ai", "launch", "settings"] },
 ] as const;
 

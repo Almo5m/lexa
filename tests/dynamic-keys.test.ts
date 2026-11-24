@@ -14,13 +14,15 @@ const families: Record<string, string[]> = {
   "look.color.": COLORS.map((color) => color.id),
   "stage.": [...STAGES],
   "school.admin.stage.": [...UNIT_STAGES, "every"],
-  "plus.feature.": ["ai", "export", "look"],
+  "plus.feature.": ["ai", "export", "look", "chat"],
   "level.skills.": ["en2ar", "ar2en", "word", "write"],
   "hook.status.": ["pending", "approved", "rejected"],
   "hooks.status.": ["pending", "approved", "rejected"],
   "mastery.": [...LEVELS],
   "source.": [...SOURCES],
   "sort.": [...SORTS],
+  "plans.name.": ["free", "plus"],
+  "plans.state.": ["active", "expiring", "expired"],
   "level.name.": ["1", "2", "3", "4", "5"],
 };
 

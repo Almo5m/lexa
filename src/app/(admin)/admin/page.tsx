@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CodesTab } from "./tabs/codes";
+import { PlansTab } from "./tabs/plans";
 import { FeedbackTab } from "./tabs/feedback";
 import { HooksTab } from "./tabs/hooks";
 import { loadBadgeCounts } from "@/features/admin/counts";
@@ -56,6 +57,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
       {tab === "overview" && <Overview />}
       {tab === "students" && <StudentsTab q={params.q} page={params.page} id={params.id} />}
+      {tab === "plans" && <PlansTab />}
       {tab === "codes" && <CodesTab />}
       {tab === "feedback" && <FeedbackTab />}
       {tab === "hooks" && <HooksTab />}
