@@ -3,21 +3,10 @@
 import { useEffect, useState } from "react";
 import { SpeakerIcon } from "@/components/icons";
 import { useT } from "@/lib/i18n/provider";
+import { speakText, stopSpeaking, supportsSpeaking } from "@/lib/voice/tts";
 
 export function speak(text: string, onEnd?: () => void): boolean {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.9;
-  const voice = window.speechSynthesis
-    .getVoices()
-    .find((item) => item.lang.startsWith("en-US") || item.lang.startsWith("en-GB"));
-  if (voice) utterance.voice = voice;
-  utterance.onend = () => onEnd?.();
-  utterance.onerror = () => onEnd?.();
-  window.speechSynthesis.speak(utterance);
-  return true;
+  return speakText(text, { onEnd });
 }
 
 interface SpeakButtonProps {
@@ -32,10 +21,8 @@ export function SpeakButton({ text, label, size = "normal" }: SpeakButtonProps) 
   const [supported, setSupported] = useState(true);
 
   useEffect(() => {
-    setSupported("speechSynthesis" in window);
-    return () => {
-      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-    };
+    setSupported(supportsSpeaking());
+    return () => stopSpeaking();
   }, []);
 
   const dimension = size === "small" ? "h-11 w-11" : "h-12 w-12";

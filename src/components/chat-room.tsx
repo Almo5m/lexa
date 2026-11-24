@@ -2,13 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { BoMascot } from "@/components/bo-mascot";
 import { RichText } from "@/components/rich-text";
 import { PlanBadge, UsageMeter } from "@/components/chat-usage";
 import { fetchAi } from "@/lib/fetch-ai";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
+import { VoiceSettings } from "@/components/voice-settings";
+import { listen, supportsListening, type ListenError, type Listener } from "@/lib/voice/stt";
+import { speakText, stopSpeaking, supportsSpeaking } from "@/lib/voice/tts";
 
 interface Message {
   role: "student" | "tutor";
@@ -52,14 +55,78 @@ export function ChatRoom(props: Props) {
   const scroller = useRef<HTMLDivElement>(null);
   const stopRef = useRef<AbortController | null>(null);
 
+  // Voice: the mic types for the student; "voice mode" also reads Bo's reply aloud and listens again after it.
+  const [canTalk, setCanTalk] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
+  const [micOn, setMicOn] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [micError, setMicError] = useState<ListenError | null>(null);
+  const listener = useRef<Listener | null>(null);
+  const voiceModeRef = useRef(false);
+  voiceModeRef.current = voiceMode;
+
   const full = count >= props.maxPerConversation;
   const outOfMessages = used >= props.limit;
+
+  useEffect(() => {
+    setCanTalk(supportsListening() && supportsSpeaking());
+    return () => {
+      listener.current?.abort();
+      stopSpeaking();
+    };
+  }, []);
+
+  const startMic = useCallback(() => {
+    if (listener.current) return;
+    setMicError(null);
+    setMicOn(true);
+    listener.current = listen({
+      onInterim: setDraft,
+      onFinal: (heard) => {
+        setDraft(heard);
+        void sendRef.current(heard, true);
+      },
+      onError: (error) => {
+        setMicError(error);
+        if (error !== "no_speech") setVoiceMode(false);
+      },
+      onEnd: () => {
+        listener.current = null;
+        setMicOn(false);
+      },
+    });
+    if (!listener.current) setMicOn(false);
+  }, []);
+
+  function toggleMic() {
+    if (micOn) {
+      listener.current?.stop();
+      return;
+    }
+    stopSpeaking();
+    setSpeaking(false);
+    startMic();
+  }
+
+  function toggleVoiceMode() {
+    if (voiceMode) {
+      setVoiceMode(false);
+      listener.current?.abort();
+      stopSpeaking();
+      setSpeaking(false);
+      return;
+    }
+    setVoiceMode(true);
+    startMic();
+  }
 
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight });
   }, [messages, busy, error]);
 
-  async function send(text: string) {
+  const sendRef = useRef<(text: string, spoken?: boolean) => Promise<void>>(async () => undefined);
+
+  async function send(text: string, spoken = false) {
     const clean = text.trim();
     if (!clean || busy !== "idle" || full || outOfMessages) return;
     setError(null);
@@ -103,6 +170,16 @@ export function ChatRoom(props: Props) {
         // A cut connection keeps what arrived (the server saved it too).
         if (!reply && !stop.signal.aborted) setError("tutor.error");
       }
+      if ((spoken || voiceModeRef.current) && reply) {
+        setSpeaking(true);
+        const started = speakText(reply, {
+          onEnd: () => {
+            setSpeaking(false);
+            if (voiceModeRef.current) startMic();
+          },
+        });
+        if (!started) setSpeaking(false);
+      }
       void fetch("/api/chat/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -119,6 +196,8 @@ export function ChatRoom(props: Props) {
       setBusy("idle");
     }
   }
+
+  sendRef.current = send;
 
   async function continueNew() {
     setStarting(true);
@@ -162,6 +241,31 @@ export function ChatRoom(props: Props) {
           </div>
           <p className="text-sm text-ink-soft" aria-live="polite">{t(status, { ai: "بو" })}</p>
           <UsageMeter used={used} limit={props.limit} />
+          {canTalk && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleVoiceMode}
+                aria-pressed={voiceMode}
+                disabled={full || outOfMessages}
+                className={`min-h-11 rounded-full px-4 text-sm font-medium disabled:opacity-50 ${voiceMode ? "bg-leaf text-white" : "shadow-[inset_0_0_0_2px_var(--color-ink)] hover:bg-paper-deep"}`}
+              >
+                {voiceMode ? t("voice.mode.on") : t("voice.mode.off")}
+              </button>
+              {speaking && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopSpeaking();
+                    setSpeaking(false);
+                  }}
+                  className="min-h-11 rounded-full px-4 text-sm shadow-[inset_0_0_0_2px_var(--color-line)] hover:bg-paper-deep"
+                >
+                  {t("voice.stopSpeaking")}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -216,11 +320,28 @@ export function ChatRoom(props: Props) {
             disabled={outOfMessages}
             className="field max-h-32 min-h-11 flex-1 resize-none"
           />
+          {canTalk && (
+            <button
+              type="button"
+              onClick={toggleMic}
+              aria-pressed={micOn}
+              aria-label={micOn ? t("voice.listening") : t("voice.mic")}
+              title={micOn ? t("voice.listening") : t("voice.mic")}
+              disabled={busy !== "idle" || outOfMessages}
+              className={`min-h-11 min-w-11 rounded-full px-3 text-sm font-medium disabled:opacity-50 ${micOn ? "bg-pen-red text-white" : "shadow-[inset_0_0_0_2px_var(--color-ink)] hover:bg-paper-deep"}`}
+            >
+              {micOn ? t("voice.listening") : t("voice.mic")}
+            </button>
+          )}
           <button type="submit" disabled={busy !== "idle" || draft.trim() === "" || outOfMessages} className="tag-btn min-h-11 text-sm disabled:opacity-50">
             {t("bochat.send")}
           </button>
         </form>
       )}
+      {micError && micError !== "no_speech" && (
+        <p role="alert" className="rounded-2xl bg-pen-red/10 px-4 py-3 text-sm text-pen-red">{t(`voice.err.${micError}` as DictKey)}</p>
+      )}
+      {canTalk && <VoiceSettings />}
       <p className="text-center text-xs text-ink-faint">{t("bochat.convLeft", { a: Math.min(count, props.maxPerConversation), b: props.maxPerConversation })}</p>
     </div>
   );

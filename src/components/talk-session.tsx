@@ -3,13 +3,14 @@
 import { fetchAi } from "@/lib/fetch-ai";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { RichText } from "@/components/rich-text";
 import { TagButton } from "@/components/tag-button";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
 import { MAX_CHARS, MIN_CHARS, bandLabel } from "@/features/talk/analyze";
 import type { TalkAnalysis } from "@/features/talk/schemas";
+import { listen, supportsListening, type ListenError, type Listener } from "@/lib/voice/stt";
 
 interface Props {
   topics: { id: string; prompt: string }[];
@@ -22,22 +23,6 @@ interface Result {
   wordsUsed: { target: string[]; used: string[] } | null;
 }
 
-interface Recognition {
-  lang: string;
-  interimResults: boolean;
-  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
-  onend: (() => void) | null;
-  onerror: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-}
-
-function createRecognition(): Recognition | null {
-  const Ctor = (window as unknown as Record<string, (new () => Recognition) | undefined>).SpeechRecognition
-    ?? (window as unknown as Record<string, (new () => Recognition) | undefined>).webkitSpeechRecognition;
-  return Ctor ? new Ctor() : null;
-}
-
 export function TalkSession({ topics }: Props) {
   const { t } = useT();
   const router = useRouter();
@@ -47,7 +32,14 @@ export function TalkSession({ topics }: Props) {
   const [error, setError] = useState<DictKey | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [listening, setListening] = useState(false);
-  const recognition = useRef<Recognition | null>(null);
+  const recognition = useRef<Listener | null>(null);
+  const [micSupported, setMicSupported] = useState(false);
+  const [micError, setMicError] = useState<ListenError | null>(null);
+
+  useEffect(() => {
+    setMicSupported(supportsListening());
+    return () => recognition.current?.abort();
+  }, []);
   const topic = topics[topicIndex % topics.length];
 
   function toggleMic() {
@@ -55,22 +47,15 @@ export function TalkSession({ topics }: Props) {
       recognition.current?.stop();
       return;
     }
-    const instance = createRecognition();
-    if (!instance) return;
-    instance.lang = "en-US";
-    instance.interimResults = false;
-    instance.onresult = (event) => {
-      const heard = Array.from(event.results)
-        .map((item) => item[0]?.transcript ?? "")
-        .join(" ")
-        .trim();
-      if (heard) setText((current) => `${current}${current && !current.endsWith(" ") ? " " : ""}${heard}`.slice(0, MAX_CHARS));
-    };
-    instance.onend = () => setListening(false);
-    instance.onerror = () => setListening(false);
-    recognition.current = instance;
+    setMicError(null);
     setListening(true);
-    instance.start();
+    recognition.current = listen({
+      onFinal: (heard) =>
+        setText((current) => `${current}${current && !current.endsWith(" ") ? " " : ""}${heard}`.slice(0, MAX_CHARS)),
+      onError: setMicError,
+      onEnd: () => setListening(false),
+    });
+    if (!recognition.current) setListening(false);
   }
 
   async function submit(event: FormEvent) {
@@ -116,7 +101,6 @@ export function TalkSession({ topics }: Props) {
 
   if (result) return <ResultView result={result} onAgain={again} />;
 
-  const micSupported = typeof window !== "undefined" && createRecognition() !== null;
 
   return (
     <form onSubmit={submit} className="sheet space-y-5 p-5 md:p-6">
@@ -162,6 +146,7 @@ export function TalkSession({ topics }: Props) {
         )}
       </div>
 
+      {micError && micError !== "no_speech" && <p role="alert" className="text-pen-red">{t(`voice.err.${micError}` as DictKey)}</p>}
       {busy && <p className="text-ink-soft">{t("tutor.thinking")}</p>}
       {error && (
         <p role="alert" className="pen-error text-pen-red">

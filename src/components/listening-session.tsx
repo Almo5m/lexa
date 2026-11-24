@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { speak } from "@/components/speak-button";
+import { VoiceSettings } from "@/components/voice-settings";
 import { TagButton } from "@/components/tag-button";
 import type { ListeningTask } from "@/features/listening/tasks";
 import { useT } from "@/lib/i18n/provider";
+import { speakText, stopSpeaking, supportsSpeaking } from "@/lib/voice/tts";
 
 const MAX_PLAYS = 3;
 
@@ -19,10 +20,8 @@ export function ListeningSession({ task }: { task: ListeningTask }) {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    setSupported("speechSynthesis" in window);
-    return () => {
-      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-    };
+    setSupported(supportsSpeaking());
+    return () => stopSpeaking();
   }, []);
 
   const score = picked.filter((choice, i) => choice === task.questions[i].answer).length;
@@ -33,11 +32,11 @@ export function ListeningSession({ task }: { task: ListeningTask }) {
     if (playing || plays >= MAX_PLAYS) return;
     setPlaying(true);
     setPlays((value) => value + 1);
-    if (!speak(task.script, () => setPlaying(false))) setPlaying(false);
+    if (!speakText(task.script, { onEnd: () => setPlaying(false) })) setPlaying(false);
   }
 
   function finish() {
-    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+    stopSpeaking();
     setDone(true);
     void fetch("/api/book/score", {
       method: "POST",
@@ -60,6 +59,7 @@ export function ListeningSession({ task }: { task: ListeningTask }) {
               {playing ? t("listening.playing") : plays === 0 ? t("listening.play") : t("listening.playAgain")}
             </TagButton>
             <p className="text-sm text-ink-soft" role="status">{t("listening.left", { n: MAX_PLAYS - plays })}</p>
+            <VoiceSettings />
           </>
         ) : (
           <p className="text-pen-red">{t("listening.unsupported")}</p>

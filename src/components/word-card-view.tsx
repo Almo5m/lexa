@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { RevealIcon } from "@/components/icons";
 import { HookBlock } from "@/components/hook-block";
+import { PronounceCheck } from "@/components/pronounce-check";
 import { SpeakButton } from "@/components/speak-button";
 import { useT } from "@/lib/i18n/provider";
 import type { WordCard } from "@/features/ai/schemas";
@@ -39,6 +40,8 @@ export function WordCardView({ card, startRevealed = false, onRevealChange, word
         <p className="ltr-text flex-1 text-xl leading-9">{card.sentence}</p>
         <SpeakButton text={card.sentence} label={t("card.listenSentence")} size="small" />
       </div>
+
+      <PronounceCheck target={card.sentence} />
 
       {!revealed && <p className="text-sm text-ink-faint">{t("card.guess")}</p>}
 

@@ -28,6 +28,8 @@ const families: Record<string, string[]> = {
   "cur.hint.": ["words", "grammar", "writing", "listening", "speaking"],
   "cur.state.": ["empty", "todo", "progress", "done"],
   "lessonEditor.color.": [...LESSON_COLORS],
+  "voice.speed.": ["slow", "normal", "fast"],
+  "voice.err.": ["denied", "no_speech", "no_mic", "network", "other"],
   "level.name.": ["1", "2", "3", "4", "5"],
 };
 

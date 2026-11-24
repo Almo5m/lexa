@@ -5,6 +5,7 @@ import { loadPlusUntil } from "@/features/plus/server";
 import { AccountForm } from "@/components/account-form";
 import { ShareManager } from "@/components/share-manager";
 import { isActive } from "@/features/share/token";
+import { VoiceSettings } from "@/components/voice-settings";
 import { StageForm } from "@/components/stage-form";
 import { chosenStage } from "@/features/stage/stage";
 import { InterestsForm } from "@/components/interests-form";
@@ -55,6 +56,12 @@ export default async function MePage() {
         <section aria-labelledby="look-title" className="sheet space-y-3 p-6">
           <h2 id="look-title" className="text-xl font-bold">{t("look.title")}</h2>
           <BoLookPicker level={levelFromXp(profile?.total_xp ?? 0)} plus={plus} />
+        </section>
+
+        <section aria-labelledby="voice-title" className="sheet space-y-3 p-6">
+          <h2 id="voice-title" className="text-xl font-bold">{t("voice.title")}</h2>
+          <p className="text-ink-soft">{t("voice.hint")}</p>
+          <VoiceSettings showVoice />
         </section>
 
         <section className="sheet p-6">
