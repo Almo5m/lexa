@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { dictionaries } from "@/lib/i18n/dictionary";
 import { COLORS, HATS } from "@/features/bo/look";
+import { LEVELS, SORTS, SOURCES } from "@/features/words/bubbles";
 import { STAGES, UNIT_STAGES } from "@/features/stage/stage";
 
 /**
@@ -17,6 +18,9 @@ const families: Record<string, string[]> = {
   "level.skills.": ["en2ar", "ar2en", "word", "write"],
   "hook.status.": ["pending", "approved", "rejected"],
   "hooks.status.": ["pending", "approved", "rejected"],
+  "mastery.": [...LEVELS],
+  "source.": [...SOURCES],
+  "sort.": [...SORTS],
   "level.name.": ["1", "2", "3", "4", "5"],
 };
 

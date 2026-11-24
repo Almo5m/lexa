@@ -6,22 +6,19 @@ import { loadSettings } from "@/lib/settings-server";
 import { SchoolUnitCard } from "@/components/school-unit-card";
 import { loadSchoolUnits, unitsForStage } from "@/features/school/load";
 import { percent, unitProgress, type SchoolWordState } from "@/features/school/progress";
+import { QuickAddWords } from "@/components/quick-add-words";
+import { BUBBLE_CLASS, LEVELS, SORTS, SOURCES, countByLevel, filterWords, isLevel, isSort, isSource, levelOf, type BubbleWord } from "@/features/words/bubbles";
 import { statusOf, type WordRow } from "@/lib/words";
-import type { WordStatus } from "@/features/srs/types";
 import type { DictKey } from "@/lib/i18n/dictionary";
 
 export const metadata = { title: "My words" };
 
-const FILTERS = ["all", "new", "learning", "weak", "mastered"] as const;
-type Filter = (typeof FILTERS)[number];
-
 export default async function WordsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; group?: string; q?: string; tab?: string }>;
+  searchParams: Promise<{ filter?: string; group?: string; q?: string; tab?: string; source?: string; sort?: string }>;
 }) {
   const params = await searchParams;
-  const filter: Filter = FILTERS.includes(params.filter as Filter) ? (params.filter as Filter) : "all";
   const { supabase, user } = await requireUserPage();
   const { t } = await getT();
   const settings = await loadSettings();
@@ -33,7 +30,7 @@ export default async function WordsPage({
   const [{ data: wordsData }, { data: groups }] = await Promise.all([
     supabase
       .from("words")
-      .select("id, term, card, card_status, ease, interval_days, repetitions, lapses, correct_count, wrong_count, due_at, last_reviewed_at, group_id")
+      .select("id, term, card, card_status, ease, interval_days, repetitions, lapses, correct_count, wrong_count, due_at, last_reviewed_at, group_id, source, created_at")
       .order("term"),
     supabase.from("word_groups").select("id, name").order("name"),
   ]);
@@ -43,28 +40,6 @@ export default async function WordsPage({
     row,
     status: statusOf(row, settings),
   }));
-
-  const visible = all.filter(
-    ({ row, status }) =>
-      (filter === "all" || status === filter) &&
-      (!params.group || row.group_id === params.group) &&
-      (!q || row.term.includes(q)),
-  );
-
-  const counts: Record<Filter, number> = {
-    all: all.length,
-    new: all.filter((w) => w.status === "new").length,
-    learning: all.filter((w) => w.status === "learning").length,
-    weak: all.filter((w) => w.status === "weak").length,
-    mastered: all.filter((w) => w.status === "mastered").length,
-  };
-
-  const statusLabel: Record<WordStatus, DictKey> = {
-    new: "card.status.new",
-    learning: "card.status.learning",
-    weak: "card.status.weak",
-    mastered: "card.status.mastered",
-  };
 
   const tabs = (
     <nav aria-label={t("words.title")} className="flex gap-1 rounded-full bg-sheet p-1 shadow-[var(--shadow-1)]">
@@ -138,95 +113,134 @@ export default async function WordsPage({
     );
   }
 
-  const href = (next: Partial<{ filter: string; group: string }>) => {
+  const bubbleWords: BubbleWord[] = all.map(({ row, status }) => ({
+    id: row.id,
+    term: row.term,
+    status,
+    reviewed: row.last_reviewed_at !== null,
+    correct: row.correct_count,
+    wrong: row.wrong_count,
+    source: isSource(row.source) ? row.source : "own",
+    groupId: row.group_id,
+    createdAt: row.created_at ?? "",
+  }));
+  const level = isLevel(params.filter) ? params.filter : undefined;
+  const source = isSource(params.source) ? params.source : undefined;
+  const sort = isSort(params.sort) ? params.sort : "az";
+  const shown = filterWords(bubbleWords, { level, source, groupId: params.group, query: q, sort });
+  const levelCounts = countByLevel(bubbleWords);
+
+  const href = (next: Partial<{ filter: string; source: string; group: string; sort: string }>) => {
     const search = new URLSearchParams({ tab: "mine" });
-    const f = next.filter ?? filter;
-    const g = "group" in next ? next.group : params.group;
-    if (f !== "all") search.set("filter", f);
-    if (g) search.set("group", g);
+    const pick = (key: "filter" | "source" | "group" | "sort", current: string | undefined) => {
+      const value = key in next ? next[key] : current;
+      if (value) search.set(key, value);
+    };
+    pick("filter", level);
+    pick("source", source);
+    pick("group", params.group);
+    pick("sort", sort === "az" ? undefined : sort);
     if (q) search.set("q", q);
-    const text = search.toString();
-    return `/words?${text}`;
+    return `/words?${search.toString()}`;
   };
+  const chip = (active: boolean) =>
+    `inline-flex min-h-11 items-center rounded-full px-4 text-sm ${
+      active ? "bg-ink font-medium text-sheet" : "shadow-[inset_0_0_0_2px_var(--color-line)] hover:bg-paper-deep"
+    }`;
 
   return (
     <div className="max-w-3xl space-y-6 lg:max-w-5xl">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{t("words.title")}</h1>
-        <Link href="/add" className="tag-btn min-h-11 text-sm">
-          {t("words.add")}
-        </Link>
-      </div>
-
+      <h1 className="text-2xl font-semibold">{t("words.title")}</h1>
       {tabs}
 
-      <form action="/words" className="flex gap-3">
-        <input type="hidden" name="tab" value="mine" />
-        {filter !== "all" && <input type="hidden" name="filter" value={filter} />}
-        {params.group && <input type="hidden" name="group" value={params.group} />}
-        <label htmlFor="q" className="sr-only">
-          {t("words.search")}
-        </label>
-        <input id="q" name="q" defaultValue={q} placeholder={t("words.search")} className="field ltr-text" />
-      </form>
-
-      <nav aria-label={t("words.title")} className="flex flex-wrap gap-2">
-        {FILTERS.map((item) => (
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-5" aria-label={t("words.levelsTitle")}>
+        {LEVELS.map((item) => (
           <Link
             key={item}
-            href={href({ filter: item })}
-            aria-current={filter === item ? "true" : undefined}
-            className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm ${
-              filter === item ? "bg-ink font-medium text-sheet" : "shadow-[inset_0_0_0_2px_var(--color-line)] hover:bg-paper-deep"
-            }`}
+            href={href({ filter: level === item ? undefined : item })}
+            aria-current={level === item ? "true" : undefined}
+            className={`rounded-3xl border p-4 transition-transform active:scale-[0.98] ${BUBBLE_CLASS[item]} ${level === item ? "ring-2 ring-current" : ""}`}
           >
-            {t(`words.${item}` as DictKey)} · {counts[item]}
+            <span className="block text-2xl font-bold">{levelCounts[item]}</span>
+            <span className="block text-sm font-medium">{t(`mastery.${item}` as DictKey)}</span>
           </Link>
         ))}
-      </nav>
+      </section>
 
-      {groups && groups.length > 0 && (
-        <nav aria-label="Groups" className="flex flex-wrap gap-2 text-sm">
-          <Link href={href({ group: undefined })} className="min-h-11 content-center px-2 transition-colors hover:text-indigo">
-            {t("words.all")}
-          </Link>
-          {groups.map((group) => (
-            <Link
-              key={group.id}
-              href={href({ group: group.id })}
-              aria-current={params.group === group.id ? "true" : undefined}
-              className={`min-h-11 content-center px-2 transition-colors hover:text-indigo ${params.group === group.id ? "font-semibold" : "text-ink-soft"}`}
-            >
-              {group.name}
+      <QuickAddWords groups={groups ?? []} />
+
+      <section className="space-y-3" aria-label={t("words.filters")}>
+        <form action="/words" className="flex gap-3">
+          <input type="hidden" name="tab" value="mine" />
+          {level && <input type="hidden" name="filter" value={level} />}
+          {source && <input type="hidden" name="source" value={source} />}
+          {params.group && <input type="hidden" name="group" value={params.group} />}
+          {sort !== "az" && <input type="hidden" name="sort" value={sort} />}
+          <label htmlFor="q" className="sr-only">{t("words.search")}</label>
+          <input id="q" name="q" defaultValue={q} placeholder={t("words.search")} className="field ltr-text" />
+        </form>
+
+        <nav aria-label={t("words.bySource")} className="flex flex-wrap gap-2">
+          <Link href={href({ source: undefined })} aria-current={!source ? "true" : undefined} className={chip(!source)}>{t("words.all")}</Link>
+          {SOURCES.map((item) => (
+            <Link key={item} href={href({ source: item })} aria-current={source === item ? "true" : undefined} className={chip(source === item)}>
+              {t(`source.${item}` as DictKey)}
             </Link>
           ))}
         </nav>
-      )}
 
-      {visible.length === 0 ? (
+        {groups && groups.length > 0 && (
+          <nav aria-label={t("words.byGroup")} className="flex flex-wrap gap-2">
+            <Link href={href({ group: undefined })} aria-current={!params.group ? "true" : undefined} className={chip(!params.group)}>{t("words.allGroups")}</Link>
+            {groups.map((group) => (
+              <Link key={group.id} href={href({ group: group.id })} aria-current={params.group === group.id ? "true" : undefined} className={chip(params.group === group.id)}>
+                {group.name}
+              </Link>
+            ))}
+          </nav>
+        )}
+
+        <nav aria-label={t("words.sortBy")} className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
+          <span>{t("words.sortBy")}</span>
+          {SORTS.map((item) => (
+            <Link key={item} href={href({ sort: item === "az" ? undefined : item })} aria-current={sort === item ? "true" : undefined} className={chip(sort === item)}>
+              {t(`sort.${item}` as DictKey)}
+            </Link>
+          ))}
+        </nav>
+      </section>
+
+      <p className="text-sm text-ink-faint">{t("words.shownCount", { a: shown.length, b: bubbleWords.length })}</p>
+
+      {shown.length === 0 ? (
         <div className="sheet flex flex-col items-center gap-3 p-8 text-center">
-          <BoMascot mood={filter === "weak" ? "happy" : "neutral"} size={130} />
-          <p className="text-ink-soft">{filter === "weak" ? t("words.emptyWeak") : t("words.empty")}</p>
+          <BoMascot mood={level === "weak" ? "happy" : "neutral"} size={130} />
+          <p className="text-ink-soft">{level === "weak" ? t("words.emptyWeak") : t("words.empty")}</p>
         </div>
       ) : (
-        <ul className="border-t border-line lg:columns-2 lg:gap-x-10">
-          {visible.map(({ row, status }) => (
-            <li key={row.id} className="break-inside-avoid border-b border-line">
+        <ul className="flex flex-wrap gap-2.5" aria-label={t("words.title")}>
+          {shown.map((word) => (
+            <li key={word.id}>
               <Link
-                href={`/words/${row.id}`}
-                className="flex min-h-14 items-center justify-between gap-4 px-1 hover:bg-paper-deep/60"
+                href={`/words/${word.id}`}
+                title={t(`mastery.${levelOf(word)}` as DictKey)}
+                className={`ltr-text inline-flex min-h-11 items-center rounded-full border px-4 text-base font-medium transition-transform active:scale-[0.97] ${BUBBLE_CLASS[levelOf(word)]}`}
               >
-                <span className="ltr-text text-lg font-medium">{row.term}</span>
-                <span className="flex items-center gap-3 text-sm text-ink-soft">
-                  <span className={status === "weak" ? "font-semibold text-pen-red" : status === "mastered" ? "text-leaf" : ""}>
-                    {t(statusLabel[status])}
-                  </span>
-                </span>
+                {word.term}
               </Link>
             </li>
           ))}
         </ul>
       )}
+
+      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-faint" aria-label={t("words.levelsTitle")}>
+        {LEVELS.map((item) => (
+          <li key={item} className="flex items-center gap-1.5">
+            <span aria-hidden="true" className={`size-3 rounded-full border ${BUBBLE_CLASS[item]}`} />
+            {t(`mastery.${item}` as DictKey)}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
