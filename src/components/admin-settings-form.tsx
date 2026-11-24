@@ -65,6 +65,9 @@ const GROUPS: { title: DictKey; fields: FieldSpec[] }[] = [
     title: "admin.group.plus",
     fields: [
       { key: "plusAiMultiplier", kind: "number" },
+      { key: "chatDailyFree", kind: "number" },
+      { key: "chatDailyPlus", kind: "number" },
+      { key: "chatMessagesPerConversation", kind: "number" },
       { key: "plusPrice", kind: "text" },
       { key: "plusHowToBuy", kind: "text" },
     ],

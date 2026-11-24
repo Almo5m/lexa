@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { DashboardIcon, HomeIcon, BoIcon, PathIcon, PracticeIcon, WordsIcon } from "@/components/icons";
-import { BoChatLauncher } from "@/components/bo-chat-sheet";
 import { useT } from "@/lib/i18n/provider";
 import type { DictKey } from "@/lib/i18n/dictionary";
 
@@ -35,6 +34,8 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
   const practice: NavLink = { href: "/practice", label: "nav.practice", icon: <PracticeIcon />, also: PRACTICE_PATHS, tour: "practice" };
   const words: NavLink = { href: "/words", label: "nav.words", icon: <WordsIcon />, also: WORDS_PATHS, tour: "words" };
 
+  const bo: NavLink = { href: "/chat", label: "nav.lexa", icon: <BoIcon />, tour: "lexa" };
+
   const tabClass = (active: boolean) =>
     `flex min-h-14 flex-col items-center justify-center gap-0.5 px-2 text-xs lg:min-h-12 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-full lg:px-4 lg:text-base ${
       active ? "font-bold text-indigo rounded-2xl bg-indigo/10" : "rounded-2xl text-ink-faint hover:text-ink"
@@ -63,10 +64,7 @@ export function AppNav({ isAdmin }: { isAdmin: boolean }) {
       {plain(practice)}
       {plain(words)}
 
-      <BoChatLauncher className={tabClass(false)} tour="lexa">
-        <BoIcon />
-        {t("nav.lexa")}
-      </BoChatLauncher>
+      {plain(bo)}
 
       {isAdmin && (
         <Link

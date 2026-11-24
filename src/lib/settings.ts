@@ -26,6 +26,9 @@ export const settingsSchema = z.object({
   boMessageEveryMinutes: z.number().int().min(0).max(240),
   boMessagesPerDay: z.number().int().min(0).max(20),
   plusAiMultiplier: z.number().int().min(1).max(10),
+  chatDailyFree: z.number().int().min(0).max(500),
+  chatDailyPlus: z.number().int().min(0).max(2000),
+  chatMessagesPerConversation: z.number().int().min(6).max(200),
   plusPrice: z.string().max(80),
   plusHowToBuy: z.string().max(500),
 });
@@ -58,6 +61,9 @@ export const defaultSettings: AppSettings = {
   boMessageEveryMinutes: 20,
   boMessagesPerDay: 4,
   plusAiMultiplier: 3,
+  chatDailyFree: 15,
+  chatDailyPlus: 60,
+  chatMessagesPerConversation: 30,
   plusPrice: "",
   plusHowToBuy: "",
 };

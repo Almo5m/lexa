@@ -267,7 +267,7 @@ export default async function HomePage() {
             title={t("blocks.challenge")}
             hint={challengeDone ? t("blocks.challengeDone", { a: challengeDone.score, b: challengeDone.max }) : t("challenge.todayHint")}
           />
-          <BlockCard href="/talk" tone="cyan" icon={<ChatIcon />} title={t("blocks.talk")} hint={t("blocks.talkHint")} />
+          <BlockCard href="/chat" tone="cyan" icon={<ChatIcon />} title={t("blocks.talk")} hint={t("blocks.talkHint")} />
           <BlockCard href="/practice" tone="indigo" icon={<PracticeIcon />} title={t("blocks.more")} hint={t("blocks.moreHint")} />
         </div>
 

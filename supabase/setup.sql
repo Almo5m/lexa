@@ -138,7 +138,7 @@ create index if not exists ai_usage_user_day_idx on public.ai_usage (user_id, cr
 
 alter table public.ai_usage drop constraint if exists ai_usage_feature_check;
 alter table public.ai_usage add constraint ai_usage_feature_check
-  check (feature in ('extract', 'cards', 'tutor', 'translate', 'review', 'demo', 'talk', 'reading', 'writing', 'level'));
+  check (feature in ('extract', 'cards', 'tutor', 'translate', 'review', 'demo', 'talk', 'reading', 'writing', 'level', 'chat'));
 
 -- Reading: one short text a day with three questions. The passage holds the right answers,
 -- so students have no policy on this table; only the server reads and writes it.
@@ -610,3 +610,70 @@ revoke all on public.school_units, public.school_words from anon, authenticated;
 grant select on public.school_units, public.school_words to authenticated;
 revoke update on public.profiles from authenticated;
 grant update (display_name, interests, onboarded, daily_minutes) on public.profiles to authenticated;
+
+-- Bo chat -------------------------------------------------------------------
+-- Conversations with Bo, kept per student. The summary is a size-capped memory of the older messages.
+-- Only the server reads and writes these tables (service role, always filtered by user_id), so a student
+-- cannot edit messages or give himself more daily messages.
+create table if not exists public.chat_conversations (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  title text not null default '' check (char_length(title) <= 80),
+  summary text not null default '' check (char_length(summary) <= 2000),
+  message_count integer not null default 0,
+  student_count integer not null default 0,
+  summarized_upto integer not null default 0,
+  carried_from uuid references public.chat_conversations (id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists chat_conversations_user_idx on public.chat_conversations (user_id, updated_at desc);
+
+create table if not exists public.chat_messages (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id uuid not null references public.chat_conversations (id) on delete cascade,
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  role text not null check (role in ('student', 'tutor')),
+  text text not null check (char_length(text) between 1 and 4000),
+  created_at timestamptz not null default now()
+);
+create index if not exists chat_messages_conv_idx on public.chat_messages (conversation_id, created_at);
+
+-- Messages a student sent today (UTC day). Kept apart from the conversations, so deleting a conversation never gives messages back.
+create table if not exists public.chat_usage (
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  day date not null default (now() at time zone 'utc')::date,
+  used integer not null default 0,
+  primary key (user_id, day)
+);
+
+-- Takes one message from today's allowance in one step. Returns the new count, or -1 when the limit is reached.
+create or replace function public.take_chat_message(p_user uuid, p_limit integer) returns integer
+language plpgsql security definer set search_path = public as $$
+declare v_used integer;
+begin
+  insert into public.chat_usage (user_id, day, used) values (p_user, (now() at time zone 'utc')::date, 0)
+  on conflict (user_id, day) do nothing;
+  update public.chat_usage set used = used + 1
+  where user_id = p_user and day = (now() at time zone 'utc')::date and used < p_limit
+  returning used into v_used;
+  if v_used is null then return -1; end if;
+  return v_used;
+end $$;
+
+create or replace function public.refund_chat_message(p_user uuid) returns void
+language sql security definer set search_path = public as $$
+  update public.chat_usage set used = greatest(used - 1, 0)
+  where user_id = p_user and day = (now() at time zone 'utc')::date;
+$$;
+
+alter table public.chat_conversations enable row level security;
+alter table public.chat_messages enable row level security;
+alter table public.chat_usage enable row level security;
+revoke all on public.chat_conversations from anon, authenticated;
+revoke all on public.chat_messages from anon, authenticated;
+revoke all on public.chat_usage from anon, authenticated;
+revoke all on function public.take_chat_message(uuid, integer) from public, anon, authenticated;
+revoke all on function public.refund_chat_message(uuid) from public, anon, authenticated;
+grant execute on function public.take_chat_message(uuid, integer) to service_role;
+grant execute on function public.refund_chat_message(uuid) to service_role;
