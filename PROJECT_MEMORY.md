@@ -433,3 +433,9 @@ Log of decisions and events, newest at the bottom.
 
 ## Phase 12.1.1 - Fix: account page crash
 - /me crashed since 10.0 because the four Plus Bo pieces had no dictionary texts. Fixed and guarded by `tests/dynamic-keys.test.ts`. Crawled every page (admin, student general, student that never chose a stage, and with setup.sql not re-run) against a fake Supabase: no other server errors found. Real data was not tested.
+
+## Phase 13.0 - شاشة النهارده
+- بو فوق وجنبه فقاعة نصها بيتغير حسب حالة الطالب ومستواه (`src/features/bo/bubble.ts`، المفاتيح `bubble.*`).
+- تحت بو علطول أربع بلاطات إحصائيات: السلسلة، المستوى والنقط، الكلمات، خطوات النهارده (`today-blocks.tsx`).
+- بعدها بلوكات رئيسية بس: كلماتك، الشرح والجرامر، خطتك، تحدي النهارده، اتكلم مع بو، تدريب وألعاب. كلمة اليوم شريط صغير.
+- مفيش تغيير في قاعدة البيانات.

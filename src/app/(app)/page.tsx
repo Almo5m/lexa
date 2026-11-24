@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { BoMascot } from "@/components/bo-mascot";
 import { MinutesPicker } from "@/components/minutes-picker";
-import { XpIcon } from "@/components/icons";
+import { BlockCard, StatTile } from "@/components/today-blocks";
+import { ChatIcon, FlameIcon, GrammarIcon, PathIcon, PracticeIcon, SparkIcon, WordsIcon, XpIcon } from "@/components/icons";
 import { requireUserPage } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
+import { bubbleFor } from "@/features/bo/bubble";
+import { levelProgress } from "@/features/gamification/xp";
 import { dailyMessage, fillName } from "@/features/bo/messages";
 import { loadBoMessages } from "@/features/bo/messages-load";
 import { loadWordsOfDay, wordForDay } from "@/features/wordday/load";
@@ -14,7 +17,7 @@ import { loadSettings } from "@/lib/settings-server";
 import { toDateKey } from "@/features/gamification/streak";
 import { nearestBadge } from "@/features/achievements/badges";
 import { nextPathWords, startUnitIndex, unitById } from "@/features/curriculum";
-import { chosenStage, hasBook } from "@/features/stage/stage";
+import { chosenStage } from "@/features/stage/stage";
 import { loadSchoolUnits, unitsForStage } from "@/features/school/load";
 import { nextSchoolWords, schoolWordTotal } from "@/features/school/pick";
 import { isDailyMinutes, newWordsQuota } from "@/features/curriculum/session-plan";
@@ -36,7 +39,7 @@ export default async function HomePage() {
     await Promise.all([
       supabase
         .from("profiles")
-        .select("display_name, level_band, onboarded, daily_minutes, streak_current, streak_longest, stage")
+        .select("display_name, level_band, onboarded, daily_minutes, streak_current, streak_longest, stage, total_xp")
         .eq("id", user.id)
         .single(),
       supabase.from("words").select("term, source, due_at, last_reviewed_at"),
@@ -101,6 +104,15 @@ export default async function HomePage() {
 
   const allDone = plan.next === null;
   const learnedTotal = words.filter((w) => w.last_reviewed_at !== null).length;
+  const progress = levelProgress(profile?.total_xp ?? 0);
+  const bubble = bubbleFor({
+    levelBand: profile?.level_band ?? null,
+    streak: profile?.streak_current ?? 0,
+    doneCount: plan.doneCount,
+    total: plan.total,
+    due,
+    learned: learnedTotal,
+  });
   const near = nearestBadge({
     words: learnedTotal,
     streak: Math.max(profile?.streak_current ?? 0, profile?.streak_longest ?? 0),
@@ -117,22 +129,25 @@ export default async function HomePage() {
   return (
     <div className="max-w-2xl xl:grid xl:max-w-5xl xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start xl:gap-8">
       <div className="space-y-5">
-        <section className="flex items-end gap-3" aria-label={t("brand.ai")}>
-          <BoMascot mood={allDone ? "happy" : "neutral"} size={92} className="shrink-0" />
-          <div className="mb-1 rounded-[22px] rounded-es-[6px] bg-sheet px-4 py-3 shadow-[var(--shadow-1)]">
-            <p className="font-semibold">{t("home.greeting", { name: profile?.display_name ?? "" })}</p>
-            <p className="text-sm text-ink-soft">{allDone ? t("today.allDone") : t("today.hint")}</p>
+        <section className="space-y-4" aria-label={t("brand.ai")}>
+          <div className="flex items-end gap-3">
+            <BoMascot mood={allDone ? "happy" : "neutral"} size={120} className="shrink-0" />
+            <div className="mb-2 min-w-0 flex-1 space-y-1 rounded-[26px] rounded-es-[6px] bg-sheet px-5 py-4 shadow-[var(--shadow-1)]">
+              <p className="font-bold">{t("home.greeting", { name: profile?.display_name ?? "" })}</p>
+              <p className="leading-7 text-ink-soft">{t(bubble.key, bubble.vars)}</p>
+              {boNote && settings.boMessagesPerDay > 0 && (
+                <p className="border-t border-line pt-2 text-sm leading-7 text-ink-faint">✦ {fillName(boNote.text, profile?.display_name ?? "")}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label={t("stats.today")}>
+            <StatTile icon={<FlameIcon active={(profile?.streak_current ?? 0) > 0} />} label={t("stats.streak")} value={t("stats.streakValue", { n: profile?.streak_current ?? 0 })} sub={t("stats.streakBest", { n: Math.max(profile?.streak_longest ?? 0, profile?.streak_current ?? 0) })} />
+            <StatTile icon={<XpIcon />} label={t("stats.level")} value={t("stats.levelValue", { n: progress.level })} ratio={progress.ratio} sub={t("stats.xp", { a: progress.currentXp, b: progress.neededXp })} />
+            <StatTile icon={<WordsIcon />} label={t("stats.words")} value={t("stats.wordsValue", { n: learnedTotal })} sub={due > 0 ? t("stats.wordsDue", { n: due }) : t("stats.wordsClear")} />
+            <StatTile icon={<SparkIcon />} label={t("stats.today")} value={t("stats.todayValue", { a: plan.doneCount, b: plan.total })} ratio={plan.total > 0 ? plan.doneCount / plan.total : 0} />
           </div>
         </section>
-
-        {boNote && settings.boMessagesPerDay > 0 && (
-          <p className="sheet flex items-start gap-3 px-5 py-4 text-sm leading-7" aria-label={t("boNote.label")}>
-            <span aria-hidden="true" className="mt-1 grid size-7 shrink-0 place-items-center rounded-full bg-indigo/10 text-indigo">
-              ✦
-            </span>
-            <span>{fillName(boNote.text, profile?.display_name ?? "")}</span>
-          </p>
-        )}
 
         {profile && chosenStage(profile.stage) === null && (
           <Link href="/me" className="sheet flex min-h-14 items-center justify-between gap-3 px-5 py-3 font-medium text-indigo">
@@ -241,26 +256,23 @@ export default async function HomePage() {
       </div>
 
       <aside className="mt-5 space-y-5 xl:sticky xl:top-6 xl:mt-0">
-        <Link href="/challenge" className="sheet flex min-h-16 items-center justify-between gap-3 px-5 py-3">
-          <span>
-            <span className="block font-semibold">{t("challenge.title")}</span>
-            <span className="block text-sm text-ink-soft">
-              {challengeDone ? t("challenge.todayDone", { a: challengeDone.score, b: challengeDone.max }) : t("challenge.todayHint")}
-            </span>
-          </span>
-          <span aria-hidden="true" className="text-indigo ltr:rotate-180">‹</span>
-        </Link>
-
-        <Link href="/board" className="sheet flex min-h-16 items-center justify-between gap-3 px-5 py-3">
-          <span>
-            <span className="block font-semibold">{t("board.title")}</span>
-            <span className="block text-sm text-ink-soft">{t("board.hint")}</span>
-          </span>
-          <span aria-hidden="true" className="text-indigo ltr:rotate-180">‹</span>
-        </Link>
+        <div className="grid grid-cols-2 gap-3">
+          <BlockCard href="/words" tone="indigo" icon={<WordsIcon />} title={t("blocks.words")} hint={t("blocks.wordsHint")} />
+          <BlockCard href="/grammar" tone="leaf" icon={<GrammarIcon />} title={t("blocks.explain")} hint={t("blocks.explainHint")} />
+          <BlockCard href="/path" tone="amber" icon={<PathIcon />} title={t("blocks.path")} hint={t("blocks.pathHint")} />
+          <BlockCard
+            href="/challenge"
+            tone="coral"
+            icon={<SparkIcon />}
+            title={t("blocks.challenge")}
+            hint={challengeDone ? t("blocks.challengeDone", { a: challengeDone.score, b: challengeDone.max }) : t("challenge.todayHint")}
+          />
+          <BlockCard href="/talk" tone="cyan" icon={<ChatIcon />} title={t("blocks.talk")} hint={t("blocks.talkHint")} />
+          <BlockCard href="/practice" tone="indigo" icon={<PracticeIcon />} title={t("blocks.more")} hint={t("blocks.moreHint")} />
+        </div>
 
         {wordOfDay && (
-          <section className="sheet space-y-2 p-5" aria-labelledby="wod-title">
+          <section className="sheet space-y-2 rounded-[28px] p-5" aria-labelledby="wod-title">
             <h2 id="wod-title" className="text-sm font-semibold text-ink-faint">{t("wod.title")}</h2>
             <p className="flex items-center gap-3">
               <span className="ltr-text text-2xl font-bold">{wordOfDay.term}</span>
@@ -272,38 +284,11 @@ export default async function HomePage() {
         )}
 
         {near && nearUnits[near.metric] && (
-          <Link
-            href="/achievements"
-            className="sheet flex min-h-12 items-center justify-between gap-3 px-5 py-3 text-sm font-medium text-indigo"
-          >
+          <Link href="/achievements" className="sheet flex min-h-12 items-center justify-between gap-3 rounded-3xl px-5 py-3 text-sm font-medium text-indigo">
             {t("badges.near", { n: near.left, what: t(nearUnits[near.metric]), target: near.target })}
-            <span aria-hidden="true" className="ltr:rotate-180">
-              ‹
-            </span>
+            <span aria-hidden="true" className="ltr:rotate-180">‹</span>
           </Link>
         )}
-
-        {hasBook(profile?.stage) && (
-          <Link href="/grammar" className="sheet flex min-h-16 items-center justify-between gap-3 px-5 py-3">
-            <span>
-              <span className="block font-semibold">{t("today.bookLink")}</span>
-              <span className="block text-sm text-ink-soft">{t("today.bookLinkHint")}</span>
-            </span>
-            <span aria-hidden="true" className="text-indigo ltr:rotate-180">
-              ‹
-            </span>
-          </Link>
-        )}
-
-        <Link href="/path" className="sheet flex min-h-16 items-center justify-between gap-3 px-5 py-3">
-          <span>
-            <span className="block font-semibold">{t("today.pathLink")}</span>
-            <span className="block text-sm text-ink-soft">{t("today.pathLinkHint")}</span>
-          </span>
-          <span aria-hidden="true" className="text-indigo ltr:rotate-180">
-            ‹
-          </span>
-        </Link>
       </aside>
     </div>
   );
